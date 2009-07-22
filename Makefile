@@ -18,3 +18,4 @@ install:
 
 clean:
 	$(OCAMLBUILD) -clean
+	rm -f *~ */*~
