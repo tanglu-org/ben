@@ -21,5 +21,5 @@ type t
 
 val of_string : string -> t
 val to_string : t -> string
-val eval : bool -> Types.package -> t -> bool
+val eval : ([> `source] as 'a)-> 'a Package.t -> t -> bool
 val fields : Baselib.Fields.t -> t -> Baselib.Fields.t

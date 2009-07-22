@@ -17,12 +17,47 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-type field = string
-type regexp = string * Pcre.regexp
+open Printf
 
-type expr =
-  | Match of field * regexp
-  | Not of expr
-  | And of expr * expr
-  | Or of expr * expr
-  | Source
+type 'a name = string
+type 'a t = (string * string) list
+
+let of_assoc x = x
+let name_of_string x = x
+
+let print p =
+  List.iter
+    (fun (f, v) -> printf "%s: %s\n" f v)
+    p;
+  print_newline ()
+
+let get = List.assoc
+
+module Set = struct
+  module S = Set.Make(String)
+  type 'a t = S.t
+  let empty = S.empty
+  let add = S.add
+  let mem = S.mem
+  let exists = S.exists
+  let iter = S.iter
+  let cardinal = S.cardinal
+  let elements = S.elements
+end
+
+module Map = struct
+  module M = Map.Make(String)
+  type ('a, 'b) t = 'b M.t
+  let empty = M.empty
+  let add = M.add
+  let iter = M.iter
+  let find = M.find
+  let map = M.mapi
+  let fold = M.fold
+end
+
+let build_depends =
+  let rex = Pcre.regexp "([, |]|\\([^)]+\\))+" in
+  fun x ->
+    let deps = get "build-depends" x in
+    Pcre.split ~rex deps

@@ -138,9 +138,3 @@ let class_of_status = function
   | Unknown -> "unknown"
   | Up_to_date -> "good"
   | Outdated -> "bad"
-
-let print_package p =
-  List.iter
-    (fun (f, v) -> printf "%s: %s\n" f v)
-    p;
-  print_newline ()

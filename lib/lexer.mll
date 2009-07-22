@@ -37,7 +37,7 @@ rule stanza to_keep empty accu = parse
       }
   | '\n'+ | eof
         {
-          if empty then raise End_of_file else List.rev accu
+          if empty then raise End_of_file else Package.of_assoc (List.rev accu)
         }
 
 and token = parse
@@ -75,6 +75,7 @@ and regexp separator buf = parse
       in
       match stanza with
         | None -> accu
-        | Some x -> loop (f accu x)
+        | Some x -> loop
+            (f (Package.name_of_string (Package.get "package" x)) x accu)
     in loop accu
 }

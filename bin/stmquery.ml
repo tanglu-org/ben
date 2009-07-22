@@ -41,14 +41,14 @@ let main () =
   let query = Query.of_string query in
   let to_keep = Query.fields core_fields query in
   let sources, packages = List.partition is_source files in
-  let print is_source ic =
+  let print kind ic =
     let lexbuf = Lexing.from_channel ic in
     Lexer.stanza_fold to_keep
-      (fun () p -> if Query.eval is_source p query then print_package p)
+      (fun _ p _ -> if Query.eval kind p query then Package.print p)
       ()
       lexbuf
   in
-  List.iter (fun x -> with_in_file x (print true)) sources;
-  List.iter (fun x -> with_in_file x (print false)) packages;;
+  List.iter (fun x -> with_in_file x (print `source)) sources;
+  List.iter (fun x -> with_in_file x (print `binary)) packages;;
 
 let _ = wrap main

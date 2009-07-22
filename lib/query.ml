@@ -38,23 +38,23 @@ let rec to_string = function
       sprintf "(%s | %s)" (to_string e1) (to_string e2)
   | Source -> "source"
 
-let rec eval is_source pkg = function
+let rec eval kind pkg = function
   | Match (field, (r, rex)) ->
       begin try
-        let value = List.assoc field pkg in
+        let value = Package.get field pkg in
         ignore (Pcre.exec ~rex value);
         true
       with Not_found ->
         false
       end
   | Source ->
-      is_source
+      kind = `source
   | Or (e1, e2) ->
-      eval is_source pkg e1 || eval is_source pkg e2
+      eval kind pkg e1 || eval kind pkg e2
   | And (e1, e2) ->
-      eval is_source pkg e1 && eval is_source pkg e2
+      eval kind pkg e1 && eval kind pkg e2
   | Not e ->
-      not (eval is_source pkg e)
+      not (eval kind pkg e)
 
 let rec fields accu = function
   | Match (f, _) ->
