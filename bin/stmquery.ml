@@ -17,9 +17,9 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Baselib
 open Printf
-open Utils
+open Corelib
+open Baselib
 
 let sources_re = Pcre.regexp "Sources"
 let is_source x =

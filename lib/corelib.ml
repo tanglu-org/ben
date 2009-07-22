@@ -17,9 +17,27 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-type t
+let with_in_file file f =
+  let chan = open_in_bin file in
+  try
+    let res = f chan in
+    close_in chan; res
+  with e -> close_in chan; raise e
 
-val of_string : string -> t
-val to_string : t -> string
-val eval : bool -> Types.package -> t -> bool
-val fields : Baselib.Fields.t -> t -> Baselib.Fields.t
+let with_out_file file f =
+  let chan = open_out_bin file in
+  try
+    let res = f chan in
+    close_out chan; res
+  with e -> close_out chan; raise e
+
+let escape_for_shell str =
+  let buf = Buffer.create (2 * String.length str) in
+  Buffer.add_char buf '\'';
+  String.iter
+    (function
+       | '\'' -> Buffer.add_string buf "'\\''"
+       | c -> Buffer.add_char buf c)
+    str;
+  Buffer.add_char buf '\'';
+  Buffer.contents buf

@@ -17,27 +17,130 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-let with_in_file file f =
-  let chan = open_in_bin file in
-  try
-    let res = f chan in
-    close_in chan; res
-  with e -> close_in chan; raise e
+open Corelib
+open Types
+open Printf
 
-let with_out_file file f =
-  let chan = open_out_bin file in
-  try
-    let res = f chan in
-    close_out chan; res
-  with e -> close_out chan; raise e
+module Fields = Set.Make(String)
 
-let escape_for_shell str =
-  let buf = Buffer.create (2 * String.length str) in
-  Buffer.add_char buf '\'';
-  String.iter
-    (function
-       | '\'' -> Buffer.add_string buf "'\\''"
-       | c -> Buffer.add_char buf c)
-    str;
-  Buffer.add_char buf '\'';
-  Buffer.contents buf
+type error =
+  | Illegal_escape of char
+  | Unknown_error of exn
+  | Nothing_to_download
+  | Wget_error of int
+
+exception Error of error
+
+let lraise e = Pervasives.raise (Error e)
+
+let string_of_error = function
+  | Illegal_escape c ->
+      sprintf "illegal escape of %C" c
+  | Unknown_error e ->
+      sprintf "unexpected error: %s" (Printexc.to_string e)
+  | Wget_error r ->
+      sprintf "wget exited with return code %d" r
+  | Nothing_to_download ->
+      sprintf "nothing to download"
+
+let choose_escape str =
+  let rec loop = function
+    | c::cs -> if String.contains str c then loop cs else c
+    | _ -> raise Not_found
+  in loop ['/'; '@'; ','; '%']
+
+let string_of_regexp (regexp, _) =
+  let escape = choose_escape regexp in
+  if escape = '/' then
+    sprintf "/%s/" regexp
+  else
+    sprintf "@%c%s%c" escape regexp escape
+
+let core_fields =
+  List.fold_right Fields.add
+    ["package"; "source"; "binary"; "provides"; "version"; "architecture"; "build-depends"]
+    Fields.empty
+
+let progress fmt =
+  if !Clflags.quiet_mode then
+    ifprintf stderr fmt
+  else
+    fprintf stderr (fmt^^"%!")
+
+let download_sources mirror suite sections dest =
+  if sections = [] then lraise Nothing_to_download;
+  let tmp = Filename.temp_file "Sources." "" in
+  let commands =
+    List.map
+      (fun section ->
+         let url = sprintf "%s/dists/%s/%s/source/Sources.bz2" mirror suite section in
+         let cmd = sprintf "{ wget -q -O- %s | bzcat >> %s; }" (escape_for_shell url) tmp in
+         cmd)
+      sections
+  in
+  let cmd = sprintf "%s && mv %s %s" (String.concat " && " commands) tmp dest in
+  progress "Downloading Sources...";
+  let r = Sys.command cmd in
+  progress "\n";
+  if r <> 0 then
+    lraise (Wget_error r)
+  else
+    ignore (Sys.command (sprintf "rm -f %s" tmp));;
+
+let download_packages mirror suite sections arch dest =
+  if sections = [] then lraise Nothing_to_download;
+  let tmp = Filename.temp_file ("Packages.") "" in
+  let commands =
+    List.map
+      (fun section ->
+         let url = sprintf "%s/dists/%s/%s/binary-%s/Packages.bz2" mirror suite section arch in
+         let cmd = sprintf "{ wget -q -O- %s | bzcat >> %s; }" (escape_for_shell url) tmp in
+         cmd)
+      sections
+  in
+  let cmd = sprintf "%s && mv %s %s" (String.concat " && " commands) tmp dest in
+  progress "Downloading Packages/%s..." arch;
+  let r = Sys.command cmd in
+  progress "\n";
+  if r <> 0 then
+    lraise (Wget_error r)
+  else
+    ignore (Sys.command (sprintf "rm -f %s" tmp));;
+
+let download_all () =
+  let (/) = Filename.concat in
+  download_sources
+    !Clflags.mirror
+    !Clflags.suite
+    !Clflags.sections
+    (!Clflags.cache_dir/"Sources");
+  List.iter
+    (fun arch -> download_packages
+       !Clflags.mirror
+       !Clflags.suite
+       !Clflags.sections
+       arch
+       (!Clflags.cache_dir/("Packages."^arch)))
+    !Clflags.architectures;;
+
+let wrap f =
+  try f ()
+  with Error e -> eprintf "stm error: %s\n" (string_of_error e)
+
+type status = Unknown | Up_to_date | Outdated
+
+let string_of_status = function
+  | Unknown -> " "
+  | Up_to_date -> "✔"
+  | Outdated -> "✘"
+
+let class_of_status = function
+  | Unknown -> "unknown"
+  | Up_to_date -> "good"
+  | Outdated -> "bad"
+
+let print_package p =
+  List.iter
+    (fun (f, v) -> printf "%s: %s\n" f v)
+    p;
+  print_newline ()
