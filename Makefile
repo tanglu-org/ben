@@ -1,4 +1,4 @@
-PKGS := -package pcre
+PKGS := -package unix,pcre
 OCAMLC := ocamlfind ocamlc $(PKGS)
 OCAMLOPT := ocamlfind ocamlopt $(PKGS)
 OCAMLBUILD := \

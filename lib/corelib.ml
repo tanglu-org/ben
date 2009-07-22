@@ -41,3 +41,22 @@ let escape_for_shell str =
     str;
   Buffer.add_char buf '\'';
   Buffer.contents buf
+
+let get_rfc2822_date () =
+  let chan = Unix.open_process_in "date -R" in
+  let r = input_line chan in
+  match Unix.close_process_in chan with
+    | Unix.WEXITED 0 -> r
+    | _ -> failwith "unexpected return of date"
+
+let list_iteri f xs =
+  let rec aux i = function
+    | [] -> ()
+    | x::xs -> f i x; aux (i+1) xs
+  in aux 0 xs
+
+let list_rev_mapi f xs =
+  let rec aux i accu = function
+    | [] -> accu
+    | x::xs -> aux (i+1) ((f i x)::accu) xs
+  in aux 0 [] xs
