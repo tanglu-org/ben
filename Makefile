@@ -1,4 +1,4 @@
-PKGS := -package unix,pcre
+PKGS := -package unix,pcre,ocamlgraph
 OCAMLC := ocamlfind ocamlc $(PKGS)
 OCAMLOPT := ocamlfind ocamlopt $(PKGS)
 OCAMLBUILD := \
@@ -8,7 +8,7 @@ OCAMLBUILD := \
     -lflags -linkpkg \
     -use-menhir -yaccflags --explain
 
-TARGETS := bin/stmquery.native
+TARGETS := bin/stmquery.native tests/sandbox.native
 
 all:
 	$(OCAMLBUILD) $(TARGETS)
