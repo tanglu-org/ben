@@ -78,7 +78,7 @@ let topo_split dgraph =
          else
            (* stay on the same level *)
            (S.add name local, accu))
-      (dgraph, inverted)
+      (inverted, dgraph)
       (S.empty, [])
   in
   List.rev_map S.elements (a::b)
