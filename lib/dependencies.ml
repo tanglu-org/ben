@@ -24,10 +24,11 @@ open Types
 
 module M = Package.Map
 module S = Package.Set
+module Name = Package.Name
 
 module G = struct
   module V = struct
-    type t = [`source] Package.name
+    type t = [`source] Name.t
     let equal = (=)
     let hash = Hashtbl.hash
   end

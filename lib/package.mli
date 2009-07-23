@@ -17,34 +17,38 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-type 'a name
 type 'a t
+
+module Name : sig
+  type 'a t
+  val of_string : string -> 'a t
+  val to_string : 'a t -> string
+end
 
 val of_assoc : (string * string) list -> 'a t
 val get : string -> 'a t -> string
 val print : 'a t -> unit
-val name_of_string : string -> 'a name
 
 module Set : sig
   type 'a t
   val empty : 'a t
-  val add : 'a name -> 'a t -> 'a t
-  val mem : 'a name -> 'a t -> bool
-  val exists : ('a name -> bool) -> 'a t -> bool
-  val iter : ('a name -> unit) -> 'a t -> unit
+  val add : 'a Name.t -> 'a t -> 'a t
+  val mem : 'a Name.t -> 'a t -> bool
+  val exists : ('a Name.t -> bool) -> 'a t -> bool
+  val iter : ('a Name.t -> unit) -> 'a t -> unit
   val cardinal : 'a t -> int
-  val elements : 'a t -> 'a name list
+  val elements : 'a t -> 'a Name.t list
 end
 
 module Map : sig
   type ('a, 'b) t
   val empty : ('a, 'b) t
-  val add : 'a name -> 'b -> ('a, 'b) t -> ('a, 'b) t
-  val find : 'a name -> ('a, 'b) t -> 'b
-  val iter : ('a name -> 'b -> unit) -> ('a, 'b) t -> unit
-  val mapi : ('a name -> 'b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
-  val fold : ('a name -> 'b -> 'c -> 'c) -> ('a, 'b) t -> 'c -> 'c
-  val update_default : 'b -> ('b -> 'b) -> 'a name -> ('a, 'b) t -> ('a, 'b) t
+  val add : 'a Name.t -> 'b -> ('a, 'b) t -> ('a, 'b) t
+  val find : 'a Name.t -> ('a, 'b) t -> 'b
+  val iter : ('a Name.t -> 'b -> unit) -> ('a, 'b) t -> unit
+  val mapi : ('a Name.t -> 'b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
+  val fold : ('a Name.t -> 'b -> 'c -> 'c) -> ('a, 'b) t -> 'c -> 'c
+  val update_default : 'b -> ('b -> 'b) -> 'a Name.t -> ('a, 'b) t -> ('a, 'b) t
 end
 
-val build_depends : [`source] t -> [`binary] name list
+val build_depends : [`source] t -> [`binary] Name.t list

@@ -20,7 +20,9 @@
 {
   open Stmerr
   open Baselib
+  open Stmerr
   open Parser
+  module Name = Package.Name
 }
 
 let space = [' ' '\t']
@@ -81,6 +83,6 @@ and regexp separator buf = parse
       match stanza with
         | None -> accu
         | Some x -> loop
-            (f (Package.name_of_string (Package.get "package" x)) x accu)
+            (f (Name.of_string (Package.get "package" x)) x accu)
     in loop accu
 }

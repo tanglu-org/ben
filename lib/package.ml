@@ -19,11 +19,15 @@
 
 open Printf
 
-type 'a name = string
 type 'a t = (string * string) list
 
+module Name = struct
+  type 'a t = string
+  let of_string x = x
+  let to_string x = x
+end
+
 let of_assoc x = x
-let name_of_string x = x
 
 let print p =
   List.iter
