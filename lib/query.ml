@@ -56,6 +56,9 @@ let rec eval kind pkg = function
   | Not e ->
       not (eval kind pkg e)
 
+let eval_source = eval `source
+let eval_binary = eval `binary
+
 let rec fields accu = function
   | Match (f, _) ->
       Fields.add f accu
