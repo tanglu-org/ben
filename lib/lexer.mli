@@ -17,16 +17,10 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Corelib
+val token : Lexing.lexbuf -> Parser.token
 
-let parse_control_file filename to_keep
-    (kind : 'a)
-    (f : 'a Package.Name.t -> 'a Package.t -> 'b -> 'b)
-    (accu : 'b) : 'b =
-  with_in_file filename begin
-    fun ic ->
-      Lexer.stanza_fold to_keep
-        (fun name p accu -> f name p accu)
-        (Lexing.from_channel ic)
-        accu
-  end
+val stanza_fold :
+  Baselib.Fields.t ->
+  ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
+  Lexing.lexbuf ->
+  'b -> 'b

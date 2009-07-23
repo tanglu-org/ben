@@ -19,5 +19,5 @@
 
 val parse_control_file :
   string -> Baselib.Fields.t -> 'a ->
-  ('a Package.name -> 'a Package.t -> 'b -> 'b) ->
+  ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
   'b -> 'b

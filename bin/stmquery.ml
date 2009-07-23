@@ -45,8 +45,8 @@ let main () =
     let lexbuf = Lexing.from_channel ic in
     Lexer.stanza_fold to_keep
       (fun _ p _ -> if Query.eval kind p query then Package.print p)
-      ()
       lexbuf
+      ()
   in
   List.iter (fun x -> with_in_file x (print `source)) sources;
   List.iter (fun x -> with_in_file x (print `binary)) packages;;

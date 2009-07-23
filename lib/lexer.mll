@@ -74,7 +74,7 @@ and regexp separator buf = parse
       }
 
 {
-  let stanza_fold headers_to_keep f accu lexbuf =
+  let stanza_fold headers_to_keep f lexbuf accu =
     let rec loop accu =
       let stanza =
         try Some (stanza headers_to_keep true [] lexbuf)
