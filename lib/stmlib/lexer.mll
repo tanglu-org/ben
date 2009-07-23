@@ -47,7 +47,7 @@ rule stanza to_keep empty accu = parse
         }
 
 and token = parse
-  | '?' (field_name as name) { FIELD name }
+  | '.' (field_name as name) { FIELD name }
   | "source" { SOURCE }
   | "~" { MATCH }
   | "|" { OR }
