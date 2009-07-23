@@ -17,9 +17,9 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Printf
-open Corelib
 open Baselib
+open Stmlib
+open Printf
 
 let sources_re = Pcre.regexp "Sources"
 let is_source x =
@@ -41,14 +41,12 @@ let main () =
   let query = Query.of_string query in
   let to_keep = Query.fields core_fields query in
   let sources, packages = List.partition is_source files in
-  let print kind ic =
-    let lexbuf = Lexing.from_channel ic in
-    Lexer.stanza_fold to_keep
-      (fun _ p _ -> if Query.eval kind p query then Package.print p)
-      lexbuf
+  let print kind filename =
+    parse_control_file filename to_keep kind
+      (fun _ p () -> if Query.eval kind p query then Package.print p)
       ()
   in
-  List.iter (fun x -> with_in_file x (print `source)) sources;
-  List.iter (fun x -> with_in_file x (print `binary)) packages;;
+  List.iter (print `source) sources;
+  List.iter (print `binary) packages;;
 
 let _ = wrap main
