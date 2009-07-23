@@ -37,6 +37,17 @@ let print p =
 
 let get = List.assoc
 
+let of_assoc x =
+  let source =
+    try List.assoc "source" x
+    with Not_found -> List.assoc "package" x
+  in
+  let source =
+    try String.sub source 0 (String.index source ' ')
+    with Not_found -> source
+  in
+  ("source", source)::(List.remove_assoc "source" x)
+
 module Set = struct
   module S = Set.Make(String)
   type 'a t = S.t
@@ -70,8 +81,16 @@ module Map = struct
     add key (f previous) t
 end
 
-let build_depends =
-  let rex = Pcre.regexp "([, |]|\\([^)]+\\))+" in
-  fun x ->
-    let deps = get "build-depends" x in
-    Pcre.split ~rex deps
+let get_and_split =
+  let rex = Pcre.regexp "(?:[, |]|\\([^)]+\\))+" in
+  fun field x ->
+    try
+      let deps = get field x in
+      Pcre.split ~rex deps
+    with Not_found -> []
+
+let build_depends x =
+  get_and_split "build-depends-indep" x @ get_and_split "build-depends" x
+
+let binaries x =
+  get_and_split "binary" x
