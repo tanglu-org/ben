@@ -49,6 +49,12 @@ module Set = struct
   let elements = S.elements
 end
 
+module BinaryIndex = struct
+  type t = [`binary] Name.t * string
+  let compare = Pervasives.compare
+end
+module BinaryMap = Map.Make(BinaryIndex)
+
 module Map = struct
   module M = Map.Make(String)
   type ('a, 'b) t = 'b M.t

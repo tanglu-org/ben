@@ -40,6 +40,9 @@ module Set : sig
   val elements : 'a t -> 'a Name.t list
 end
 
+module BinaryMap : Map.S
+  with type key = [`binary] Name.t * string
+
 module Map : sig
   type ('a, 'b) t
   val empty : ('a, 'b) t
