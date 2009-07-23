@@ -24,4 +24,5 @@ type subcommand = {
 
 val register_subcommand : subcommand -> unit
 val get_subcommand : string -> subcommand
+val parse_common_args : string list -> string list
 val main : unit -> unit

@@ -17,15 +17,20 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-let quiet_mode = ref false
+let get_env_default var default =
+  try Sys.getenv var with Not_found -> default
 
-let architectures = ref
-  [ "alpha"; "amd64"; "armel";
-    "hppa"; "i386"; "ia64";
-    "kfreebsd-amd64"; "kfreebsd-i386";
-    "mips"; "mipsel"; "powerpc"; "s390"; "sparc" ]
-
-let cache_dir = ref "/home/steph/tmp/mirror"
-let mirror = ref "http://ftp.fr.debian.org"
+let dry_run = ref false
+let verbose = ref false
+let architectures = ref Baselib.debian_architectures
+let cache_dir = ref (get_env_default "STM_CACHE_DIR" (Sys.getcwd ()))
+let mirror = ref "http://ftp.fr.debian.org/debian"
 let suite = ref "unstable"
-let sections = ref [ "main"; "contrib"; "non-free" ]
+let areas = ref ["main"; "contrib"; "non-free"]
+let quiet = ref false
+
+let progress fmt =
+  if !quiet then
+    Printf.ifprintf stderr fmt
+  else
+    Printf.fprintf stderr (fmt^^"%!")
