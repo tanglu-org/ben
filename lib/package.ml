@@ -52,8 +52,12 @@ module Map = struct
   let add = M.add
   let iter = M.iter
   let find = M.find
-  let map = M.mapi
+  let mapi = M.mapi
   let fold = M.fold
+
+  let update_default default f key t =
+    let previous = try find key t with Not_found -> default in
+    add key (f previous) t
 end
 
 let build_depends =

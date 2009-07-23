@@ -42,25 +42,23 @@ end
 module Topological = Graph.Topological.Make(G)
 
 let get_dep_graph src bin =
-  M.map
-    (fun spkg_name spkg ->
-       let deps = Package.build_depends spkg in
+  M.mapi
+    (fun name pkg ->
+       let deps = Package.build_depends pkg in
        List.fold_left
          (fun accu dep ->
-            try
-              S.add (M.find dep bin) accu
-            with
-              | Not_found -> accu)
+            try S.add (M.find dep bin) accu
+            with Not_found -> accu)
          S.empty
          deps)
     src
 
 let invert_dep_graph src =
-  M.map
+  M.mapi
     (fun pkg _ ->
        M.fold
          (fun name deps accu ->
-            if S.mem name deps then
+            if S.mem pkg deps then
               S.add name accu
             else
               accu)

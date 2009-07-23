@@ -42,8 +42,9 @@ module Map : sig
   val add : 'a name -> 'b -> ('a, 'b) t -> ('a, 'b) t
   val find : 'a name -> ('a, 'b) t -> 'b
   val iter : ('a name -> 'b -> unit) -> ('a, 'b) t -> unit
-  val map : ('a name -> 'b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
+  val mapi : ('a name -> 'b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
   val fold : ('a name -> 'b -> 'c -> 'c) -> ('a, 'b) t -> 'c -> 'c
+  val update_default : 'b -> ('b -> 'b) -> 'a name -> ('a, 'b) t -> ('a, 'b) t
 end
 
 val build_depends : [`source] t -> [`binary] name list
