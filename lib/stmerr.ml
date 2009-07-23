@@ -24,6 +24,8 @@ type error =
   | Unknown_error of exn
   | Nothing_to_download
   | Wget_error of int
+  | Unexpected_char of char * int
+  | Bad_marshalled_data of string
 
 exception Error of error
 
@@ -36,6 +38,10 @@ let string_of_exn = function
       sprintf "wget exited with return code %d" r
   | Nothing_to_download ->
       sprintf "nothing to download"
+  | Unexpected_char (c, i) ->
+      sprintf "unexpected char %C at position %d" c i
+  | Bad_marshalled_data s ->
+      sprintf "bad marshalled data in %s" s
 
 let raise e = Pervasives.raise (Error e)
 let not_found () = Pervasives.raise Not_found

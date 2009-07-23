@@ -18,6 +18,7 @@
 (**************************************************************************)
 
 {
+  open Stmerr
   open Baselib
   open Parser
 }
@@ -37,7 +38,10 @@ rule stanza to_keep empty accu = parse
       }
   | '\n'+ | eof
         {
-          if empty then raise End_of_file else Package.of_assoc (List.rev accu)
+          if empty then
+            Pervasives.raise End_of_file
+          else
+            Package.of_assoc (List.rev accu)
         }
 
 and token = parse
@@ -51,6 +55,7 @@ and token = parse
   | ")" { RPAREN }
   | '@' (_ as c) | ('/' as c) { REGEXP (regexp c (Buffer.create 32) lexbuf) }
   | space | "\n" { token lexbuf }
+  | _ as c { raise (Unexpected_char (c, Lexing.lexeme_start lexbuf)) }
   | eof { EOF }
 
 and regexp separator buf = parse
