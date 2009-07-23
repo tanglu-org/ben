@@ -18,35 +18,16 @@
 (**************************************************************************)
 
 open Corelib
+open Stmerr
 open Types
 open Printf
 
 module Fields = Set.Make(String)
 
-type error =
-  | Illegal_escape of char
-  | Unknown_error of exn
-  | Nothing_to_download
-  | Wget_error of int
-
-exception Error of error
-
-let lraise e = Pervasives.raise (Error e)
-
-let string_of_error = function
-  | Illegal_escape c ->
-      sprintf "illegal escape of %C" c
-  | Unknown_error e ->
-      sprintf "unexpected error: %s" (Printexc.to_string e)
-  | Wget_error r ->
-      sprintf "wget exited with return code %d" r
-  | Nothing_to_download ->
-      sprintf "nothing to download"
-
 let choose_escape str =
   let rec loop = function
     | c::cs -> if String.contains str c then loop cs else c
-    | _ -> raise Not_found
+    | _ -> Pervasives.raise Not_found
   in loop ['/'; '@'; ','; '%']
 
 let string_of_regexp (regexp, _) =
@@ -68,7 +49,7 @@ let progress fmt =
     fprintf stderr (fmt^^"%!")
 
 let download_sources mirror suite sections dest =
-  if sections = [] then lraise Nothing_to_download;
+  if sections = [] then raise Nothing_to_download;
   let tmp = Filename.temp_file "Sources." "" in
   let commands =
     List.map
@@ -83,12 +64,12 @@ let download_sources mirror suite sections dest =
   let r = Sys.command cmd in
   progress "\n";
   if r <> 0 then
-    lraise (Wget_error r)
+    raise (Wget_error r)
   else
     ignore (Sys.command (sprintf "rm -f %s" tmp));;
 
 let download_packages mirror suite sections arch dest =
-  if sections = [] then lraise Nothing_to_download;
+  if sections = [] then raise Nothing_to_download;
   let tmp = Filename.temp_file ("Packages.") "" in
   let commands =
     List.map
@@ -103,7 +84,7 @@ let download_packages mirror suite sections arch dest =
   let r = Sys.command cmd in
   progress "\n";
   if r <> 0 then
-    lraise (Wget_error r)
+    raise (Wget_error r)
   else
     ignore (Sys.command (sprintf "rm -f %s" tmp));;
 
@@ -125,7 +106,7 @@ let download_all () =
 
 let wrap f =
   try f ()
-  with Error e -> eprintf "stm error: %s\n" (string_of_error e)
+  with Error e -> eprintf "stm error: %s\n" (string_of_exn e)
 
 type status = Unknown | Up_to_date | Outdated
 
