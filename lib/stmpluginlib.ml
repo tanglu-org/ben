@@ -57,6 +57,12 @@ let rec parse_common_args = function
   | "--archs"::x::xs ->
       Clflags.architectures := Corelib.simple_split ',' x;
       parse_common_args xs
+  | "--suite"::x::xs ->
+      Clflags.suite := x;
+      parse_common_args xs
+  | "--cache-dir"::x::xs ->
+      Clflags.cache_dir := x;
+      parse_common_args xs
   | x::xs -> x::(parse_common_args xs)
   | [] -> []
 

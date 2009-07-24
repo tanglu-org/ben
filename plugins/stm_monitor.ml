@@ -112,7 +112,8 @@ let rec parse_local_args = function
   | "--use-cache"::xs ->
       use_cache := true;
       parse_local_args xs
-  | xs -> xs
+  | x::xs -> x::(parse_local_args xs)
+  | [] -> []
 
 let main args =
   let _ = parse_local_args (Stmpluginlib.parse_common_args args) in
