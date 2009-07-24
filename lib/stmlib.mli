@@ -17,7 +17,63 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-val parse_control_file :
-  string -> Baselib.Fields.t -> 'a ->
-  ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
-  'b -> 'b
+module Package : sig
+  type 'a t
+
+  module Name : sig
+    type 'a t
+    val of_string : string -> 'a t
+    val to_string : 'a t -> string
+  end
+
+  val of_assoc : (string * string) list -> 'a t
+  val get : string -> 'a t -> string
+  val print : 'a t -> unit
+
+  module Set : sig
+    type 'a t
+    val empty : 'a t
+    val add : 'a Name.t -> 'a t -> 'a t
+    val mem : 'a Name.t -> 'a t -> bool
+    val exists : ('a Name.t -> bool) -> 'a t -> bool
+    val iter : ('a Name.t -> unit) -> 'a t -> unit
+    val cardinal : 'a t -> int
+    val elements : 'a t -> 'a Name.t list
+  end
+
+  module BinaryMap : Map.S
+    with type key = [`binary] Name.t * string
+
+  module Map : sig
+    type ('a, 'b) t
+    val empty : ('a, 'b) t
+    val add : 'a Name.t -> 'b -> ('a, 'b) t -> ('a, 'b) t
+    val find : 'a Name.t -> ('a, 'b) t -> 'b
+    val iter : ('a Name.t -> 'b -> unit) -> ('a, 'b) t -> unit
+    val mapi : ('a Name.t -> 'b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
+    val fold : ('a Name.t -> 'b -> 'c -> 'c) -> ('a, 'b) t -> 'c -> 'c
+    val update_default : 'b -> ('b -> 'b) -> 'a Name.t -> ('a, 'b) t -> ('a, 'b) t
+  end
+
+  val build_depends : [`source] t -> [`binary] Name.t list
+  val binaries : [`source] t -> [`binary] Name.t list
+end
+
+module Query : sig
+  type t
+
+  val of_string : string -> t
+  val to_string : t -> string
+  val fields : Baselib.Fields.t -> t -> Baselib.Fields.t
+
+  val eval : ([> `source] as 'a) -> 'a Package.t -> t -> bool
+  val eval_source : [`source] Package.t -> t -> bool
+  val eval_binary : [`binary] Package.t -> t -> bool
+end
+
+module Utils : sig
+  val parse_control_file :
+    string -> Baselib.Fields.t -> 'a ->
+    ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
+    'b -> 'b
+end

@@ -17,10 +17,54 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-val token : Lexing.lexbuf -> Parser.token
+open Printf
+open Types
+open Baselib
 
-val stanza_fold :
-  Baselib.Fields.t ->
-  ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
-  Lexing.lexbuf ->
-  'b -> 'b
+type t = Types.expr
+
+let of_string s =
+  let lexbuf = Lexing.from_string s in
+  Parser.full_expr Lexer.token lexbuf
+
+let rec to_string = function
+  | Match (f, r) ->
+      sprintf "?%s ~ %s" f (string_of_regexp r)
+  | Not e ->
+      sprintf "!%s" (to_string e)
+  | And (e1, e2) ->
+      sprintf "(%s & %s)" (to_string e1) (to_string e2)
+  | Or (e1, e2) ->
+      sprintf "(%s | %s)" (to_string e1) (to_string e2)
+  | Source -> "source"
+
+let rec eval kind pkg = function
+  | Match (field, (r, rex)) ->
+      begin try
+        let value = Package.get field pkg in
+        ignore (Pcre.exec ~rex value);
+        true
+      with Not_found ->
+        false
+      end
+  | Source ->
+      kind = `source
+  | Or (e1, e2) ->
+      eval kind pkg e1 || eval kind pkg e2
+  | And (e1, e2) ->
+      eval kind pkg e1 && eval kind pkg e2
+  | Not e ->
+      not (eval kind pkg e)
+
+let eval_source x = eval `source x
+let eval_binary x = eval `binary x
+
+let rec fields accu = function
+  | Match (f, _) ->
+      Fields.add f accu
+  | Not e ->
+      fields accu e
+  | And (e1, e2) | Or (e1, e2) ->
+      fields (fields accu e1) e2
+  | Source ->
+      accu

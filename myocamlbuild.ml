@@ -51,6 +51,7 @@ let _ =
         Options.ocaml_yaccflags := ["--explain"]
 
     | After_rules ->
+        Pathname.define_context "lib/stmlib" ["lib"];
         Pathname.define_context "plugins" ["lib"];
         Pathname.define_context "bin" ["lib"; "plugins"];
         flag ["ocaml"; "link"; "program"] & A"-linkpkg";

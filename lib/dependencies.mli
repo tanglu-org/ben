@@ -17,6 +17,8 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
+open Stmlib
+
 val get_dep_graph :
   ([`source], [`source] Package.t) Package.Map.t ->
   ([`binary], [`source] Package.Name.t) Package.Map.t ->
