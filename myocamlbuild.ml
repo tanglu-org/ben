@@ -25,6 +25,7 @@ let packages = ["unix"; "pcre"; "ocamlgraph"]
 
 exception Require_findlib
 exception Missing_findlib_package of string
+exception Subprocess_died_unexpectedly of Unix.process_status
 
 let try_exec cmd =
   Sys.command (sprintf "%s >/dev/null 2>&1" cmd) = 0
@@ -38,6 +39,7 @@ let has_ocamlopt = try_exec "which ocamlopt"
 let best = if has_ocamlopt then "native" else "byte"
 let _ = if not (try_exec "ocamlfind printconf") then raise Require_findlib
 let _ = List.iter require packages
+let main_executable = sprintf "bin/%s.%s" name best
 
 let _ =
   dispatch begin function
@@ -86,6 +88,50 @@ let _ =
               (S [A"sed";
                   A"-e"; A (sprintf "s/@STATIC_PLUGINS@/%s/" static);
                   P"bin/stm.mlp"; Sh">"; P"bin/stm.ml"])
+        end;
+
+        (* rule for dependency graph *)
+        rule "modules.dot" ~deps:[main_executable] ~prod:"modules.dot" begin
+          fun _ _ ->
+            let ic = Unix.open_process_in "find -name '*.ml.depends'" in
+            let buf = Buffer.create 1024 in
+            bprintf buf "digraph build_graph {\n";
+            let rec loop accu =
+              match (try Some (input_line ic) with End_of_file -> None) with
+                | None -> accu
+                | Some filename ->
+                    let node =
+                      let n = String.length filename in
+                      let j = n - String.length ".ml.depends" in
+                      let i =
+                        try String.rindex_from filename j '/'
+                        with Not_found -> 0
+                      in
+                      String.capitalize (String.sub filename (i+1) (j-i-1))
+                    in
+                    let deps = List.tl (string_list_of_file filename) in
+                    loop ((node, deps)::accu)
+            in
+            let deps_assoc = loop [] in
+            let module S = Set.Make(String) in
+            let mynodes = List.fold_left
+              (fun accu (x, _) -> S.add x accu) S.empty deps_assoc
+            in
+            let mynodes = S.add "Stmlib" mynodes in
+            let () = List.iter
+              (fun (x, deps) -> List.iter
+                 (fun dep ->
+                    if S.mem dep mynodes then
+                      bprintf buf "  \"%s\" -> \"%s\";\n" x dep)
+                 deps)
+              deps_assoc
+            in
+            bprintf buf "}\n";
+            begin match Unix.close_process_in ic with
+              | Unix.WEXITED 0 -> ()
+              | e -> raise (Subprocess_died_unexpectedly e)
+            end;
+            Echo ([Buffer.contents buf], "modules.dot")
         end
 
     | _ -> ()

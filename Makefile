@@ -28,11 +28,18 @@ ARCH := $(if $(HAS_OPT),native,byte)
 OCAMLBUILD := ocamlbuild $(CLASSIC) $(if $(HAS_OPT),,-byte-plugin)
 
 # Build
-TARGETS := bin/$(NAME).$(ARCH)
+TARGETS := bin/$(NAME).$(ARCH) modules.dot
+GENERATED := modules.png
 
-all:
+all: ocamlbuild $(GENERATED)
+
+.PHONY: ocamlbuild
+ocamlbuild:
 	$(OCAMLBUILD) $(TARGETS)
+
+%.png: ocamlbuild
+	dot -Tpng $(patsubst %.png,_build/%.dot,$@) > $@
 
 clean:
 	$(OCAMLBUILD) -clean
-	rm -f *~ */*~
+	rm -f *~ */*~ $(GENERATED)

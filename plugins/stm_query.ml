@@ -21,6 +21,9 @@ open Baselib
 open Stmlib
 open Printf
 
+(* Hack to make ocamldep see the dependency to Stmlib *)
+let _ = Stmlib.Utils.parse_control_file
+
 let sources_re = Pcre.regexp "Sources"
 let is_source x =
   try
