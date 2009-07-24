@@ -60,3 +60,20 @@ let list_rev_mapi f xs =
     | [] -> accu
     | x::xs -> aux (i+1) ((f i x)::accu) xs
   in aux 0 [] xs
+
+let simple_split delim str =
+  let n = String.length str in
+  let rec aux i accu =
+    if i < n then
+      let j = try String.index_from str i delim with Not_found -> n in
+      aux (j+1) (String.sub str i (j-i) :: accu)
+    else List.rev accu
+  in aux 0 []
+
+let starts_with str x =
+  let n = String.length str and p = String.length x in
+  n > p && String.sub str 0 p = x
+
+let ends_with str x =
+  let n = String.length str and p = String.length x in
+  n > p && String.sub str (n-p) p = x
