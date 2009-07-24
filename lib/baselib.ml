@@ -104,10 +104,6 @@ let download_all () =
        (!Clflags.cache_dir/("Packages."^arch)))
     !Clflags.architectures;;
 
-let wrap f =
-  try f ()
-  with Error e -> eprintf "stm error: %s\n" (string_of_exn e)
-
 type status = Unknown | Up_to_date | Outdated
 
 let string_of_status = function

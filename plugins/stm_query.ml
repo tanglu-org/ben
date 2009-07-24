@@ -17,38 +17,38 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
+open Baselib
+open Stmlib
 open Printf
 
-type error =
-  | Illegal_escape of char
-  | Unknown_error of exn
-  | Nothing_to_download
-  | Wget_error of int
-  | Unexpected_char of char * int
-  | Bad_marshalled_data of string
-  | Unknown_command of string
+let sources_re = Pcre.regexp "Sources"
+let is_source x =
+  try
+    ignore (Pcre.exec ~rex:sources_re x);
+    true
+  with Not_found -> false
 
-exception Error of error
+let usage cmd =
+  fprintf stderr "Usage: %s <query> [ file ... ]\n" cmd;
+  exit 1
 
-let string_of_exn = function
-  | Illegal_escape c ->
-      sprintf "illegal escape of %C" c
-  | Unknown_error e ->
-      sprintf "unexpected error: %s" (Printexc.to_string e)
-  | Wget_error r ->
-      sprintf "wget exited with return code %d" r
-  | Nothing_to_download ->
-      sprintf "nothing to download"
-  | Unexpected_char (c, i) ->
-      sprintf "unexpected char %C at position %d" c i
-  | Bad_marshalled_data s ->
-      sprintf "bad marshalled data in %s" s
-  | Unknown_command s ->
-      sprintf "unknown command: %s" s
+let main args =
+  let query, files = match args with
+    | query::files -> query, files
+    | _ -> usage "stm query"
+  in
+  let query = Query.of_string query in
+  let to_keep = Query.fields core_fields query in
+  let sources, packages = List.partition is_source files in
+  let print kind filename =
+    parse_control_file filename to_keep kind
+      (fun _ p () -> if Query.eval kind p query then Package.print p)
+      ()
+  in
+  List.iter (print `source) sources;
+  List.iter (print `binary) packages;;
 
-let raise e = Pervasives.raise (Error e)
-let not_found () = Pervasives.raise Not_found
-
-let wrap f =
-  try f ()
-  with Error e -> eprintf "stm error: %s\n" (string_of_exn e)
+let subcommand = {
+  Stmpluginlib.name = "query";
+  Stmpluginlib.main = main
+}

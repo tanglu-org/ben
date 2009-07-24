@@ -1,20 +1,37 @@
-PKGS := -package unix,pcre,ocamlgraph
-OCAMLC := ocamlfind ocamlc $(PKGS)
-OCAMLOPT := ocamlfind ocamlopt $(PKGS)
-OCAMLBUILD := \
-  ocamlbuild -classic-display \
-    -I lib \
-    -ocamlc '$(OCAMLC)' -ocamlopt '$(OCAMLOPT)' \
-    -lflags -linkpkg \
-    -use-menhir -yaccflags --explain
+##########################################################################
+#  Copyright © 2009 Stéphane Glondu <steph@glondu.net>                   #
+#                                                                        #
+#  This program is free software: you can redistribute it and/or modify  #
+#  it under the terms of the GNU Affero General Public License as        #
+#  published by the Free Software Foundation, either version 3 of the    #
+#  License, or (at your option) any later version, with the additional   #
+#  exemption that compiling, linking, and/or using OpenSSL is allowed.   #
+#                                                                        #
+#  This program is distributed in the hope that it will be useful, but   #
+#  WITHOUT ANY WARRANTY; without even the implied warranty of            #
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU     #
+#  Affero General Public License for more details.                       #
+#                                                                        #
+#  You should have received a copy of the GNU Affero General Public      #
+#  License along with this program.  If not, see                         #
+#  <http://www.gnu.org/licenses/>.                                       #
+##########################################################################
 
-TARGETS := bin/stmquery.native tests/sandbox.native
+# Configuration
+NAME := stm
+PREFIX := /usr/local
+
+# Auto-detection
+HAS_OPT := $(shell if which ocamlopt > /dev/null; then echo yes; fi)
+CLASSIC := $(if $(INSIDE_EMACS),-classic-display)
+ARCH := $(if $(HAS_OPT),native,byte)
+OCAMLBUILD := ocamlbuild $(CLASSIC) $(if $(HAS_OPT),,-byte-plugin)
+
+# Build
+TARGETS := bin/$(NAME).$(ARCH)
 
 all:
 	$(OCAMLBUILD) $(TARGETS)
-
-install:
-	install -s _build/bin/stmquery.native /usr/local/bin/stmquery
 
 clean:
 	$(OCAMLBUILD) -clean

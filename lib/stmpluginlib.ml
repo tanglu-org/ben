@@ -17,38 +17,40 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Printf
+open Stmerr
 
-type error =
-  | Illegal_escape of char
-  | Unknown_error of exn
-  | Nothing_to_download
-  | Wget_error of int
-  | Unexpected_char of char * int
-  | Bad_marshalled_data of string
-  | Unknown_command of string
+type subcommand = {
+  name : string;
+  main : string list -> unit
+}
+let subcommands = ref []
 
-exception Error of error
+let register_subcommand sc =
+  subcommands := (sc.name, sc) :: !subcommands
 
-let string_of_exn = function
-  | Illegal_escape c ->
-      sprintf "illegal escape of %C" c
-  | Unknown_error e ->
-      sprintf "unexpected error: %s" (Printexc.to_string e)
-  | Wget_error r ->
-      sprintf "wget exited with return code %d" r
-  | Nothing_to_download ->
-      sprintf "nothing to download"
-  | Unexpected_char (c, i) ->
-      sprintf "unexpected char %C at position %d" c i
-  | Bad_marshalled_data s ->
-      sprintf "bad marshalled data in %s" s
-  | Unknown_command s ->
-      sprintf "unknown command: %s" s
+let get_subcommand x =
+  try List.assoc x !subcommands
+  with Not_found -> raise (Unknown_command x)
 
-let raise e = Pervasives.raise (Error e)
-let not_found () = Pervasives.raise Not_found
+let to_cmd x =
+  let n = String.length x in
+  if n > 4 && String.sub x 0 4 = "stm-" then
+    String.sub x 4 (n-4)
+  else x
 
-let wrap f =
-  try f ()
-  with Error e -> eprintf "stm error: %s\n" (string_of_exn e)
+let main () = match Array.to_list Sys.argv with
+  | [] ->
+      (* we assume Sys.argv.(0) is always here! *)
+      assert false
+  | cmd::xs ->
+      let sc, args =
+        try
+          let cmd = to_cmd (Filename.basename cmd) in
+          get_subcommand cmd, xs
+        with Error (Unknown_command _) -> match xs with
+          | cmd::xs ->
+              get_subcommand cmd, xs
+          | _ ->
+              failwith "nothing to do"
+      in
+      wrap (fun () -> sc.main args)
