@@ -17,37 +17,7 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Baselib
-open Printf
-
-let sources_re = Pcre.regexp "Sources"
-let is_source x =
-  try
-    ignore (Pcre.exec ~rex:sources_re x);
-    true
-  with Not_found -> false
-
-let usage cmd =
-  fprintf stderr "Usage: %s <query> [ file ... ]\n" cmd;
-  exit 1
-
-let main args =
-  let query, files = match args with
-    | query::files -> query, files
-    | _ -> usage "stm query"
-  in
-  let query = Query.of_string query in
-  let to_keep = Query.fields core_fields query in
-  let sources, packages = List.partition is_source files in
-  let print kind filename =
-    Utils.parse_control_file filename to_keep kind
-      (fun _ p () -> if Query.eval kind p query then Package.print p)
-      ()
-  in
-  List.iter (print `source) sources;
-  List.iter (print `binary) packages;;
-
-let subcommand = {
-  Stmpluginlib.name = "query";
-  Stmpluginlib.main = main
-}
+val parse_control_file :
+  string -> Baselib.Fields.t -> 'a ->
+  ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
+  'b -> 'b

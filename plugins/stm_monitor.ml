@@ -20,7 +20,6 @@
 open Printf
 open Corelib
 open Baselib
-open Stmlib
 open Marshalling
 
 module M = Package.Map

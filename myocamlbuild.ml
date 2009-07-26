@@ -117,7 +117,6 @@ let _ =
             let mynodes = List.fold_left
               (fun accu (x, _) -> S.add x accu) S.empty deps_assoc
             in
-            let mynodes = S.add "Stmlib" mynodes in
             let () = List.iter
               (fun (x, deps) -> List.iter
                  (fun dep ->
