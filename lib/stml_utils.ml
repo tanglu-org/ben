@@ -17,20 +17,16 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-let get_env_default var default =
-  try Sys.getenv var with Not_found -> default
+open Stml_core
 
-let dry_run = ref false
-let verbose = ref false
-let architectures = ref Baselib.debian_architectures
-let cache_dir = ref (get_env_default "STM_CACHE_DIR" (Sys.getcwd ()))
-let mirror = ref "http://ftp.fr.debian.org/debian"
-let suite = ref "unstable"
-let areas = ref ["main"; "contrib"; "non-free"]
-let quiet = ref false
-
-let progress fmt =
-  if !quiet then
-    Printf.ifprintf stderr fmt
-  else
-    Printf.fprintf stderr (fmt^^"%!")
+let parse_control_file filename to_keep
+    (kind : 'a)
+    (f : 'a Package.Name.t -> 'a Package.t -> 'b -> 'b)
+    (accu : 'b) : 'b =
+  with_in_file filename begin
+    fun ic ->
+      Stml_lexer.stanza_fold to_keep
+        (fun name p accu -> f name p accu)
+        (Lexing.from_channel ic)
+        accu
+  end

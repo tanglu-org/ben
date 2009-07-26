@@ -18,16 +18,16 @@
 (**************************************************************************)
 
 open Printf
-open Corelib
-open Baselib
-open Marshalling
+open Stml_core
+open Stml_base
+open Stml_marshal
 
 module M = Package.Map
 module S = Package.Set
 
 let use_cache = ref false
 
-let p = Clflags.progress
+let p = Stml_clflags.progress
 let ( // ) = Filename.concat
 let ( !! ) = Lazy.force
 let ( !!! ) = Package.Name.to_string
@@ -60,13 +60,13 @@ module Marshallable = struct
     bin_map : [`binary] Package.t PAMap.t
   }
 end
-module Marshal = Marshalling.Make(Marshallable)
+module Marshal = Stml_marshal.Make(Marshallable)
 open Marshallable
 
 let parse_binaries accu arch =
   p "Parsing Packages.%s..." arch;
-  let res = Utils.parse_control_file
-    (!Clflags.cache_dir // ("Packages."^arch))
+  let res = Stml_utils.parse_control_file
+    (!Stml_clflags.cache_dir // ("Packages."^arch))
     !!to_keep `binary
     (fun name pkg accu ->
        if Query.eval_binary pkg !!is_affected then
@@ -77,8 +77,8 @@ let parse_binaries accu arch =
 
 let parse_sources accu =
   p "Parsing sources...";
-  let res = Utils.parse_control_file
-    (!Clflags.cache_dir // "Sources")
+  let res = Stml_utils.parse_control_file
+    (!Stml_clflags.cache_dir // "Sources")
     !!to_keep `source
     (fun name pkg accu ->
        if Query.eval_source pkg !!is_affected then
@@ -88,14 +88,15 @@ let parse_sources accu =
   in p "\n"; res
 
 let get_data () =
-  let file = !Clflags.cache_dir // "monitor.cache" in
+  let file = !Stml_clflags.cache_dir // "monitor.cache" in
   if !use_cache then
     Marshal.load file
   else
     let data = {
       src_map = parse_sources M.empty;
       bin_map =
-        List.fold_left parse_binaries PAMap.empty !Clflags.architectures;
+        List.fold_left
+          parse_binaries PAMap.empty !Stml_clflags.architectures;
     } in
     Marshal.dump file data;
     data
@@ -115,7 +116,7 @@ let rec parse_local_args = function
   | [] -> []
 
 let main args =
-  let _ = parse_local_args (Stmpluginlib.parse_common_args args) in
+  let _ = parse_local_args (Stml_plugin.parse_common_args args) in
   let {src_map = sources; bin_map = binaries} = get_data () in
   let src_of_bin : ([`binary], [`source] Package.Name.t) M.t =
     PAMap.fold
@@ -154,6 +155,6 @@ let main args =
   ()
 
 let subcommand = {
-  Stmpluginlib.name = "monitor";
-  Stmpluginlib.main = main;
+  Stml_plugin.name = "monitor";
+  Stml_plugin.main = main;
 }

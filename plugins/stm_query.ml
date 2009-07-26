@@ -17,7 +17,7 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Baselib
+open Stml_base
 open Printf
 
 let sources_re = Pcre.regexp "Sources"
@@ -40,7 +40,7 @@ let main args =
   let to_keep = Query.fields core_fields query in
   let sources, packages = List.partition is_source files in
   let print kind filename =
-    Utils.parse_control_file filename to_keep kind
+    Stml_utils.parse_control_file filename to_keep kind
       (fun _ p () -> if Query.eval kind p query then Package.print p)
       ()
   in
@@ -48,6 +48,6 @@ let main args =
   List.iter (print `binary) packages;;
 
 let subcommand = {
-  Stmpluginlib.name = "query";
-  Stmpluginlib.main = main
+  Stml_plugin.name = "query";
+  Stml_plugin.main = main
 }

@@ -18,10 +18,9 @@
 (**************************************************************************)
 
 {
-  open Stmerr
-  open Baselib
-  open Stmerr
-  open Parser
+  open Stml_error
+  open Stml_base
+  open Stml_parser
   module Name = Package.Name
 }
 

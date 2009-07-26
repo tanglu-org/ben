@@ -18,14 +18,14 @@
 (**************************************************************************)
 
 open Printf
-open Types
-open Baselib
+open Stml_types
+open Stml_base
 
-type t = Types.expr
+type t = Stml_types.expr
 
 let of_string s =
   let lexbuf = Lexing.from_string s in
-  Parser.full_expr Lexer.token lexbuf
+  Stml_parser.full_expr Stml_lexer.token lexbuf
 
 let rec to_string = function
   | Match (f, r) ->

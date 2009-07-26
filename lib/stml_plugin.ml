@@ -17,7 +17,7 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Stmerr
+open Stml_error
 
 type subcommand = {
   name : string;
@@ -40,28 +40,28 @@ let to_cmd x =
 
 let rec parse_common_args = function
   | ("--dry-run" | "-n")::xs ->
-      Clflags.dry_run := true;
+      Stml_clflags.dry_run := true;
       parse_common_args xs
   | ("--quiet" | "-q")::xs ->
-      Clflags.quiet := true;
+      Stml_clflags.quiet := true;
       parse_common_args xs
   | ("--verbose" | "-v")::xs ->
-      Clflags.verbose := true;
+      Stml_clflags.verbose := true;
       parse_common_args xs
   | "--mirror"::x::xs ->
-      Clflags.mirror := x;
+      Stml_clflags.mirror := x;
       parse_common_args xs
   | "--areas"::x::xs ->
-      Clflags.areas := Corelib.simple_split ',' x;
+      Stml_clflags.areas := Stml_core.simple_split ',' x;
       parse_common_args xs
   | "--archs"::x::xs ->
-      Clflags.architectures := Corelib.simple_split ',' x;
+      Stml_clflags.architectures := Stml_core.simple_split ',' x;
       parse_common_args xs
   | "--suite"::x::xs ->
-      Clflags.suite := x;
+      Stml_clflags.suite := x;
       parse_common_args xs
   | "--cache-dir"::x::xs ->
-      Clflags.cache_dir := x;
+      Stml_clflags.cache_dir := x;
       parse_common_args xs
   | x::xs -> x::(parse_common_args xs)
   | [] -> []

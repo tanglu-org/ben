@@ -17,16 +17,45 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Corelib
+open Stml_core
+open Stml_error
+open Stml_types
+open Printf
 
-let parse_control_file filename to_keep
-    (kind : 'a)
-    (f : 'a Package.Name.t -> 'a Package.t -> 'b -> 'b)
-    (accu : 'b) : 'b =
-  with_in_file filename begin
-    fun ic ->
-      Lexer.stanza_fold to_keep
-        (fun name p accu -> f name p accu)
-        (Lexing.from_channel ic)
-        accu
-  end
+module Fields = Set.Make(String)
+
+let choose_escape str =
+  let rec loop = function
+    | c::cs -> if String.contains str c then loop cs else c
+    | _ -> Pervasives.raise Not_found
+  in loop ['/'; '@'; ','; '%']
+
+let string_of_regexp (regexp, _) =
+  let escape = choose_escape regexp in
+  if escape = '/' then
+    sprintf "/%s/" regexp
+  else
+    sprintf "@%c%s%c" escape regexp escape
+
+let core_fields =
+  List.fold_right Fields.add
+    ["package"; "source"; "binary"; "provides"; "version"; "architecture"; "build-depends"]
+    Fields.empty
+
+let debian_architectures =
+  [ "alpha"; "amd64"; "armel";
+    "hppa"; "i386"; "ia64";
+    "kfreebsd-amd64"; "kfreebsd-i386";
+    "mips"; "mipsel"; "powerpc"; "s390"; "sparc" ]
+
+type status = Unknown | Up_to_date | Outdated
+
+let string_of_status = function
+  | Unknown -> " "
+  | Up_to_date -> "✔"
+  | Outdated -> "✘"
+
+let class_of_status = function
+  | Unknown -> "unknown"
+  | Up_to_date -> "good"
+  | Outdated -> "bad"

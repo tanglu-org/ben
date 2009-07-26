@@ -18,37 +18,37 @@
 (**************************************************************************)
 
 open Printf
-open Corelib
-open Baselib
-open Stmerr
+open Stml_core
+open Stml_base
+open Stml_error
 
-let p = Clflags.progress
+let p = Stml_clflags.progress
 let ( / ) = Filename.concat
 
 let download_sources () =
-  if !Clflags.areas = [] then raise Nothing_to_download;
-  let wquiet = if !Clflags.verbose then "" else "-q" in
-  let dst = !Clflags.cache_dir/"Sources" in
+  if !Stml_clflags.areas = [] then raise Nothing_to_download;
+  let wquiet = if !Stml_clflags.verbose then "" else "-q" in
+  let dst = !Stml_clflags.cache_dir/"Sources" in
   let tmp = Filename.temp_file "Sources." "" in
   let commands =
     List.map
       (fun area ->
          let url = sprintf "%s/dists/%s/%s/source/Sources.bz2"
-           !Clflags.mirror !Clflags.suite area
+           !Stml_clflags.mirror !Stml_clflags.suite area
          in
-         if !Clflags.dry_run then p "Would download %s\n" url;
+         if !Stml_clflags.dry_run then p "Would download %s\n" url;
          let cmd = sprintf "{ wget %s -O- %s | bzcat >> %s; }"
            wquiet (escape_for_shell url) tmp
          in cmd)
-      !Clflags.areas
+      !Stml_clflags.areas
   in
   let cmd = sprintf "%s && mv %s %s"
     (String.concat " && " commands) tmp dst
   in
-  if not !Clflags.dry_run then begin
-    if not !Clflags.verbose then p "Downloading Sources...";
+  if not !Stml_clflags.dry_run then begin
+    if not !Stml_clflags.verbose then p "Downloading Sources...";
     let r = Sys.command cmd in
-    if not !Clflags.verbose then p "\n";
+    if not !Stml_clflags.verbose then p "\n";
     if r <> 0 then
       raise (Wget_error r)
     else
@@ -56,28 +56,28 @@ let download_sources () =
   end;;
 
 let download_binaries arch =
-  if !Clflags.areas = [] then raise Nothing_to_download;
-  let wquiet = if !Clflags.verbose then "" else "-q" in
-  let dst = !Clflags.cache_dir/"Packages."^arch in
+  if !Stml_clflags.areas = [] then raise Nothing_to_download;
+  let wquiet = if !Stml_clflags.verbose then "" else "-q" in
+  let dst = !Stml_clflags.cache_dir/"Packages."^arch in
   let tmp = Filename.temp_file ("Packages.") "" in
   let commands =
     List.map
       (fun area ->
          let url = sprintf "%s/dists/%s/%s/binary-%s/Packages.bz2"
-           !Clflags.mirror !Clflags.suite area arch
+           !Stml_clflags.mirror !Stml_clflags.suite area arch
          in
-         if !Clflags.dry_run then p "Would download %s\n" url;
+         if !Stml_clflags.dry_run then p "Would download %s\n" url;
          let cmd = sprintf "{ wget %s -O- %s | bzcat >> %s; }"
            wquiet (escape_for_shell url) tmp
          in
          cmd)
-      !Clflags.areas
+      !Stml_clflags.areas
   in
   let cmd = sprintf "%s && mv %s %s"
     (String.concat " && " commands) tmp dst
   in
-  if not !Clflags.dry_run then begin
-    if not !Clflags.verbose then p "Downloading Packages/%s..." arch;
+  if not !Stml_clflags.dry_run then begin
+    if not !Stml_clflags.verbose then p "Downloading Packages/%s..." arch;
     let r = Sys.command cmd in
     p "\n";
     if r <> 0 then
@@ -88,13 +88,13 @@ let download_binaries arch =
 
 let download_all () =
   download_sources ();
-  List.iter download_binaries !Clflags.architectures;;
+  List.iter download_binaries !Stml_clflags.architectures;;
 
 let main args =
-  ignore (Stmpluginlib.parse_common_args args);
+  ignore (Stml_plugin.parse_common_args args);
   download_all ()
 
 let subcommand = {
-  Stmpluginlib.name = "download";
-  Stmpluginlib.main = main;
+  Stml_plugin.name = "download";
+  Stml_plugin.main = main;
 }

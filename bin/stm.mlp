@@ -17,9 +17,9 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Stmpluginlib
+open Stml_plugin
 
 let static_plugins = [ @STATIC_PLUGINS@ ]
 
 let _ = List.iter register_subcommand static_plugins
-let _ = Stmerr.wrap main
+let _ = Stml_error.wrap main

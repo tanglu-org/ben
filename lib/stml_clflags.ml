@@ -17,7 +17,20 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-val parse_control_file :
-  string -> Baselib.Fields.t -> 'a ->
-  ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
-  'b -> 'b
+let get_env_default var default =
+  try Sys.getenv var with Not_found -> default
+
+let dry_run = ref false
+let verbose = ref false
+let architectures = ref Stml_base.debian_architectures
+let cache_dir = ref (get_env_default "STM_CACHE_DIR" (Sys.getcwd ()))
+let mirror = ref "http://ftp.fr.debian.org/debian"
+let suite = ref "unstable"
+let areas = ref ["main"; "contrib"; "non-free"]
+let quiet = ref false
+
+let progress fmt =
+  if !quiet then
+    Printf.ifprintf stderr fmt
+  else
+    Printf.fprintf stderr (fmt^^"%!")

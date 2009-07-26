@@ -17,9 +17,9 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Corelib
-open Baselib
-open Stmerr
+open Stml_core
+open Stml_base
+open Stml_error
 
 module type MARSHALLABLE = sig
   type t

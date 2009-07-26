@@ -18,18 +18,18 @@
 /**************************************************************************/
 
 %{
-  open Types
+  open Stml_types
 %}
 
-%token <Types.field> FIELD
-%token <Types.regexp> REGEXP
+%token <Stml_types.field> FIELD
+%token <Stml_types.regexp> REGEXP
 %token MATCH OR AND NOT LPAREN RPAREN EOF SOURCE
 
 %left OR
 %left AND
 %nonassoc NOT
 
-%start <Types.expr> full_expr
+%start <Stml_types.expr> full_expr
 
 %%
 

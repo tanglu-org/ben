@@ -18,9 +18,9 @@
 (**************************************************************************)
 
 open Printf
-open Corelib
-open Baselib
-open Types
+open Stml_core
+open Stml_base
+open Stml_types
 
 module M = Package.Map
 module S = Package.Set
