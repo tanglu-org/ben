@@ -78,7 +78,7 @@ let format_arch x =
       match x with
         | Unknown -> f
         | Up_to_date -> (fun x -> "\027[32m"^(f x)^"\027[0m")
-        | Outdated -> (fun x -> "\027[31m"^(f x)^"\027[0m")
+        | Outdated -> (fun x -> "\027[1m\027[31m"^(f x)^"\027[0m")
     else f
   in f
 
@@ -121,8 +121,8 @@ let get_data () =
     data
 
 let print_dep_line src deps =
-  printf "%s:" (Package.Name.to_string src);
-  S.iter (fun dep -> printf " %s" (Package.Name.to_string dep)) deps;
+  printf "%s:" !!!src;
+  S.iter (fun dep -> printf " %s" !!!dep) deps;
   printf "\n%!"
 
 let print_dep_graph x = M.iter print_dep_line x
@@ -146,7 +146,7 @@ let rec parse_local_args = function
 
 let print_text_monitor sources binaries rounds =
   let nmax = M.fold begin fun src _ accu ->
-    let n = String.length (Package.Name.to_string src) in
+    let n = String.length !!!src in
     if n > accu then n else accu
   end sources 0 in
   let src_fmt = Scanf.format_from_string (sprintf "%%%ds:" (nmax+2)) "%s" in
