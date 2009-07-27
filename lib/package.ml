@@ -58,6 +58,7 @@ module Set = struct
   let iter = S.iter
   let cardinal = S.cardinal
   let elements = S.elements
+  let fold = S.fold
 end
 
 module BinaryIndex = struct

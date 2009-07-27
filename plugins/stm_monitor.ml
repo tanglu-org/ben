@@ -26,6 +26,10 @@ module M = Package.Map
 module S = Package.Set
 
 let use_cache = ref false
+let use_colors = ref false
+
+type output_type = Text | Xhtml | Levels
+let output_type = ref Levels
 
 let p = Stml_clflags.progress
 let ( // ) = Filename.concat
@@ -62,6 +66,21 @@ module Marshallable = struct
 end
 module Marshal = Stml_marshal.Make(Marshallable)
 open Marshallable
+
+let format_arch x =
+  let f = match x with
+    | Unknown -> (fun x -> " "^x^" ")
+    | Up_to_date -> (fun x -> "("^x^")")
+    | Outdated -> (fun x -> "["^x^"]")
+  in
+  let f =
+    if !use_colors then
+      match x with
+        | Unknown -> f
+        | Up_to_date -> (fun x -> "\027[32m"^(f x)^"\027[0m")
+        | Outdated -> (fun x -> "\027[31m"^(f x)^"\027[0m")
+    else f
+  in f
 
 let parse_binaries accu arch =
   p "Parsing Packages.%s..." arch;
@@ -112,8 +131,74 @@ let rec parse_local_args = function
   | "--use-cache"::xs ->
       use_cache := true;
       parse_local_args xs
+  | "--color"::xs ->
+      use_colors := true;
+      output_type := Text;
+      parse_local_args xs
+  | "--text"::xs ->
+      output_type := Text;
+      parse_local_args xs
+  | "--html"::xs ->
+      output_type := Xhtml;
+      parse_local_args xs
   | x::xs -> x::(parse_local_args xs)
   | [] -> []
+
+let print_text_monitor sources binaries rounds =
+  let nmax = M.fold begin fun src _ accu ->
+    let n = String.length (Package.Name.to_string src) in
+    if n > accu then n else accu
+  end sources 0 in
+  let src_fmt = Scanf.format_from_string (sprintf "%%%ds:" (nmax+2)) "%s" in
+  let width =
+    String.length (String.concat "   " !Stml_clflags.architectures)+6+nmax
+  in
+  let nrounds = String.length (string_of_int (List.length rounds)) in
+  let hwidth = String.length "> Dependency level  <" + nrounds in
+  let header_fmt =
+    let width = width-hwidth+2 in
+    let left = width/2 in
+    let right = width-left in
+    let buf = Buffer.create 64 in
+    for i = 1 to left do Buffer.add_char buf '=' done;
+    bprintf buf "> Dependency level %%%dd <" nrounds;
+    for i = 1 to right do Buffer.add_char buf '=' done;
+    Buffer.add_char buf '\n';
+    Scanf.format_from_string (Buffer.contents buf) "%d"
+  in
+  list_iteri begin fun i xs ->
+    printf header_fmt i;
+    let packages = List.sort (fun x y -> compare !!!x !!!y) xs in
+    List.iter begin fun src ->
+      printf src_fmt (Package.Name.to_string src);
+      List.iter begin fun arch ->
+        let pkgs = Package.binaries (M.find src sources) in
+        let state = List.fold_left begin fun accu pkg ->
+          try
+            let pkg = PAMap.find (pkg, arch) binaries in
+            if accu = Outdated || Query.eval_binary pkg !!is_bad then
+              Outdated
+            else if Query.eval_binary pkg !!is_good then
+              Up_to_date
+            else Unknown
+          with Not_found -> accu
+        end Unknown pkgs in
+        printf " %s" (format_arch state arch)
+      end !Stml_clflags.architectures;
+      printf "\n";
+    end packages;
+    printf "\n"
+  end rounds
+
+let print_dependency_levels dep_graph rounds =
+  list_iteri begin fun i xs ->
+    printf "===[ Dependency level %d ]=====\n" i;
+    let packages = List.sort (fun x y -> compare !!!x !!!y) xs in
+    List.iter begin fun src ->
+      let deps = M.find src dep_graph in
+      print_dep_line src deps
+    end packages
+  end rounds
 
 let main args =
   let _ = parse_local_args (Stml_plugin.parse_common_args args) in
@@ -138,21 +223,10 @@ let main args =
   in
   let dep_graph = Dependencies.get_dep_graph sources src_of_bin in
   let rounds = Dependencies.topo_split dep_graph in
-(*
-  print_dep_graph dep_graph;
-*)
-  list_iteri
-    (fun i xs ->
-       printf "===> Dependency level %d <===\n" i;
-       let packages = List.sort (fun x y -> compare !!!x !!!y) xs in
-       List.iter
-         (fun src ->
-            let deps = M.find src dep_graph in
-            print_dep_line src deps)
-         packages;
-       printf "\n")
-    rounds;
-  ()
+  match !output_type with
+    | Levels -> print_dependency_levels dep_graph rounds
+    | Text -> print_text_monitor sources binaries rounds
+    | Xhtml -> assert false
 
 let subcommand = {
   Stml_plugin.name = "monitor";

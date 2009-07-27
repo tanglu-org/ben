@@ -77,7 +77,7 @@ let download_binaries arch =
     (String.concat " && " commands) tmp dst
   in
   if not !Stml_clflags.dry_run then begin
-    if not !Stml_clflags.verbose then p "Downloading Packages/%s..." arch;
+    if not !Stml_clflags.verbose then p "Downloading Packages.%s..." arch;
     let r = Sys.command cmd in
     p "\n";
     if r <> 0 then

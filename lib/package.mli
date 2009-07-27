@@ -38,6 +38,7 @@ module Set : sig
   val iter : ('a Name.t -> unit) -> 'a t -> unit
   val cardinal : 'a t -> int
   val elements : 'a t -> 'a Name.t list
+  val fold : ('a Name.t -> 'b -> 'b) -> 'a t -> 'b -> 'b
 end
 
 module BinaryMap : Map.S
