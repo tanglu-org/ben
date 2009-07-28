@@ -19,6 +19,7 @@
 
 type t
 
+val of_expr : Stml_types.expr -> t
 val of_string : string -> t
 val to_string : t -> string
 val fields : Stml_base.Fields.t -> t -> Stml_base.Fields.t

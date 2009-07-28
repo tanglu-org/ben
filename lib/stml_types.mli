@@ -21,8 +21,12 @@ type field = string
 type regexp = string * Pcre.regexp
 
 type expr =
-  | Match of field * regexp
-  | Not of expr
-  | And of expr * expr
-  | Or of expr * expr
-  | Source
+  | EMatch of field * regexp
+  | ENot of expr
+  | EAnd of expr * expr
+  | EOr of expr * expr
+  | ESource
+  | EList of expr list
+  | EString of string
+
+type config = (string * expr) list

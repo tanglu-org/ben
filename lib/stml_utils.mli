@@ -21,3 +21,6 @@ val parse_control_file :
   string -> Stml_base.Fields.t -> 'a ->
   ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
   'b -> 'b
+
+val parse_config_file :
+  string -> Stml_types.config

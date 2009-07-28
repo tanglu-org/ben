@@ -36,17 +36,14 @@ let ( // ) = Filename.concat
 let ( !! ) = Lazy.force
 let ( !!! ) = Package.Name.to_string
 
-let is_affected = lazy (Query.of_string ".maintainer~/debian-ocaml-maint/ | .build-depends~/ocaml/ | .build-depends-indep~/ocaml/ | .depends~/ocaml(-base)?(-nox)?-3\\.11\\../")
-let is_good = lazy (Query.of_string ".depends ~ /ocaml(-base)?(-nox)?-3\\.11\\.1/")
-let is_bad = lazy (Query.of_string ".depends ~ /ocaml(-base)?(-nox)?-3\\.11\\.0/")
+let is_affected = lazy (Query.of_expr (Stml_clflags.get_config "is_affected"))
+let is_good = lazy (Query.of_expr (Stml_clflags.get_config "is_good"))
+let is_bad = lazy (Query.of_expr (Stml_clflags.get_config "is_bad"))
 let to_keep =
   lazy begin
     let (@@) x y = Query.fields y x in
     !!is_affected @@ !!is_good @@ !!is_bad @@ core_fields
   end
-
-(** Basename of all files handled by this script *)
-let basename = "ocaml_transition_monitor"
 
 let src_webbrowse_url =
   "http://git.debian.org/?p=users/glondu-guest/stm.git"
@@ -69,7 +66,7 @@ open Marshallable
 
 let format_arch x =
   let f = match x with
-    | Unknown -> (fun x -> " "^x^" ")
+    | Unknown -> (fun x -> "."^x^".")
     | Up_to_date -> (fun x -> "("^x^")")
     | Outdated -> (fun x -> "["^x^"]")
   in

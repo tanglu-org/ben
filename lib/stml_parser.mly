@@ -24,12 +24,15 @@
 %token <Stml_types.field> FIELD
 %token <Stml_types.regexp> REGEXP
 %token MATCH OR AND NOT LPAREN RPAREN EOF SOURCE
+%token LBRACKET RBRACKET SEMICOLON EQUALS
+%token <string> STRING IDENT
 
 %left OR
 %left AND
 %nonassoc NOT
 
 %start <Stml_types.expr> full_expr
+%start <Stml_types.config> config_file
 
 %%
 
@@ -37,9 +40,17 @@ full_expr:
 | e = expr EOF { e }
 
 expr:
-| e1 = expr OR e2 = expr { Or (e1, e2) }
-| e1 = expr AND e2 = expr { And (e1, e2) }
-| NOT e = expr { Not e }
-| n = FIELD MATCH v = REGEXP { Match (n, v) }
+| e1 = expr OR e2 = expr { EOr (e1, e2) }
+| e1 = expr AND e2 = expr { EAnd (e1, e2) }
+| NOT e = expr { ENot e }
+| n = FIELD MATCH v = REGEXP { EMatch (n, v) }
 | LPAREN e = expr RPAREN { e }
-| SOURCE { Source }
+| SOURCE { ESource }
+| LBRACKET xs = separated_list(SEMICOLON, expr) RBRACKET { EList xs }
+| x = STRING { EString x }
+
+config_item:
+| i = IDENT EQUALS e = expr SEMICOLON { (i, e) }
+
+config_file:
+| xs = list(config_item) EOF { xs }

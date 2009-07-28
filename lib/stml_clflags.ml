@@ -17,6 +17,8 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
+open Stml_error
+
 let get_env_default var default =
   try Sys.getenv var with Not_found -> default
 
@@ -28,6 +30,11 @@ let mirror = ref "http://ftp.fr.debian.org/debian"
 let suite = ref "unstable"
 let areas = ref ["main"; "contrib"; "non-free"]
 let quiet = ref false
+
+let config : Stml_types.config ref = ref []
+let get_config key =
+  try List.assoc key !config
+  with Not_found -> raise (Missing_configuration_item key)
 
 let progress fmt =
   if !quiet then

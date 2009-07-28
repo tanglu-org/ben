@@ -18,28 +18,34 @@
 (**************************************************************************)
 
 open Printf
+open Stml_error
 open Stml_types
 open Stml_base
 
 type t = Stml_types.expr
+
+let of_expr x = x
 
 let of_string s =
   let lexbuf = Lexing.from_string s in
   Stml_parser.full_expr Stml_lexer.token lexbuf
 
 let rec to_string = function
-  | Match (f, r) ->
+  | EMatch (f, r) ->
       sprintf "?%s ~ %s" f (string_of_regexp r)
-  | Not e ->
+  | ENot e ->
       sprintf "!%s" (to_string e)
-  | And (e1, e2) ->
+  | EAnd (e1, e2) ->
       sprintf "(%s & %s)" (to_string e1) (to_string e2)
-  | Or (e1, e2) ->
+  | EOr (e1, e2) ->
       sprintf "(%s | %s)" (to_string e1) (to_string e2)
-  | Source -> "source"
+  | EList xs ->
+      sprintf "[%s]" (String.concat "; " (List.map to_string xs))
+  | ESource -> "source"
+  | EString x -> string_of_string x
 
 let rec eval kind pkg = function
-  | Match (field, (r, rex)) ->
+  | EMatch (field, (r, rex)) ->
       begin try
         let value = Package.get field pkg in
         ignore (Pcre.exec ~rex value);
@@ -47,24 +53,28 @@ let rec eval kind pkg = function
       with Not_found ->
         false
       end
-  | Source ->
+  | ESource ->
       kind = `source
-  | Or (e1, e2) ->
+  | EOr (e1, e2) ->
       eval kind pkg e1 || eval kind pkg e2
-  | And (e1, e2) ->
+  | EAnd (e1, e2) ->
       eval kind pkg e1 && eval kind pkg e2
-  | Not e ->
+  | ENot e ->
       not (eval kind pkg e)
+  | (EString _ | EList _) as x ->
+      raise (Unexpected_expression (to_string x))
 
 let eval_source x = eval `source x
 let eval_binary x = eval `binary x
 
 let rec fields accu = function
-  | Match (f, _) ->
+  | EMatch (f, _) ->
       Fields.add f accu
-  | Not e ->
+  | ENot e ->
       fields accu e
-  | And (e1, e2) | Or (e1, e2) ->
+  | EAnd (e1, e2) | EOr (e1, e2) ->
       fields (fields accu e1) e2
-  | Source ->
+  | EList xs ->
+      List.fold_left fields accu xs
+  | ESource | EString _ ->
       accu

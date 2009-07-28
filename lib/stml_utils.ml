@@ -18,15 +18,31 @@
 (**************************************************************************)
 
 open Stml_core
+open Stml_error
+open Lexing
 
 let parse_control_file filename to_keep
     (kind : 'a)
     (f : 'a Package.Name.t -> 'a Package.t -> 'b -> 'b)
     (accu : 'b) : 'b =
-  with_in_file filename begin
-    fun ic ->
-      Stml_lexer.stanza_fold to_keep
-        (fun name p accu -> f name p accu)
-        (Lexing.from_channel ic)
-        accu
+  with_in_file filename begin fun ic ->
+    Stml_lexer.stanza_fold to_keep
+      (fun name p accu -> f name p accu)
+      (from_channel ic)
+      accu
+  end
+
+let parse_config_file filename =
+  with_in_file filename begin fun ic ->
+    let lexbuf = from_channel ic in
+    let pos = lexbuf.lex_curr_p in
+    lexbuf.lex_curr_p <- { pos with pos_fname = filename };
+    try
+      Stml_parser.config_file Stml_lexer.token lexbuf
+    with Stml_parser.Error ->
+      let pos = Lexing.lexeme_start_p lexbuf in
+      raise (Parsing_error
+               (pos.pos_fname,
+                pos.pos_lnum,
+                pos.pos_cnum-pos.pos_bol))
   end

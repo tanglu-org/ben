@@ -24,9 +24,13 @@ type error =
   | Unknown_error of exn
   | Nothing_to_download
   | Wget_error of int
-  | Unexpected_char of char * int
+  | Unexpected_char of string * char * int * int
   | Bad_marshalled_data of string
   | Unknown_command of string
+  | Unexpected_expression of string
+  | Error_in_configuration_file of string
+  | Missing_configuration_item of string
+  | Parsing_error of string * int * int
 
 exception Error of error
 
@@ -39,12 +43,24 @@ let string_of_exn = function
       sprintf "wget exited with return code %d" r
   | Nothing_to_download ->
       sprintf "nothing to download"
-  | Unexpected_char (c, i) ->
-      sprintf "unexpected char %C at position %d" c i
+  | Unexpected_char (file, c, line, column) ->
+      sprintf
+        "unexpected char %C in file %S, line %d, position %d"
+        c file line column
   | Bad_marshalled_data s ->
       sprintf "bad marshalled data in %s" s
   | Unknown_command s ->
       sprintf "unknown command: %s" s
+  | Unexpected_expression s ->
+      sprintf "unexpected expression: %s" s
+  | Error_in_configuration_file s ->
+      sprintf "error in configuration file: %s" s
+  | Missing_configuration_item s ->
+      sprintf "missing configuration item: %s" s
+  | Parsing_error (file, line, column) ->
+      sprintf
+        "parse error in file %S, line %d, character %d"
+        file line column
 
 let raise e = Pervasives.raise (Error e)
 let not_found () = Pervasives.raise Not_found

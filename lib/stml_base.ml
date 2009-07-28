@@ -24,18 +24,22 @@ open Printf
 
 module Fields = Set.Make(String)
 
-let choose_escape str =
+let choose_escape str xs =
   let rec loop = function
     | c::cs -> if String.contains str c then loop cs else c
     | _ -> Pervasives.raise Not_found
-  in loop ['/'; '@'; ','; '%']
+  in loop xs
 
 let string_of_regexp (regexp, _) =
-  let escape = choose_escape regexp in
+  let escape = choose_escape regexp ['/'; '@'; ','; '%'] in
   if escape = '/' then
     sprintf "/%s/" regexp
   else
     sprintf "@%c%s%c" escape regexp escape
+
+let string_of_string string =
+  let escape = choose_escape string ['"'; '\''] in
+  sprintf "%c%s%c" escape string escape
 
 let core_fields =
   List.fold_right Fields.add

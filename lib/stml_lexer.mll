@@ -25,7 +25,7 @@
 }
 
 let space = [' ' '\t']
-let field_name = ['a'-'z' 'A'-'Z' '-' '0'-'9']+
+let field_name = ['a'-'z' 'A'-'Z' '-' '_' '0'-'9']+
 let field_value = ([^ '\n'] | '\n' space)*
 
 rule stanza to_keep empty accu = parse
@@ -48,15 +48,30 @@ rule stanza to_keep empty accu = parse
 and token = parse
   | '.' (field_name as name) { FIELD name }
   | "source" { SOURCE }
-  | "~" { MATCH }
-  | "|" { OR }
-  | "&" { AND }
-  | "!" { NOT }
-  | "(" { LPAREN }
-  | ")" { RPAREN }
+  | '~' { MATCH }
+  | '|' { OR }
+  | '&' { AND }
+  | '!' { NOT }
+  | '(' { LPAREN }
+  | ')' { RPAREN }
+  | '[' { LBRACKET }
+  | ']' { RBRACKET }
+  | '=' { EQUALS }
+  | ';' { SEMICOLON }
+  | field_name as id { IDENT id }
+  | '#' { comment lexbuf }
+  | ('"'|"'") as c { STRING (string c (Buffer.create 128) lexbuf) }
   | '@' (_ as c) | ('/' as c) { REGEXP (regexp c (Buffer.create 32) lexbuf) }
-  | space | "\n" { token lexbuf }
-  | _ as c { raise (Unexpected_char (c, Lexing.lexeme_start lexbuf)) }
+  | '\n' { Lexing.new_line lexbuf; token lexbuf }
+  | space { token lexbuf }
+  | _ as c
+      {
+        let pos = Lexing.lexeme_start_p lexbuf in
+        raise (Unexpected_char (pos.Lexing.pos_fname,
+                                c,
+                                pos.Lexing.pos_lnum,
+                                pos.Lexing.pos_cnum-pos.Lexing.pos_bol))
+      }
   | eof { EOF }
 
 and regexp separator buf = parse
@@ -68,9 +83,26 @@ and regexp separator buf = parse
           (res, reg)
         else begin
           Buffer.add_char buf c;
+          if c = '\n' then Lexing.new_line lexbuf;
           regexp separator buf lexbuf
         end
       }
+
+and string separator buf = parse
+  | _ as c
+      {
+        if c = separator then
+          Buffer.contents buf
+        else begin
+          Buffer.add_char buf c;
+          if c = '\n' then Lexing.new_line lexbuf;
+          string separator buf lexbuf
+        end
+      }
+
+and comment = parse
+  | '\n' { Lexing.new_line lexbuf; token lexbuf }
+  | _ { comment lexbuf }
 
 {
   let stanza_fold headers_to_keep f lexbuf accu =
