@@ -144,7 +144,30 @@ let rec parse_local_args = function
   | x::xs -> x::(parse_local_args xs)
   | [] -> []
 
+let compute_monitor_data sources binaries rounds =
+  List.map begin fun xs ->
+    let packages = List.sort (fun x y -> compare !!!x !!!y) xs in
+    List.map begin fun src ->
+      let states =
+        List.map begin fun arch ->
+          let pkgs = Package.binaries (M.find src sources) in
+          List.fold_left begin fun accu pkg ->
+            try
+              let pkg = PAMap.find (pkg, arch) binaries in
+              if accu = Outdated || Query.eval_binary pkg !!is_bad then
+                Outdated
+              else if Query.eval_binary pkg !!is_good then
+                Up_to_date
+              else Unknown
+            with Not_found -> accu
+          end Unknown pkgs
+        end !Stml_clflags.architectures
+      in src, states
+    end packages
+  end rounds
+
 let print_text_monitor sources binaries rounds =
+  let monitor_data = compute_monitor_data sources binaries rounds in
   let nmax = M.fold begin fun src _ accu ->
     let n = String.length !!!src in
     if n > accu then n else accu
@@ -168,27 +191,15 @@ let print_text_monitor sources binaries rounds =
   in
   list_iteri begin fun i xs ->
     printf header_fmt i;
-    let packages = List.sort (fun x y -> compare !!!x !!!y) xs in
-    List.iter begin fun src ->
-      printf src_fmt (Package.Name.to_string src);
-      List.iter begin fun arch ->
-        let pkgs = Package.binaries (M.find src sources) in
-        let state = List.fold_left begin fun accu pkg ->
-          try
-            let pkg = PAMap.find (pkg, arch) binaries in
-            if accu = Outdated || Query.eval_binary pkg !!is_bad then
-              Outdated
-            else if Query.eval_binary pkg !!is_good then
-              Up_to_date
-            else Unknown
-          with Not_found -> accu
-        end Unknown pkgs in
+    List.iter begin fun (src, states) ->
+      printf src_fmt !!!src;
+      List.iter begin fun (arch, state) ->
         printf " %s" (format_arch state arch)
-      end !Stml_clflags.architectures;
+      end (List.combine !Stml_clflags.architectures states);
       printf "\n";
-    end packages;
+    end xs;
     printf "\n"
-  end rounds
+  end monitor_data
 
 let print_dependency_levels dep_graph rounds =
   list_iteri begin fun i xs ->
