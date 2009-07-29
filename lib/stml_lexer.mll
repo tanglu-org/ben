@@ -39,10 +39,8 @@ rule stanza to_keep empty accu = parse
       }
   | '\n'+ | eof
         {
-          if empty then
-            Pervasives.raise End_of_file
-          else
-            Package.of_assoc (List.rev accu)
+          if empty then Pervasives.raise End_of_file
+          else List.rev accu
         }
 
 and token = parse
@@ -114,6 +112,6 @@ and comment = parse
       match stanza with
         | None -> accu
         | Some x -> loop
-            (f (Name.of_string (Package.get "package" x)) x accu)
+            (f (List.assoc "package" x) x accu)
     in loop accu
 }

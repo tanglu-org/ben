@@ -27,8 +27,6 @@ module Name = struct
   let to_string x = x
 end
 
-let of_assoc x = x
-
 let print p =
   List.iter
     (fun (f, v) -> printf "%s: %s\n" f v)
@@ -36,17 +34,6 @@ let print p =
   print_newline ()
 
 let get = List.assoc
-
-let of_assoc x =
-  let source =
-    try List.assoc "source" x
-    with Not_found -> List.assoc "package" x
-  in
-  let source =
-    try String.sub source 0 (String.index source ' ')
-    with Not_found -> source
-  in
-  ("source", source)::(List.remove_assoc "source" x)
 
 module Set = struct
   module S = Set.Make(String)
@@ -60,6 +47,30 @@ module Set = struct
   let elements = S.elements
   let fold = S.fold
 end
+
+let of_assoc sort ~debcheck_data x =
+  match sort with
+    | `binary ->
+        let source =
+          try get "source" x
+          with Not_found -> get "package" x
+        in
+        let source =
+          try String.sub source 0 (String.index source ' ')
+          with Not_found -> source
+        in
+        let x = ("source", source)::(List.remove_assoc "source" x) in
+        begin match debcheck_data with
+          | None -> x
+          | Some data ->
+              let name = get "package" x in
+              try
+                if Set.mem name data then
+                  ("edos-debcheck", "uninstallable")::x
+                else x
+              with Not_found -> x
+        end
+    | `source -> x
 
 module BinaryIndex = struct
   type t = [`binary] Name.t * string

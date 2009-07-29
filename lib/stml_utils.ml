@@ -21,16 +21,65 @@ open Stml_core
 open Stml_error
 open Lexing
 
-let parse_control_file filename to_keep
-    (kind : 'a)
-    (f : 'a Package.Name.t -> 'a Package.t -> 'b -> 'b)
-    (accu : 'b) : 'b =
-  with_in_file filename begin fun ic ->
-    Stml_lexer.stanza_fold to_keep
-      (fun name p accu -> f name p accu)
-      (from_channel ic)
-      accu
-  end
+module S = Package.Set
+let p = Stml_clflags.progress
+
+let debcheck =
+  let rex = Pcre.regexp "^([^ ]+) \\(= ([^)]+)\\): FAILED$" in
+  fun filename ->
+    let a, b = if !Stml_clflags.quiet then ("\n", "") else ("", "\n") in
+    let ic = Printf.ksprintf
+      Unix.open_process_in
+      "edos-debcheck -quiet -failures < %s" filename
+    in
+    let rec loop accu =
+      begin match (try Some (input_line ic) with End_of_file -> None) with
+        | None ->
+            accu
+        | Some line ->
+            begin try
+              let r = Pcre.exec ~rex line in
+              loop (S.add (Package.Name.of_string (Pcre.get_substring r 1)) accu)
+            with Not_found ->
+              Printf.eprintf "%sW: ignored line: %s%s%!" a line b;
+              loop accu
+            end
+      end
+    in
+    let result = loop S.empty in
+    begin match Unix.close_process_in ic with
+      | Unix.WEXITED 0 -> ()
+      | Unix.WEXITED i ->
+          Printf.eprintf
+            "%sW: subprocess edos-debcheck exited with code %d%s%!" a i b
+      | Unix.WSIGNALED i ->
+          Printf.eprintf
+            "%sW: subprocess edos-debcheck died with signal %d%s%!" a i b
+      | Unix.WSTOPPED i ->
+          Printf.eprintf
+            "%sW: subprocess edos-debcheck stopped with signal %d%s%!" a i b
+    end; result
+
+let parse_control_file kind filename to_keep f accu =
+  let base = Filename.basename filename in
+  let debcheck_data =
+    if Stml_base.Fields.mem "edos-debcheck" to_keep then begin
+      p "Running edos-debcheck on %s..." base;
+      let result = debcheck filename in
+      p "\n"; Some result
+    end else None
+  in
+  p "Parsing %s..." base;
+  let result =
+    with_in_file filename begin fun ic ->
+      Stml_lexer.stanza_fold to_keep begin fun name p accu ->
+        f
+          (Package.Name.of_string name)
+          (Package.of_assoc ~debcheck_data kind p)
+          accu
+      end (from_channel ic) accu
+    end
+  in p "\n"; result
 
 let parse_config_file filename =
   with_in_file filename begin fun ic ->

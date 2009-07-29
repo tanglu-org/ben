@@ -80,28 +80,24 @@ let format_arch x =
   in f
 
 let parse_binaries accu arch =
-  p "Parsing Packages.%s..." arch;
-  let res = Stml_utils.parse_control_file
+  Stml_utils.parse_control_file `binary
     (!Stml_clflags.cache_dir // ("Packages."^arch))
-    !!to_keep `binary
+    !!to_keep
     (fun name pkg accu ->
        if Query.eval_binary pkg !!is_affected then
          PAMap.add (name, arch) pkg accu
        else accu)
     accu
-  in p "\n"; res
 
 let parse_sources accu =
-  p "Parsing sources...";
-  let res = Stml_utils.parse_control_file
+  Stml_utils.parse_control_file `source
     (!Stml_clflags.cache_dir // "Sources")
-    !!to_keep `source
+    !!to_keep
     (fun name pkg accu ->
        if Query.eval_source pkg !!is_affected then
          M.add name pkg accu
        else accu)
     accu
-  in p "\n"; res
 
 let get_data () =
   let file = !Stml_clflags.cache_dir // "monitor.cache" in

@@ -18,9 +18,11 @@
 (**************************************************************************)
 
 val parse_control_file :
-  string -> Stml_base.Fields.t -> 'a ->
+  ([< `binary | `source] as 'a) ->
+  string -> Stml_base.Fields.t ->
   ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
   'b -> 'b
 
-val parse_config_file :
-  string -> Stml_types.config
+val parse_config_file : string -> Stml_types.config
+
+val debcheck : string -> [`binary] Package.Set.t

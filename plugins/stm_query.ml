@@ -40,7 +40,7 @@ let main args =
   let to_keep = Query.fields core_fields query in
   let sources, packages = List.partition is_source files in
   let print kind filename =
-    Stml_utils.parse_control_file filename to_keep kind
+    Stml_utils.parse_control_file kind filename to_keep
       (fun _ p () -> if Query.eval kind p query then Package.print p)
       ()
   in

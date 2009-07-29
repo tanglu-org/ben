@@ -25,7 +25,6 @@ module Name : sig
   val to_string : 'a t -> string
 end
 
-val of_assoc : (string * string) list -> 'a t
 val get : string -> 'a t -> string
 val print : 'a t -> unit
 
@@ -40,6 +39,11 @@ module Set : sig
   val elements : 'a t -> 'a Name.t list
   val fold : ('a Name.t -> 'b -> 'b) -> 'a t -> 'b -> 'b
 end
+
+val of_assoc :
+  ([< `binary | `source] as 'a) ->
+  debcheck_data : [`binary] Set.t option ->
+  (string * string) list -> 'a t
 
 module BinaryMap : Map.S
   with type key = [`binary] Name.t * string
