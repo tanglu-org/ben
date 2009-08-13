@@ -47,7 +47,7 @@ let main args =
   List.iter (print `source) sources;
   List.iter (print `binary) packages;;
 
-let subcommand = {
-  Stml_plugin.name = "query";
-  Stml_plugin.main = main
+let frontend = {
+  Stml_frontend.name = "query";
+  Stml_frontend.main = main
 }

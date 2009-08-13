@@ -17,9 +17,9 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Stml_plugin
+open Stml_frontend
 
-let static_plugins = [ @STATIC_PLUGINS@ ]
+let static_frontends = [ @STATIC_FRONTENDS@ ]
 
-let _ = List.iter register_subcommand static_plugins
+let _ = List.iter register_frontend static_frontends
 let _ = Stml_error.wrap main

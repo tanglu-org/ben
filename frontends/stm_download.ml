@@ -91,10 +91,10 @@ let download_all () =
   List.iter download_binaries !Stml_clflags.architectures;;
 
 let main args =
-  ignore (Stml_plugin.parse_common_args args);
+  ignore (Stml_frontend.parse_common_args args);
   download_all ()
 
-let subcommand = {
-  Stml_plugin.name = "download";
-  Stml_plugin.main = main;
+let frontend = {
+  Stml_frontend.name = "download";
+  Stml_frontend.main = main;
 }

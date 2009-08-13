@@ -54,8 +54,8 @@ let _ =
 
     | After_rules ->
         Pathname.define_context "lib/stmlib" ["lib"];
-        Pathname.define_context "plugins" ["lib"];
-        Pathname.define_context "bin" ["lib"; "plugins"];
+        Pathname.define_context "frontends" ["lib"];
+        Pathname.define_context "bin" ["lib"; "frontends"];
         flag ["ocaml"; "link"; "program"] & A"-linkpkg";
         List.iter
           (fun pkg ->
@@ -63,12 +63,12 @@ let _ =
              List.iter flag ["ocamldep"; "compile"; "link"; "doc"])
           packages;
 
-        (* rule for the main executable that will link all plugins  *)
+        (* rule for the main executable that will link all frontends  *)
         rule "bin/stm.ml" ~deps:["bin/stm.mlp"] ~prod:"bin/stm.ml" begin
           let prefix = name^"_" in
           let p = String.length prefix in
           fun _ _ ->
-            let files = Array.to_list (Sys.readdir "../plugins") in
+            let files = Array.to_list (Sys.readdir "../frontends") in
             let static = List.filter
               (fun x ->
                  let n = String.length x in
@@ -78,7 +78,7 @@ let _ =
               files
             in
             let static = List.map
-              (fun x -> (Filename.chop_suffix x ".ml")^".subcommand")
+              (fun x -> (Filename.chop_suffix x ".ml")^".frontend")
               static
             in
             let static =
@@ -86,7 +86,7 @@ let _ =
             in
             Cmd
               (S [A"sed";
-                  A"-e"; A (sprintf "s/@STATIC_PLUGINS@/%s/" static);
+                  A"-e"; A (sprintf "s/@STATIC_FRONTENDS@/%s/" static);
                   P"bin/stm.mlp"; Sh">"; P"bin/stm.ml"])
         end;
 

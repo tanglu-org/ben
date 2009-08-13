@@ -17,12 +17,12 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-type subcommand = {
+type frontend = {
   name : string;
   main : string list -> unit
 }
 
-val register_subcommand : subcommand -> unit
-val get_subcommand : string -> subcommand
+val register_frontend : frontend -> unit
+val get_frontend : string -> frontend
 val parse_common_args : string list -> string list
 val main : unit -> unit

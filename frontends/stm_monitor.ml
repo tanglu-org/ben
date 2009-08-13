@@ -205,7 +205,7 @@ let print_dependency_levels dep_graph rounds =
   end rounds
 
 let main args =
-  let _ = parse_local_args (Stml_plugin.parse_common_args args) in
+  let _ = parse_local_args (Stml_frontend.parse_common_args args) in
   let {src_map = sources; bin_map = binaries} = get_data () in
   let src_of_bin : ([`binary], [`source] Package.Name.t) M.t =
     PAMap.fold
@@ -232,7 +232,7 @@ let main args =
     | Text -> print_text_monitor sources binaries rounds
     | Xhtml -> assert false
 
-let subcommand = {
-  Stml_plugin.name = "monitor";
-  Stml_plugin.main = main;
+let frontend = {
+  Stml_frontend.name = "monitor";
+  Stml_frontend.main = main;
 }

@@ -20,17 +20,17 @@
 open Stml_error
 open Stml_types
 
-type subcommand = {
+type frontend = {
   name : string;
   main : string list -> unit
 }
-let subcommands = ref []
+let frontends = ref []
 
-let register_subcommand sc =
-  subcommands := (sc.name, sc) :: !subcommands
+let register_frontend sc =
+  frontends := (sc.name, sc) :: !frontends
 
-let get_subcommand x =
-  try List.assoc x !subcommands
+let get_frontend x =
+  try List.assoc x !frontends
   with Not_found -> raise (Unknown_command x)
 
 let to_cmd x =
@@ -114,10 +114,10 @@ let main () = match Array.to_list Sys.argv with
       let sc, args =
         try
           let cmd = to_cmd (Filename.basename cmd) in
-          get_subcommand cmd, xs
+          get_frontend cmd, xs
         with Error (Unknown_command _) -> match xs with
           | cmd::xs ->
-              get_subcommand cmd, xs
+              get_frontend cmd, xs
           | _ ->
               failwith "nothing to do"
       in
