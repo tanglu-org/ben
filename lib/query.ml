@@ -32,7 +32,7 @@ let of_string s =
 
 let rec to_string = function
   | EMatch (f, r) ->
-      sprintf "?%s ~ %s" f (string_of_regexp r)
+      sprintf ".%s ~ %s" f (string_of_regexp r)
   | ENot e ->
       sprintf "!%s" (to_string e)
   | EAnd (e1, e2) ->
@@ -43,11 +43,11 @@ let rec to_string = function
       sprintf "[%s]" (String.concat "; " (List.map to_string xs))
   | ESource -> "source"
   | EString x -> string_of_string x
-  | EVersion (cmp, x) -> sprintf "(%s %s)" (string_of_cmp cmp) x
+  | EVersion (cmp, x) -> sprintf "(%s \"%s\")" (string_of_cmp cmp) x
   | EDep (field, package, Some (cmp, ref_version)) ->
-    sprintf "(%s %% (%s %s %s))" field package (string_of_cmp cmp) ref_version
+    sprintf "(%s %% (\"%s\" %s \"%s\"))" field package (string_of_cmp cmp) ref_version
   | EDep (field, package, None) ->
-    sprintf "(%s %% (%s))" field package
+    sprintf "(%s %% (\"%s\"))" field package
 
 let rec eval kind pkg = function
   | EMatch (field, (r, rex)) ->
