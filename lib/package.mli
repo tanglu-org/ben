@@ -17,6 +17,8 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
+open Stml_types
+
 type 'a t
 
 module Name : sig
@@ -61,3 +63,10 @@ end
 
 val build_depends : [`source] t -> [`binary] Name.t list
 val binaries : [`source] t -> [`binary] Name.t list
+
+type dependency = {
+  dep_name : string;
+  dep_version : (comparison * string) option;
+}
+
+val dependencies : string -> 'a t -> dependency list

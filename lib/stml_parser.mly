@@ -32,7 +32,7 @@
 %token MATCH OR AND NOT LPAREN RPAREN EOF SOURCE
 %token LBRACKET RBRACKET SEMICOLON EQUALS
 %token <string> STRING IDENT
-%token LE LT GT GE VEQ
+%token LE LT GT GE VEQ DEPMATCH
 
 %left OR
 %left AND
@@ -56,10 +56,19 @@ expr:
 | VEQ x = STRING { EVersion ("==", veq, x) }
 | NOT e = expr { ENot e }
 | n = FIELD MATCH v = REGEXP { EMatch (n, v) }
+| f = FIELD DEPMATCH LPAREN p = STRING c = comparison v = STRING RPAREN { EDep (f, p, Some (c, v)) }
+| f = FIELD DEPMATCH LPAREN p = STRING RPAREN { EDep (f, p, None) }
 | LPAREN e = expr RPAREN { e }
 | SOURCE { ESource }
 | LBRACKET xs = separated_list(SEMICOLON, expr) RBRACKET { EList xs }
 | x = STRING { EString x }
+
+comparison:
+| LE { VLe }
+| LT { VLt }
+| VEQ { VEq }
+| GE { VGe }
+| GT { VGt }
 
 config_item:
 | i = IDENT EQUALS e = expr SEMICOLON { (i, e) }

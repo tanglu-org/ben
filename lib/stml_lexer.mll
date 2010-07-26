@@ -47,11 +47,12 @@ and token = parse
   | '.' (field_name as name) { FIELD name }
   | "source" { SOURCE }
   | "<=" { LE }
-  | "<" { LT }
+  | ("<" | "<<") { LT }
   | ">=" { GE }
-  | ">" { GT }
+  | (">" | ">>") { GT }
   | "==" { VEQ }
   | '~' { MATCH }
+  | '%' { DEPMATCH }
   | '|' { OR }
   | '&' { AND }
   | '!' { NOT }

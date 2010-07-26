@@ -44,6 +44,10 @@ let rec to_string = function
   | ESource -> "source"
   | EString x -> string_of_string x
   | EVersion (cmp, _, x) -> sprintf "(%s %s)" cmp x
+  | EDep (field, package, Some (cmp, ref_version)) ->
+    sprintf "(%s %% (%s %s %s))" field package (string_of_cmp cmp) ref_version
+  | EDep (field, package, None) ->
+    sprintf "(%s %% (%s))" field package
 
 let rec eval kind pkg = function
   | EMatch (field, (r, rex)) ->
@@ -67,6 +71,25 @@ let rec eval kind pkg = function
   | EVersion (_ , cmp, ref_version) ->
       let value = Package.get "version" pkg in
       cmp (version_compare value ref_version)
+  | EDep (field, package, Some (cmp, refv)) ->
+    let deps = Package.dependencies field pkg in
+    List.exists
+      (fun x ->
+        x.Package.dep_name = package && begin
+          match x.Package.dep_version with
+            | None -> false
+            | Some (rcmp, rrefv) ->
+              match rcmp, cmp with
+                | VGe, VGe | VGt, VGe | VGt, VGt -> version_compare rrefv refv >= 0
+                | VGe, VGt -> version_compare rrefv refv > 0
+                | _, _ -> false  (* FIXME: missing cases *)
+        end)
+      deps
+  | EDep (field, package, None) ->
+    let deps = Package.dependencies field pkg in
+    List.exists
+      (fun x -> x.Package.dep_name = package)
+      deps
 
 let eval_source x = eval `source x
 let eval_binary x = eval `binary x
@@ -84,3 +107,5 @@ let rec fields accu = function
       accu
   | EVersion _ ->
       Fields.add "version" accu
+  | EDep (field, _, _) ->
+    Fields.add field accu

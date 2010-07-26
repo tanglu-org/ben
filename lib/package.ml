@@ -18,6 +18,7 @@
 (**************************************************************************)
 
 open Printf
+open Stml_types
 
 type 'a t = (string * string) list
 
@@ -106,3 +107,45 @@ let build_depends x =
 
 let binaries x =
   get_and_split "binary" x
+
+type dependency = {
+  dep_name : string;
+  dep_version : (comparison * string) option;
+}
+
+let split_name_and_version =
+  let rex = Pcre.regexp "^\\s*(\\S+)\\s*(\\((\\S+)\\s*([^)]+)\\))?\\s*$" in
+  fun x ->
+    try
+      let r = Pcre.exec ~rex x in
+      let dep =
+        try
+          let cmp = match Pcre.get_substring r 3 with
+            | "<=" -> VLe
+            | "<<" -> VLt
+            | ">=" -> VGe
+            | ">>" -> VGt
+            | "=" -> VEq
+            | "<" -> VLt
+            | ">" -> VGt
+            | x -> ksprintf failwith "invalid comparison operator: %s" x
+          in
+          Some (cmp, Pcre.get_substring r 4)
+        with Not_found ->
+          None
+      in {
+        dep_name = Pcre.get_substring r 1;
+        dep_version = dep;
+      }
+    with Not_found ->
+      ksprintf failwith "unable to parse: %s" x
+
+let dependencies =
+  let rex = Pcre.regexp "(?:\\s*[,|]\\s*)+" in
+  fun field x ->
+    try
+      let deps = get field x in
+      let deps = Pcre.split ~rex deps in
+      List.map split_name_and_version deps
+    with Not_found ->
+      []

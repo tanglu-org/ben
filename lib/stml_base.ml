@@ -37,6 +37,13 @@ let string_of_regexp (regexp, _) =
   else
     sprintf "@%c%s%c" escape regexp escape
 
+let string_of_cmp = function
+  | VLe -> "<="
+  | VLt -> "<<"
+  | VEq -> "="
+  | VGt -> ">>"
+  | VGe -> ">="
+
 let string_of_string string =
   let escape = choose_escape string ['"'; '\''] in
   sprintf "%c%s%c" escape string escape
