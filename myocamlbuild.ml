@@ -21,7 +21,7 @@ open Printf
 open Ocamlbuild_plugin
 
 let name = "stm"
-let packages = ["unix"; "pcre"; "ocamlgraph"]
+let packages = ["unix"; "pcre"; "ocamlgraph"; "perl"]
 
 exception Require_findlib
 exception Missing_findlib_package of string

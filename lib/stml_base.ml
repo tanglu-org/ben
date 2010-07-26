@@ -63,3 +63,11 @@ let class_of_status = function
   | Unknown -> "unknown"
   | Up_to_date -> "good"
   | Outdated -> "bad"
+
+let () = ignore (Perl.eval "use Dpkg::Version")
+
+let version_compare x y =
+  Perl.int_of_sv
+    (Perl.call
+       ~fn:"Dpkg::Version::version_compare"
+       [Perl.sv_of_string x; Perl.sv_of_string y])

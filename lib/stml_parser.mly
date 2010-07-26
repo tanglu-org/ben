@@ -19,6 +19,12 @@
 
 %{
   open Stml_types
+
+  let ge x = x >= 0
+  let gt x = x > 0
+  let veq x = x = 0
+  let le x = x <= 0
+  let lt x = x < 0
 %}
 
 %token <Stml_types.field> FIELD
@@ -26,6 +32,7 @@
 %token MATCH OR AND NOT LPAREN RPAREN EOF SOURCE
 %token LBRACKET RBRACKET SEMICOLON EQUALS
 %token <string> STRING IDENT
+%token LE LT GT GE VEQ
 
 %left OR
 %left AND
@@ -42,6 +49,11 @@ full_expr:
 expr:
 | e1 = expr OR e2 = expr { EOr (e1, e2) }
 | e1 = expr AND e2 = expr { EAnd (e1, e2) }
+| LE x = STRING { EVersion ("<=", le, x) }
+| LT x = STRING { EVersion ("<", lt, x) }
+| GE x = STRING { EVersion (">=", ge, x) }
+| GT x = STRING { EVersion (">", gt, x) }
+| VEQ x = STRING { EVersion ("==", veq, x) }
 | NOT e = expr { ENot e }
 | n = FIELD MATCH v = REGEXP { EMatch (n, v) }
 | LPAREN e = expr RPAREN { e }

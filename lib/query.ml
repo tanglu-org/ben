@@ -43,6 +43,7 @@ let rec to_string = function
       sprintf "[%s]" (String.concat "; " (List.map to_string xs))
   | ESource -> "source"
   | EString x -> string_of_string x
+  | EVersion (cmp, _, x) -> sprintf "(%s %s)" cmp x
 
 let rec eval kind pkg = function
   | EMatch (field, (r, rex)) ->
@@ -63,6 +64,9 @@ let rec eval kind pkg = function
       not (eval kind pkg e)
   | (EString _ | EList _) as x ->
       raise (Unexpected_expression (to_string x))
+  | EVersion (_ , cmp, ref_version) ->
+      let value = Package.get "version" pkg in
+      cmp (version_compare value ref_version)
 
 let eval_source x = eval `source x
 let eval_binary x = eval `binary x
@@ -78,3 +82,5 @@ let rec fields accu = function
       List.fold_left fields accu xs
   | ESource | EString _ ->
       accu
+  | EVersion _ ->
+      Fields.add "version" accu

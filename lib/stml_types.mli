@@ -28,6 +28,7 @@ type expr =
   | ESource
   | EList of expr list
   | EString of string
+  | EVersion of string * (int -> bool) * string
 
 type config = (string * expr) list
 
