@@ -46,11 +46,11 @@ rule stanza to_keep empty accu = parse
 and token = parse
   | '.' (field_name as name) { FIELD name }
   | "source" { SOURCE }
+  | '=' { EQ }
   | "<=" { LE }
   | ("<" | "<<") { LT }
   | ">=" { GE }
   | (">" | ">>") { GT }
-  | "==" { VEQ }
   | '~' { MATCH }
   | '%' { DEPMATCH }
   | '|' { OR }
@@ -60,7 +60,6 @@ and token = parse
   | ')' { RPAREN }
   | '[' { LBRACKET }
   | ']' { RBRACKET }
-  | '=' { EQUALS }
   | ';' { SEMICOLON }
   | field_name as id { IDENT id }
   | '#' { comment lexbuf }

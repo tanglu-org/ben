@@ -19,20 +19,14 @@
 
 %{
   open Stml_types
-
-  let ge x = x >= 0
-  let gt x = x > 0
-  let veq x = x = 0
-  let le x = x <= 0
-  let lt x = x < 0
 %}
 
 %token <Stml_types.field> FIELD
 %token <Stml_types.regexp> REGEXP
 %token MATCH OR AND NOT LPAREN RPAREN EOF SOURCE
-%token LBRACKET RBRACKET SEMICOLON EQUALS
+%token LBRACKET RBRACKET SEMICOLON
 %token <string> STRING IDENT
-%token LE LT GT GE VEQ DEPMATCH
+%token LE LT GT GE EQ DEPMATCH
 
 %left OR
 %left AND
@@ -49,11 +43,7 @@ full_expr:
 expr:
 | e1 = expr OR e2 = expr { EOr (e1, e2) }
 | e1 = expr AND e2 = expr { EAnd (e1, e2) }
-| LE x = STRING { EVersion ("<=", le, x) }
-| LT x = STRING { EVersion ("<", lt, x) }
-| GE x = STRING { EVersion (">=", ge, x) }
-| GT x = STRING { EVersion (">", gt, x) }
-| VEQ x = STRING { EVersion ("==", veq, x) }
+| c = comparison x = STRING { EVersion (c, x) }
 | NOT e = expr { ENot e }
 | n = FIELD MATCH v = REGEXP { EMatch (n, v) }
 | f = FIELD DEPMATCH LPAREN p = STRING c = comparison v = STRING RPAREN { EDep (f, p, Some (c, v)) }
@@ -64,14 +54,14 @@ expr:
 | x = STRING { EString x }
 
 comparison:
-| LE { VLe }
-| LT { VLt }
-| VEQ { VEq }
-| GE { VGe }
-| GT { VGt }
+| LE { Le }
+| LT { Lt }
+| EQ { Eq }
+| GE { Ge }
+| GT { Gt }
 
 config_item:
-| i = IDENT EQUALS e = expr SEMICOLON { (i, e) }
+| i = IDENT EQ e = expr SEMICOLON { (i, e) }
 
 config_file:
 | xs = list(config_item) EOF { xs }

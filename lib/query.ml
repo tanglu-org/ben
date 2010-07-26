@@ -43,7 +43,7 @@ let rec to_string = function
       sprintf "[%s]" (String.concat "; " (List.map to_string xs))
   | ESource -> "source"
   | EString x -> string_of_string x
-  | EVersion (cmp, _, x) -> sprintf "(%s %s)" cmp x
+  | EVersion (cmp, x) -> sprintf "(%s %s)" (string_of_cmp cmp) x
   | EDep (field, package, Some (cmp, ref_version)) ->
     sprintf "(%s %% (%s %s %s))" field package (string_of_cmp cmp) ref_version
   | EDep (field, package, None) ->
@@ -68,9 +68,9 @@ let rec eval kind pkg = function
       not (eval kind pkg e)
   | (EString _ | EList _) as x ->
       raise (Unexpected_expression (to_string x))
-  | EVersion (_ , cmp, ref_version) ->
+  | EVersion (cmp, ref_version) ->
       let value = Package.get "version" pkg in
-      cmp (version_compare value ref_version)
+      version_compare_cmp cmp value ref_version
   | EDep (field, package, Some (cmp, refv)) ->
     let deps = Package.dependencies field pkg in
     List.exists
@@ -80,8 +80,8 @@ let rec eval kind pkg = function
             | None -> false
             | Some (rcmp, rrefv) ->
               match rcmp, cmp with
-                | VGe, VGe | VGt, VGe | VGt, VGt -> version_compare rrefv refv >= 0
-                | VGe, VGt -> version_compare rrefv refv > 0
+                | Ge, Ge | Gt, Ge | Gt, Gt -> version_compare rrefv refv >= 0
+                | Ge, Gt -> version_compare rrefv refv > 0
                 | _, _ -> false  (* FIXME: missing cases *)
         end)
       deps

@@ -121,13 +121,13 @@ let split_name_and_version =
       let dep =
         try
           let cmp = match Pcre.get_substring r 3 with
-            | "<=" -> VLe
-            | "<<" -> VLt
-            | ">=" -> VGe
-            | ">>" -> VGt
-            | "=" -> VEq
-            | "<" -> VLt
-            | ">" -> VGt
+            | "<=" -> Le
+            | "<<" -> Lt
+            | ">=" -> Ge
+            | ">>" -> Gt
+            | "=" -> Eq
+            | "<" -> Lt
+            | ">" -> Gt
             | x -> ksprintf failwith "invalid comparison operator: %s" x
           in
           Some (cmp, Pcre.get_substring r 4)

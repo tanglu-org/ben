@@ -38,11 +38,11 @@ let string_of_regexp (regexp, _) =
     sprintf "@%c%s%c" escape regexp escape
 
 let string_of_cmp = function
-  | VLe -> "<="
-  | VLt -> "<<"
-  | VEq -> "="
-  | VGt -> ">>"
-  | VGe -> ">="
+  | Le -> "<="
+  | Lt -> "<<"
+  | Eq -> "="
+  | Gt -> ">>"
+  | Ge -> ">="
 
 let string_of_string string =
   let escape = choose_escape string ['"'; '\''] in
@@ -78,3 +78,12 @@ let version_compare x y =
     (Perl.call
        ~fn:"Dpkg::Version::version_compare"
        [Perl.sv_of_string x; Perl.sv_of_string y])
+
+let version_compare_cmp cmp x y =
+  let d = version_compare x y in
+  match cmp with
+    | Eq -> d = 0
+    | Ge -> d >= 0
+    | Gt -> d > 0
+    | Le -> d <= 0
+    | Lt -> d < 0

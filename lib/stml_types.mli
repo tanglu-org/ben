@@ -20,7 +20,7 @@
 type field = string
 type regexp = string * Pcre.regexp
 
-type comparison = VLe | VLt | VEq | VGt | VGe
+type comparison = Le | Lt | Eq | Gt | Ge
 
 type expr =
   | EMatch of field * regexp
@@ -30,7 +30,7 @@ type expr =
   | ESource
   | EList of expr list
   | EString of string
-  | EVersion of string * (int -> bool) * string
+  | EVersion of comparison * string
   | EDep of string * string * (comparison * string) option
       (** field, package, comparison, reference_version *)
 
