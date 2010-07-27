@@ -21,7 +21,7 @@ open Printf
 open Ocamlbuild_plugin
 
 let name = "stm"
-let packages = ["unix"; "pcre"; "ocamlgraph"; "perl"]
+let packages = ["unix"; "pcre"; "ocamlgraph"]
 
 exception Require_findlib
 exception Missing_findlib_package of string
@@ -62,6 +62,18 @@ let _ =
              let flag x = flag (x::["ocaml"]) & S[A"-package"; A pkg] in
              List.iter flag ["ocamldep"; "compile"; "link"; "doc"])
           packages;
+
+        (* C stubs *)
+        flag ["ocamlmklib"; "c"] (S[A "-ldpkg"]);
+        flag ["link"; "library"; "ocaml"; "byte"; "use_libstml"]
+          (S[A"-dllib"; A"-lstml"; A"-cclib"; A"-lstml"]);
+        flag ["link"; "library"; "ocaml"; "native"; "use_libstml"]
+          (S[A"-cclib"; A"-lstml"]);
+        flag ["link"; "library"; "ocaml"; "native"; "use_libstml"]
+          (S[A"-cclib"; A"-lstml"]);
+        flag ["link"; "program"; "ocaml"; "byte"; "use_libstml"]
+          (S[A"-dllib"; A"-lstml"]);
+        dep  ["link"; "ocaml"; "use_libstml"] ["lib/libstml.a"];
 
         (* rule for the main executable that will link all frontends  *)
         rule "bin/stm.ml" ~deps:["bin/stm.mlp"] ~prod:"bin/stm.ml" begin

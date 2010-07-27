@@ -70,7 +70,7 @@ let rec eval kind pkg = function
       raise (Unexpected_expression (to_string x))
   | EVersion (cmp, ref_version) ->
       let value = Package.get "version" pkg in
-      version_compare_cmp cmp value ref_version
+      version_compare cmp value ref_version
   | EDep (field, package, Some (cmp, refv)) ->
     let deps = Package.dependencies field pkg in
     List.exists
@@ -80,8 +80,8 @@ let rec eval kind pkg = function
             | None -> false
             | Some (rcmp, rrefv) ->
               match rcmp, cmp with
-                | Ge, Ge | Gt, Ge | Gt, Gt -> version_compare rrefv refv >= 0
-                | Ge, Gt -> version_compare rrefv refv > 0
+                | Ge, Ge | Gt, Ge | Gt, Gt -> Version.compare rrefv refv >= 0
+                | Ge, Gt -> Version.compare rrefv refv > 0
                 | _, _ -> false  (* FIXME: missing cases *)
         end)
       deps

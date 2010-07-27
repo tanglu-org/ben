@@ -31,9 +31,12 @@ OCAMLBUILD := ocamlbuild $(CLASSIC) $(if $(HAS_OPT),,-byte-plugin)
 TARGETS := bin/$(NAME).$(ARCH) modules.dot
 GENERATED := modules.png
 
+# C stubs magic for bytecode
+export CAML_LD_LIBRARY_PATH=$(PWD)/_build/lib
+
 all: ocamlbuild $(GENERATED)
 
-.PHONY: ocamlbuild
+.PHONY: ocamlbuild clean env
 ocamlbuild:
 	$(OCAMLBUILD) $(TARGETS)
 
@@ -43,3 +46,6 @@ ocamlbuild:
 clean:
 	$(OCAMLBUILD) -clean
 	rm -f *~ */*~ $(GENERATED)
+
+env:
+	@echo export CAML_LD_LIBRARY_PATH=$(CAML_LD_LIBRARY_PATH)

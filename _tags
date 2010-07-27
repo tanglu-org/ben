@@ -1,2 +1,4 @@
 <**/*>: debug
 <lib/stmlib/*.cmx>: for-pack(Stmlib)
+<lib/stml.cm{x,}a>: use_libstml
+<**/*.{byte,native}>: use_libstml

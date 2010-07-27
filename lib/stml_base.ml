@@ -71,17 +71,48 @@ let class_of_status = function
   | Up_to_date -> "good"
   | Outdated -> "bad"
 
-let version_compare =
-  let init = lazy (ignore (Perl.eval "use Dpkg::Version")) in
-  fun x y ->
-    Lazy.force init;
-    Perl.int_of_sv
-      (Perl.call
-         ~fn:"Dpkg::Version::version_compare"
-         [Perl.sv_of_string x; Perl.sv_of_string y])
+module Version : sig
 
-let version_compare_cmp cmp x y =
-  let d = version_compare x y in
+  type t = string
+  val compare : t -> t -> int
+
+end = struct
+
+  type t = string
+
+  external verrevcmp : string -> string -> int = "caml_verrevcmp"
+
+  let decomp =
+    let rex = Pcre.regexp "^(?:(\\d+):)?(?:([^\\s-]+)|(\\S+)-([^\\s-]+))$" in
+    fun x ->
+      try
+        let r = Pcre.exec ~rex x in
+        let epoch =
+          try int_of_string (Pcre.get_substring r 1)
+          with Not_found -> 0
+        in
+        let upstream =
+          try Pcre.get_substring r 2
+          with Not_found -> Pcre.get_substring r 3
+        in
+        let debian =
+          try Pcre.get_substring r 4
+          with Not_found -> "0"
+        in
+        (epoch, upstream, debian)
+      with Not_found ->
+        ksprintf invalid_arg "invalid version number: %s" x
+
+  let compare x y =
+    let (x1, x2, x3) = decomp x and (y1, y2, y3) = decomp y in
+    let (>>=) x f = if x = 0 then f () else x in
+    let cmp x y () = verrevcmp x y in
+    y1 - x1 >>= cmp x2 y2 >>= cmp x3 y3
+
+end
+
+let version_compare cmp x y =
+  let d = Version.compare x y in
   match cmp with
     | Eq -> d = 0
     | Ge -> d >= 0
