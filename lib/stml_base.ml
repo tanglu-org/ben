@@ -107,7 +107,7 @@ end = struct
     let (x1, x2, x3) = decomp x and (y1, y2, y3) = decomp y in
     let (>>=) x f = if x = 0 then f () else x in
     let cmp x y () = verrevcmp x y in
-    y1 - x1 >>= cmp x2 y2 >>= cmp x3 y3
+    x1 - y1 >>= cmp x2 y2 >>= cmp x3 y3
 
 end
 
