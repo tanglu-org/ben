@@ -28,7 +28,7 @@ ARCH := $(if $(HAS_OPT),native,byte)
 OCAMLBUILD := ocamlbuild $(CLASSIC) $(if $(HAS_OPT),,-byte-plugin)
 
 # Build
-TARGETS := bin/$(NAME).$(ARCH) modules.dot
+TARGETS := lib/stml.cma bin/$(NAME).$(ARCH) modules.dot
 GENERATED := modules.png
 
 # C stubs magic for bytecode
