@@ -63,11 +63,14 @@ let debcheck =
 let parse_control_file kind filename to_keep f accu =
   let base = Filename.basename filename in
   let debcheck_data =
-    if Stml_base.Fields.mem "edos-debcheck" to_keep then begin
-      p "Running edos-debcheck on %s..." base;
-      let result = debcheck filename in
-      p "\n"; Some result
-    end else None
+    match kind with
+      | `binary ->
+        if Stml_base.Fields.mem "edos-debcheck" to_keep then begin
+          p "Running edos-debcheck on %s..." base;
+          let result = debcheck filename in
+          p "\n"; Some result
+        end else None
+      | `source -> None
   in
   p "Parsing %s..." base;
   let result =
