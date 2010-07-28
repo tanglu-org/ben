@@ -48,7 +48,7 @@ let debcheck =
     in
     let result = loop S.empty in
     begin match Unix.close_process_in ic with
-      | Unix.WEXITED 0 -> ()
+      | Unix.WEXITED (0|1) -> ()
       | Unix.WEXITED i ->
           Printf.eprintf
             "%sW: subprocess edos-debcheck exited with code %d%s%!" a i b
