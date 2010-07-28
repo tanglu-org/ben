@@ -109,10 +109,20 @@ let rec parse_common_args = function
   | x::xs -> x::(parse_common_args xs)
   | [] -> []
 
+let print_help () =
+  Printf.printf "Usage: %s command [options]\n%!" Sys.argv.(0);
+  Printf.printf "List of available commands:\n%!";
+  List.iter
+    (fun frontend -> Printf.printf " - %s\n%!" frontend)
+    (available_frontends ());
+  exit 0
+
 let main () = match Array.to_list Sys.argv with
   | [] ->
       (* we assume Sys.argv.(0) is always here! *)
       assert false
+  | _ :: ("-h"|"-help"|"--help") :: _ ->
+      print_help ()
   | cmd::xs ->
       let sc, args =
         try
@@ -122,6 +132,6 @@ let main () = match Array.to_list Sys.argv with
           | cmd::xs ->
               get_frontend cmd, xs
           | _ ->
-              failwith "nothing to do"
+              print_help ()
       in
       wrap (fun () -> sc.main args)
