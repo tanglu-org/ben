@@ -137,6 +137,16 @@ let rec parse_local_args = function
   | x::xs -> x::(parse_local_args xs)
   | [] -> []
 
+let help () =
+  List.iter
+    (fun (option , desc) ->
+      Printf.printf "    %s: %s\n%!" option desc
+    )
+    [ "--use-cache", "Use cache";
+      "--color", "Color if text output";
+      "--text", "Select text output format";
+      "--html", "Select HTML output format" ]
+
 let compute_monitor_data sources binaries rounds =
   List.map begin fun xs ->
     let packages = List.sort (fun x y -> compare !!!x !!!y) xs in
@@ -235,4 +245,5 @@ let main args =
 let frontend = {
   Stml_frontend.name = "monitor";
   Stml_frontend.main = main;
+  Stml_frontend.help = help;
 }

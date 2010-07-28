@@ -22,7 +22,8 @@ open Stml_types
 
 type frontend = {
   name : string;
-  main : string list -> unit
+  main : string list -> unit;
+  help : unit -> unit
 }
 let frontends = ref []
 
@@ -113,7 +114,10 @@ let print_help () =
   Printf.printf "Usage: %s command [options]\n%!" Sys.argv.(0);
   Printf.printf "List of available commands:\n%!";
   List.iter
-    (fun frontend -> Printf.printf " - %s\n%!" frontend)
+    (fun frontend ->
+      Printf.printf " - %s\n%!" frontend;
+      (get_frontend frontend).help ()
+    )
     (available_frontends ());
   exit 0
 

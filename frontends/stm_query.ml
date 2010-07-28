@@ -31,6 +31,9 @@ let usage cmd =
   fprintf stderr "Usage: %s <query> [ file ... ]\n" cmd;
   exit 1
 
+let help () =
+  printf "    <query> [ file1 ... ]\n%!"
+
 let main args =
   let query, files = match args with
     | query::files -> query, files
@@ -49,5 +52,6 @@ let main args =
 
 let frontend = {
   Stml_frontend.name = "query";
-  Stml_frontend.main = main
+  Stml_frontend.main = main;
+  Stml_frontend.help = help;
 }

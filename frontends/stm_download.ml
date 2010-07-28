@@ -97,4 +97,5 @@ let main args =
 let frontend = {
   Stml_frontend.name = "download";
   Stml_frontend.main = main;
+  Stml_frontend.help = fun () -> ();
 }

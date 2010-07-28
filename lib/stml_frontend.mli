@@ -19,7 +19,8 @@
 
 type frontend = {
   name : string;
-  main : string list -> unit
+  main : string list -> unit;
+  help : unit -> unit
 }
 
 val register_frontend : frontend -> unit
