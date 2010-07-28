@@ -33,6 +33,9 @@ let get_frontend x =
   try List.assoc x !frontends
   with Not_found -> raise (Unknown_command x)
 
+let available_frontends () =
+  List.map fst !frontends
+
 let to_cmd x =
   let n = String.length x in
   if n > 4 && String.sub x 0 4 = "stm-" then
