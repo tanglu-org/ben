@@ -119,6 +119,21 @@ let print_help () =
       (get_frontend frontend).help ()
     )
     (available_frontends ());
+  Printf.printf "List of available options:\n%!";
+  List.iter
+    (fun (option, desc) ->
+      Printf.printf " * %s\t%s\n%!" option desc
+    )
+    [ "--dry-run" , "Dry run";
+      "--quiet|-q", "Quiet mode";
+      "--verbose", "Verbose mode";
+      "--mirror", "Mirror to use";
+      "--areas", "Areas to consider";
+      "--archs", "Architectures to consider";
+      "--suite", "Suite";
+      "--cache-dir", "Path to cache dir";
+      "--config|-c", "Config file"
+    ];
   exit 0
 
 let main () = match Array.to_list Sys.argv with
