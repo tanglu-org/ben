@@ -102,7 +102,7 @@ let parse_sources accu =
 
 let get_data () =
   let file = !Benl_clflags.cache_dir // "monitor.cache" in
-  if !use_cache then
+  if !use_cache && Sys.file_exists file then
     Marshal.load file
   else
     let data = {
