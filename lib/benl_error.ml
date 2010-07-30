@@ -23,7 +23,7 @@ type error =
   | Illegal_escape of char
   | Unknown_error of exn
   | Nothing_to_download
-  | Wget_error of int
+  | Curl_error of int
   | Unexpected_char of string * char * int * int
   | Bad_marshalled_data of string
   | Unknown_command of string
@@ -39,8 +39,8 @@ let string_of_exn = function
       sprintf "illegal escape of %C" c
   | Unknown_error e ->
       sprintf "unexpected error: %s" (Printexc.to_string e)
-  | Wget_error r ->
-      sprintf "wget exited with return code %d" r
+  | Curl_error r ->
+      sprintf "curl exited with return code %d" r
   | Nothing_to_download ->
       sprintf "nothing to download"
   | Unexpected_char (file, c, line, column) ->

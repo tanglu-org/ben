@@ -27,7 +27,7 @@ let ( / ) = Filename.concat
 
 let download_sources () =
   if !Benl_clflags.areas = [] then raise Nothing_to_download;
-  let wquiet = if !Benl_clflags.verbose then "" else "-q" in
+  let wquiet = if !Benl_clflags.verbose then "" else "-s" in
   let dst = !Benl_clflags.cache_dir/"Sources" in
   let tmp = Filename.temp_file "Sources." "" in
   let commands =
@@ -37,7 +37,7 @@ let download_sources () =
            !Benl_clflags.mirror !Benl_clflags.suite area
          in
          if !Benl_clflags.dry_run then p "Would download %s\n" url;
-         let cmd = sprintf "{ wget %s -O- %s | bzcat >> %s; }"
+         let cmd = sprintf "{ curl %s %s | bzcat >> %s; }"
            wquiet (escape_for_shell url) tmp
          in cmd)
       !Benl_clflags.areas
@@ -50,14 +50,14 @@ let download_sources () =
     let r = Sys.command cmd in
     if not !Benl_clflags.verbose then p "\n";
     if r <> 0 then
-      raise (Wget_error r)
+      raise (Curl_error r)
     else
       ignore (Sys.command (sprintf "rm -f %s" tmp))
   end;;
 
 let download_binaries arch =
   if !Benl_clflags.areas = [] then raise Nothing_to_download;
-  let wquiet = if !Benl_clflags.verbose then "" else "-q" in
+  let wquiet = if !Benl_clflags.verbose then "" else "-s" in
   let dst = !Benl_clflags.cache_dir/"Packages."^arch in
   let tmp = Filename.temp_file ("Packages.") "" in
   let commands =
@@ -67,7 +67,7 @@ let download_binaries arch =
            !Benl_clflags.mirror !Benl_clflags.suite area arch
          in
          if !Benl_clflags.dry_run then p "Would download %s\n" url;
-         let cmd = sprintf "{ wget %s -O- %s | bzcat >> %s; }"
+         let cmd = sprintf "{ curl %s %s | bzcat >> %s; }"
            wquiet (escape_for_shell url) tmp
          in
          cmd)
@@ -81,7 +81,7 @@ let download_binaries arch =
     let r = Sys.command cmd in
     p "\n";
     if r <> 0 then
-      raise (Wget_error r)
+      raise (Curl_error r)
     else
       ignore (Sys.command (sprintf "rm -f %s" tmp))
   end;;
