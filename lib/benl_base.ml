@@ -17,9 +17,9 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Stml_core
-open Stml_error
-open Stml_types
+open Benl_core
+open Benl_error
+open Benl_types
 open Printf
 
 module Fields = Set.Make(String)

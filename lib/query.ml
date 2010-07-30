@@ -18,17 +18,17 @@
 (**************************************************************************)
 
 open Printf
-open Stml_error
-open Stml_types
-open Stml_base
+open Benl_error
+open Benl_types
+open Benl_base
 
-type t = Stml_types.expr
+type t = Benl_types.expr
 
 let of_expr x = x
 
 let of_string s =
   let lexbuf = Lexing.from_string s in
-  Stml_parser.full_expr Stml_lexer.token lexbuf
+  Benl_parser.full_expr Benl_lexer.token lexbuf
 
 let parens show expr =
   if show

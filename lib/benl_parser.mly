@@ -18,11 +18,11 @@
 /**************************************************************************/
 
 %{
-  open Stml_types
+  open Benl_types
 %}
 
-%token <Stml_types.field> FIELD
-%token <Stml_types.regexp> REGEXP
+%token <Benl_types.field> FIELD
+%token <Benl_types.regexp> REGEXP
 %token MATCH OR AND NOT LPAREN RPAREN EOF SOURCE
 %token LBRACKET RBRACKET SEMICOLON
 %token <string> STRING IDENT
@@ -32,8 +32,8 @@
 %left AND
 %nonassoc NOT
 
-%start <Stml_types.expr> full_expr
-%start <Stml_types.config> config_file
+%start <Benl_types.expr> full_expr
+%start <Benl_types.config> config_file
 
 %%
 

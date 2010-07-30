@@ -18,9 +18,9 @@
 (**************************************************************************)
 
 open Printf
-open Stml_core
-open Stml_base
-open Stml_marshal
+open Benl_core
+open Benl_base
+open Benl_marshal
 open XHTML.M
 
 module M = Package.Map
@@ -32,25 +32,22 @@ let use_colors = ref false
 type output_type = Text | Xhtml | Levels
 let output_type = ref Levels
 
-let p = Stml_clflags.progress
+let p = Benl_clflags.progress
 let ( // ) = Filename.concat
 let ( !! ) = Lazy.force
 let ( !!! ) = Package.Name.to_string
 
-let is_affected = lazy (Query.of_expr (Stml_clflags.get_config "is_affected"))
-let is_good = lazy (Query.of_expr (Stml_clflags.get_config "is_good"))
-let is_bad = lazy (Query.of_expr (Stml_clflags.get_config "is_bad"))
+let is_affected = lazy (Query.of_expr (Benl_clflags.get_config "is_affected"))
+let is_good = lazy (Query.of_expr (Benl_clflags.get_config "is_good"))
+let is_bad = lazy (Query.of_expr (Benl_clflags.get_config "is_bad"))
 let to_keep =
   lazy begin
     let (@@) x y = Query.fields y x in
        !!is_affected
     @@ !!is_good
     @@ !!is_bad
-    @@ (Stml_base.Fields.add "directory" core_fields)
+    @@ (Benl_base.Fields.add "directory" core_fields)
   end
-
-let src_webbrowse_url =
-  "http://git.debian.org/?p=users/glondu-guest/stm.git"
 
 module PAIndex = struct
   type t = [`binary] Package.Name.t * string
@@ -59,13 +56,13 @@ end
 module PAMap = Map.Make(PAIndex)
 
 module Marshallable = struct
-  let magic_number = "STMA0901"
+  let magic_number = "BENA0901"
   type t = {
     src_map : ([`source], [`source] Package.t) Package.Map.t;
     bin_map : [`binary] Package.t PAMap.t
   }
 end
-module Marshal = Stml_marshal.Make(Marshallable)
+module Marshal = Benl_marshal.Make(Marshallable)
 open Marshallable
 
 let format_arch x =
@@ -84,8 +81,8 @@ let format_arch x =
   in f
 
 let parse_binaries accu arch =
-  Stml_utils.parse_control_file `binary
-    (!Stml_clflags.cache_dir // ("Packages."^arch))
+  Benl_utils.parse_control_file `binary
+    (!Benl_clflags.cache_dir // ("Packages."^arch))
     !!to_keep
     (fun name pkg accu ->
        if Query.eval_binary pkg !!is_affected then
@@ -94,8 +91,8 @@ let parse_binaries accu arch =
     accu
 
 let parse_sources accu =
-  Stml_utils.parse_control_file `source
-    (!Stml_clflags.cache_dir // "Sources")
+  Benl_utils.parse_control_file `source
+    (!Benl_clflags.cache_dir // "Sources")
     !!to_keep
     (fun name pkg accu ->
        if Query.eval_source pkg !!is_affected then
@@ -104,7 +101,7 @@ let parse_sources accu =
     accu
 
 let get_data () =
-  let file = !Stml_clflags.cache_dir // "monitor.cache" in
+  let file = !Benl_clflags.cache_dir // "monitor.cache" in
   if !use_cache then
     Marshal.load file
   else
@@ -112,7 +109,7 @@ let get_data () =
       src_map = parse_sources M.empty;
       bin_map =
         List.fold_left
-          parse_binaries PAMap.empty !Stml_clflags.architectures;
+          parse_binaries PAMap.empty !Benl_clflags.architectures;
     } in
     Marshal.dump file data;
     data
@@ -168,7 +165,7 @@ let compute_monitor_data sources binaries rounds =
               else Unknown
             with Not_found -> accu
           end Unknown pkgs
-        end !Stml_clflags.architectures
+        end !Benl_clflags.architectures
       in src, states
     end packages
   end rounds
@@ -181,7 +178,7 @@ let print_text_monitor sources binaries rounds =
   end sources 0 in
   let src_fmt = Scanf.format_from_string (sprintf "%%%ds:" (nmax+2)) "%s" in
   let width =
-    String.length (String.concat "   " !Stml_clflags.architectures)+6+nmax
+    String.length (String.concat "   " !Benl_clflags.architectures)+6+nmax
   in
   let nrounds = String.length (string_of_int (List.length rounds)) in
   let hwidth = String.length "> Dependency level  <" + nrounds in
@@ -202,7 +199,7 @@ let print_text_monitor sources binaries rounds =
       printf src_fmt !!!src;
       List.iter begin fun (arch, state) ->
         printf " %s" (format_arch state arch)
-      end (List.combine !Stml_clflags.architectures states);
+      end (List.combine !Benl_clflags.architectures states);
       printf "\n";
     end xs;
     printf "\n"
@@ -230,7 +227,7 @@ module SS = Set.Make(String)
 
 let uniq l =
   let s = List.fold_left
-    begin fun s state -> SS.add (Stml_base.class_of_status state) s end
+    begin fun s state -> SS.add (Benl_base.class_of_status state) s end
     (SS.empty) l in
   SS.elements s
 
@@ -245,12 +242,12 @@ let print_html_monitor sources binaries rounds =
   let monitor_data = compute_monitor_data sources binaries rounds in
   let mytitle =
     try
-      Query.to_string (Query.of_expr (Stml_clflags.get_config "title"))
+      Query.to_string (Query.of_expr (Benl_clflags.get_config "title"))
     with _ -> "(no title)" in
   let is_affected = Query.to_string (Lazy.force is_affected) in
   let is_good = Query.to_string (Lazy.force is_good) in
   let is_bad = Query.to_string (Lazy.force is_bad) in
-  let archs_count = List.length !Stml_clflags.architectures in
+  let archs_count = List.length !Benl_clflags.architectures in
   let html hbody =
     html ~a:[a_xmlns `W3_org_1999_xhtml]
       (head (title (pcdata (sprintf "Transition: %s" mytitle))) [
@@ -310,7 +307,7 @@ let print_html_monitor sources binaries rounds =
           hbody;
         ];
         div ~a:[a_id "footer"] [
-          small [ pcdata (sprintf "Page generated on %s" (Stml_core.get_rfc2822_date ())) ]
+          small [ pcdata (sprintf "Page generated on %s" (Benl_core.get_rfc2822_date ())) ]
         ]
       ]) in
   let abrege = function
@@ -321,7 +318,7 @@ let print_html_monitor sources binaries rounds =
     | x -> x in
   let archs_columns = List.map begin fun arch ->
     th [ small [ pcdata (abrege arch) ] ]
-  end !Stml_clflags.architectures in
+  end !Benl_clflags.architectures in
   let empty_col = td [ pcdata "" ] in
   let archs_columns header =
     tr
@@ -351,8 +348,8 @@ let print_html_monitor sources binaries rounds =
               pcdata ")" ]
           ::
           (List.map begin fun state ->
-            (td ~a:[ a_class [ Stml_base.class_of_status state ] ]
-               [ small [ pcdata (Stml_base.string_of_status state) ] ])
+            (td ~a:[ a_class [ Benl_base.class_of_status state ] ]
+               [ small [ pcdata (Benl_base.string_of_status state) ] ])
           end states)
           )
         :: acc
@@ -386,7 +383,7 @@ let print_dependency_levels dep_graph rounds =
   end rounds
 
 let main args =
-  let _ = parse_local_args (Stml_frontend.parse_common_args args) in
+  let _ = parse_local_args (Benl_frontend.parse_common_args args) in
   let {src_map = sources; bin_map = binaries} = get_data () in
   let src_of_bin : ([`binary], [`source] Package.Name.t) M.t =
     PAMap.fold
@@ -414,7 +411,7 @@ let main args =
     | Xhtml -> print_html_monitor sources binaries rounds
 
 let frontend = {
-  Stml_frontend.name = "monitor";
-  Stml_frontend.main = main;
-  Stml_frontend.help = help;
+  Benl_frontend.name = "monitor";
+  Benl_frontend.main = main;
+  Benl_frontend.help = help;
 }

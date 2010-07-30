@@ -18,7 +18,7 @@
 (**************************************************************************)
 
 open Printf
-open Stml_types
+open Benl_types
 
 type 'a t = (string * string) list
 

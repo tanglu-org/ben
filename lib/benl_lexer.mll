@@ -18,9 +18,9 @@
 (**************************************************************************)
 
 {
-  open Stml_error
-  open Stml_base
-  open Stml_parser
+  open Benl_error
+  open Benl_base
+  open Benl_parser
   module Name = Package.Name
 }
 

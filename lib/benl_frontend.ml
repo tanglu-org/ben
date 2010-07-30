@@ -17,8 +17,8 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Stml_error
-open Stml_types
+open Benl_error
+open Benl_types
 
 type frontend = {
   name : string;
@@ -39,7 +39,7 @@ let available_frontends () =
 
 let to_cmd x =
   let n = String.length x in
-  if n > 4 && String.sub x 0 4 = "stm-" then
+  if n > 4 && String.sub x 0 4 = "ben-" then
     String.sub x 4 (n-4)
   else x
 
@@ -60,19 +60,19 @@ let check_string_list what = function
   | _ -> fail "%s must be a list of strings" what
 
 let read_config_file filename =
-  let config = Stml_utils.parse_config_file filename in
+  let config = Benl_utils.parse_config_file filename in
   let rec process = function
     | ("mirror", x)::xs ->
-        Stml_clflags.mirror := check_string "mirror" x;
+        Benl_clflags.mirror := check_string "mirror" x;
         process xs
     | ("areas", x)::xs ->
-        Stml_clflags.areas := check_string_list "areas" x;
+        Benl_clflags.areas := check_string_list "areas" x;
         process xs
     | ("architectures", x)::xs ->
-        Stml_clflags.architectures := check_string_list "architectures" x;
+        Benl_clflags.architectures := check_string_list "architectures" x;
         process xs
     | ("suite", x)::xs ->
-        Stml_clflags.suite := check_string "suite" x;
+        Benl_clflags.suite := check_string "suite" x;
         process xs
     | x::xs ->
         x::(process xs)
@@ -81,31 +81,31 @@ let read_config_file filename =
 
 let rec parse_common_args = function
   | ("--dry-run" | "-n")::xs ->
-      Stml_clflags.dry_run := true;
+      Benl_clflags.dry_run := true;
       parse_common_args xs
   | ("--quiet" | "-q")::xs ->
-      Stml_clflags.quiet := true;
+      Benl_clflags.quiet := true;
       parse_common_args xs
   | ("--verbose" | "-v")::xs ->
-      Stml_clflags.verbose := true;
+      Benl_clflags.verbose := true;
       parse_common_args xs
   | "--mirror"::x::xs ->
-      Stml_clflags.mirror := x;
+      Benl_clflags.mirror := x;
       parse_common_args xs
   | "--areas"::x::xs ->
-      Stml_clflags.areas := Stml_core.simple_split ',' x;
+      Benl_clflags.areas := Benl_core.simple_split ',' x;
       parse_common_args xs
   | "--archs"::x::xs ->
-      Stml_clflags.architectures := Stml_core.simple_split ',' x;
+      Benl_clflags.architectures := Benl_core.simple_split ',' x;
       parse_common_args xs
   | "--suite"::x::xs ->
-      Stml_clflags.suite := x;
+      Benl_clflags.suite := x;
       parse_common_args xs
   | "--cache-dir"::x::xs ->
-      Stml_clflags.cache_dir := x;
+      Benl_clflags.cache_dir := x;
       parse_common_args xs
   | ("--config"|"-c")::x::xs ->
-      Stml_clflags.config := read_config_file x;
+      Benl_clflags.config := read_config_file x;
       parse_common_args xs
   | x::xs -> x::(parse_common_args xs)
   | [] -> []

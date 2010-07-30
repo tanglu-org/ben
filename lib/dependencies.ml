@@ -18,9 +18,9 @@
 (**************************************************************************)
 
 open Printf
-open Stml_core
-open Stml_base
-open Stml_types
+open Benl_core
+open Benl_base
+open Benl_types
 
 module M = Package.Map
 module S = Package.Set

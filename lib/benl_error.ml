@@ -67,4 +67,4 @@ let not_found () = Pervasives.raise Not_found
 
 let wrap f =
   try f ()
-  with Error e -> eprintf "stm error: %s\n" (string_of_exn e)
+  with Error e -> eprintf "ben error: %s\n" (string_of_exn e)

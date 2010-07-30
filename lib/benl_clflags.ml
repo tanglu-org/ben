@@ -17,9 +17,27 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Stml_frontend
+open Benl_error
 
-let static_frontends = [ @STATIC_FRONTENDS@ ]
+let get_env_default var default =
+  try Sys.getenv var with Not_found -> default
 
-let _ = List.iter register_frontend static_frontends
-let _ = Stml_error.wrap main
+let dry_run = ref false
+let verbose = ref false
+let architectures = ref Benl_base.debian_architectures
+let cache_dir = ref (get_env_default "BEN_CACHE_DIR" (Sys.getcwd ()))
+let mirror = ref "http://ftp.fr.debian.org/debian"
+let suite = ref "unstable"
+let areas = ref ["main"; "contrib"; "non-free"]
+let quiet = ref false
+
+let config : Benl_types.config ref = ref []
+let get_config key =
+  try List.assoc key !config
+  with Not_found -> raise (Missing_configuration_item key)
+
+let progress fmt =
+  if !quiet then
+    Printf.ifprintf stderr fmt
+  else
+    Printf.fprintf stderr (fmt^^"%!")

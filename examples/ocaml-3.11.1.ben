@@ -1,11 +1,14 @@
-# stm configuration file for OCaml transition to 3.11.1 in Karmic
+# ben configuration file for OCaml transition to 3.11.1
 
-mirror = "http://ftp.ubuntu.com/ubuntu";
-suite = "karmic";
-areas = [ "main"; "universe"; "multiverse" ];
+mirror = "http://ftp.fr.debian.org/debian";
+suite = "unstable";
+areas = [ "main"; "contrib"; "non-free" ];
 
 architectures = [
-    "amd64"; "i386"
+    "alpha"; "amd64"; "armel";
+    "hppa"; "i386"; "ia64";
+    "kfreebsd-amd64"; "kfreebsd-i386";
+    "mips"; "mipsel"; "powerpc"; "s390"; "sparc"
 ];
 
 is_affected = .maintainer ~ /debian-ocaml-maint/

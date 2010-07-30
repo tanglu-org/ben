@@ -17,41 +17,35 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Stml_base
-open Printf
+open Benl_core
+open Benl_base
+open Benl_error
 
-let sources_re = Pcre.regexp "Sources"
-let is_source x =
-  try
-    ignore (Pcre.exec ~rex:sources_re x);
-    true
-  with Not_found -> false
+module type MARSHALLABLE = sig
+  type t
+  val magic_number : string
+end
 
-let usage cmd =
-  fprintf stderr "Usage: %s <query> [ file ... ]\n" cmd;
-  exit 1
+module Make (I : MARSHALLABLE) = struct
 
-let help () =
-  printf "    <query> [ file1 ... ]\n%!"
+  let load filename =
+    with_in_file filename begin
+      fun ic ->
+        let n = String.length I.magic_number in
+        let buf = String.create n in
+        really_input ic buf 0 n;
+        if buf = I.magic_number then begin
+          (input_value ic : I.t)
+        end else begin
+          raise (Bad_marshalled_data filename)
+        end
+    end
 
-let main args =
-  let query, files = match args with
-    | query::files -> query, files
-    | _ -> usage "stm query"
-  in
-  let query = Query.of_string query in
-  let to_keep = Query.fields core_fields query in
-  let sources, packages = List.partition is_source files in
-  let print kind filename =
-    Stml_utils.parse_control_file kind filename to_keep
-      (fun _ p () -> if Query.eval kind p query then Package.print p)
-      ()
-  in
-  List.iter (print `source) sources;
-  List.iter (print `binary) packages;;
+  let dump filename (data : I.t) =
+    with_out_file filename begin
+      fun ic ->
+        output_string ic I.magic_number;
+        output_value ic data
+    end
 
-let frontend = {
-  Stml_frontend.name = "query";
-  Stml_frontend.main = main;
-  Stml_frontend.help = help;
-}
+end

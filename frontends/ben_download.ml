@@ -18,37 +18,37 @@
 (**************************************************************************)
 
 open Printf
-open Stml_core
-open Stml_base
-open Stml_error
+open Benl_core
+open Benl_base
+open Benl_error
 
-let p = Stml_clflags.progress
+let p = Benl_clflags.progress
 let ( / ) = Filename.concat
 
 let download_sources () =
-  if !Stml_clflags.areas = [] then raise Nothing_to_download;
-  let wquiet = if !Stml_clflags.verbose then "" else "-q" in
-  let dst = !Stml_clflags.cache_dir/"Sources" in
+  if !Benl_clflags.areas = [] then raise Nothing_to_download;
+  let wquiet = if !Benl_clflags.verbose then "" else "-q" in
+  let dst = !Benl_clflags.cache_dir/"Sources" in
   let tmp = Filename.temp_file "Sources." "" in
   let commands =
     List.map
       (fun area ->
          let url = sprintf "%s/dists/%s/%s/source/Sources.bz2"
-           !Stml_clflags.mirror !Stml_clflags.suite area
+           !Benl_clflags.mirror !Benl_clflags.suite area
          in
-         if !Stml_clflags.dry_run then p "Would download %s\n" url;
+         if !Benl_clflags.dry_run then p "Would download %s\n" url;
          let cmd = sprintf "{ wget %s -O- %s | bzcat >> %s; }"
            wquiet (escape_for_shell url) tmp
          in cmd)
-      !Stml_clflags.areas
+      !Benl_clflags.areas
   in
   let cmd = sprintf "%s && mv %s %s"
     (String.concat " && " commands) tmp dst
   in
-  if not !Stml_clflags.dry_run then begin
-    if not !Stml_clflags.verbose then p "Downloading Sources...";
+  if not !Benl_clflags.dry_run then begin
+    if not !Benl_clflags.verbose then p "Downloading Sources...";
     let r = Sys.command cmd in
-    if not !Stml_clflags.verbose then p "\n";
+    if not !Benl_clflags.verbose then p "\n";
     if r <> 0 then
       raise (Wget_error r)
     else
@@ -56,28 +56,28 @@ let download_sources () =
   end;;
 
 let download_binaries arch =
-  if !Stml_clflags.areas = [] then raise Nothing_to_download;
-  let wquiet = if !Stml_clflags.verbose then "" else "-q" in
-  let dst = !Stml_clflags.cache_dir/"Packages."^arch in
+  if !Benl_clflags.areas = [] then raise Nothing_to_download;
+  let wquiet = if !Benl_clflags.verbose then "" else "-q" in
+  let dst = !Benl_clflags.cache_dir/"Packages."^arch in
   let tmp = Filename.temp_file ("Packages.") "" in
   let commands =
     List.map
       (fun area ->
          let url = sprintf "%s/dists/%s/%s/binary-%s/Packages.bz2"
-           !Stml_clflags.mirror !Stml_clflags.suite area arch
+           !Benl_clflags.mirror !Benl_clflags.suite area arch
          in
-         if !Stml_clflags.dry_run then p "Would download %s\n" url;
+         if !Benl_clflags.dry_run then p "Would download %s\n" url;
          let cmd = sprintf "{ wget %s -O- %s | bzcat >> %s; }"
            wquiet (escape_for_shell url) tmp
          in
          cmd)
-      !Stml_clflags.areas
+      !Benl_clflags.areas
   in
   let cmd = sprintf "%s && mv %s %s"
     (String.concat " && " commands) tmp dst
   in
-  if not !Stml_clflags.dry_run then begin
-    if not !Stml_clflags.verbose then p "Downloading Packages.%s..." arch;
+  if not !Benl_clflags.dry_run then begin
+    if not !Benl_clflags.verbose then p "Downloading Packages.%s..." arch;
     let r = Sys.command cmd in
     p "\n";
     if r <> 0 then
@@ -88,14 +88,14 @@ let download_binaries arch =
 
 let download_all () =
   download_sources ();
-  List.iter download_binaries !Stml_clflags.architectures;;
+  List.iter download_binaries !Benl_clflags.architectures;;
 
 let main args =
-  ignore (Stml_frontend.parse_common_args args);
+  ignore (Benl_frontend.parse_common_args args);
   download_all ()
 
 let frontend = {
-  Stml_frontend.name = "download";
-  Stml_frontend.main = main;
-  Stml_frontend.help = fun () -> ();
+  Benl_frontend.name = "download";
+  Benl_frontend.main = main;
+  Benl_frontend.help = fun () -> ();
 }

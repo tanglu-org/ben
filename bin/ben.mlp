@@ -17,12 +17,9 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-val parse_control_file :
-  ([< `binary | `source] as 'a) ->
-  string -> Stml_base.Fields.t ->
-  ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
-  'b -> 'b
+open Benl_frontend
 
-val parse_config_file : string -> Stml_types.config
+let static_frontends = [ @STATIC_FRONTENDS@ ]
 
-val debcheck : string -> [`binary] Package.Set.t
+let _ = List.iter register_frontend static_frontends
+let _ = Benl_error.wrap main

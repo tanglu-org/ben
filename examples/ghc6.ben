@@ -1,4 +1,4 @@
-# stm configuration file for ghc6 transition
+# ben configuration file for ghc6 transition
 
 mirror = "http://ftp.fr.debian.org/debian";
 suite = "unstable";

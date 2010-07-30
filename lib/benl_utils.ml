@@ -17,17 +17,17 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Stml_core
-open Stml_error
+open Benl_core
+open Benl_error
 open Lexing
 
 module S = Package.Set
-let p = Stml_clflags.progress
+let p = Benl_clflags.progress
 
 let debcheck =
   let rex = Pcre.regexp "^([^ ]+) \\(= ([^)]+)\\): FAILED$" in
   fun filename ->
-    let a, b = if !Stml_clflags.quiet then ("\n", "") else ("", "\n") in
+    let a, b = if !Benl_clflags.quiet then ("\n", "") else ("", "\n") in
     let ic = Printf.ksprintf
       Unix.open_process_in
       "edos-debcheck -quiet -failures < %s" filename
@@ -65,7 +65,7 @@ let parse_control_file kind filename to_keep f accu =
   let debcheck_data =
     match kind with
       | `binary ->
-        if Stml_base.Fields.mem "edos-debcheck" to_keep then begin
+        if Benl_base.Fields.mem "edos-debcheck" to_keep then begin
           p "Running edos-debcheck on %s..." base;
           let result = debcheck filename in
           p "\n"; Some result
@@ -75,7 +75,7 @@ let parse_control_file kind filename to_keep f accu =
   p "Parsing %s..." base;
   let result =
     with_in_file filename begin fun ic ->
-      Stml_lexer.stanza_fold to_keep begin fun name p accu ->
+      Benl_lexer.stanza_fold to_keep begin fun name p accu ->
         f
           (Package.Name.of_string name)
           (Package.of_assoc ~debcheck_data kind p)
@@ -90,8 +90,8 @@ let parse_config_file filename =
     let pos = lexbuf.lex_curr_p in
     lexbuf.lex_curr_p <- { pos with pos_fname = filename };
     try
-      Stml_parser.config_file Stml_lexer.token lexbuf
-    with Stml_parser.Error ->
+      Benl_parser.config_file Benl_lexer.token lexbuf
+    with Benl_parser.Error ->
       let pos = Lexing.lexeme_start_p lexbuf in
       raise (Parsing_error
                (pos.pos_fname,

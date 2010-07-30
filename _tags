@@ -1,5 +1,5 @@
 <**/*>: debug
 <**/*.ml*>: annot
-<lib/stmlib/*.cmx>: for-pack(Stmlib)
-<lib/stml.cm{x,}a>: use_libstml
-<**/*.{byte,native}>: use_libstml
+<lib/benlib/*.cmx>: for-pack(Benlib)
+<lib/benl.cm{x,}a>: use_libbenl
+<**/*.{byte,native}>: use_libbenl

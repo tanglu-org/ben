@@ -17,7 +17,7 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open Stml_types
+open Benl_types
 
 type 'a t
 

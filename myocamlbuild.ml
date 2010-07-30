@@ -20,7 +20,7 @@
 open Printf
 open Ocamlbuild_plugin
 
-let name = "stm"
+let name = "ben"
 let packages = ["unix"; "pcre"; "ocamlgraph"; "ocsigen_xhtml"]
 
 exception Require_findlib
@@ -53,7 +53,7 @@ let _ =
         Options.ocaml_yaccflags := ["--explain"]
 
     | After_rules ->
-        Pathname.define_context "lib/stmlib" ["lib"];
+        Pathname.define_context "lib/benlib" ["lib"];
         Pathname.define_context "frontends" ["lib"];
         Pathname.define_context "bin" ["lib"; "frontends"];
         flag ["ocaml"; "link"; "program"] & A"-linkpkg";
@@ -65,18 +65,18 @@ let _ =
 
         (* C stubs *)
         flag ["ocamlmklib"; "c"] (S[A "-ldpkg"]);
-        flag ["link"; "library"; "ocaml"; "byte"; "use_libstml"]
-          (S[A"-dllib"; A"-lstml"; A"-cclib"; A"-lstml"]);
-        flag ["link"; "library"; "ocaml"; "native"; "use_libstml"]
-          (S[A"-cclib"; A"-lstml"]);
-        flag ["link"; "library"; "ocaml"; "native"; "use_libstml"]
-          (S[A"-cclib"; A"-lstml"]);
-        flag ["link"; "program"; "ocaml"; "byte"; "use_libstml"]
-          (S[A"-dllib"; A"-lstml"]);
-        dep  ["link"; "ocaml"; "use_libstml"] ["lib/libstml.a"];
+        flag ["link"; "library"; "ocaml"; "byte"; "use_libbenl"]
+          (S[A"-dllib"; A"-lbenl"; A"-cclib"; A"-lbenl"]);
+        flag ["link"; "library"; "ocaml"; "native"; "use_libbenl"]
+          (S[A"-cclib"; A"-lbenl"]);
+        flag ["link"; "library"; "ocaml"; "native"; "use_libbenl"]
+          (S[A"-cclib"; A"-lbenl"]);
+        flag ["link"; "program"; "ocaml"; "byte"; "use_libbenl"]
+          (S[A"-dllib"; A"-lbenl"]);
+        dep  ["link"; "ocaml"; "use_libbenl"] ["lib/libbenl.a"];
 
         (* rule for the main executable that will link all frontends  *)
-        rule "bin/stm.ml" ~deps:["bin/stm.mlp"] ~prod:"bin/stm.ml" begin
+        rule "bin/ben.ml" ~deps:["bin/ben.mlp"] ~prod:"bin/ben.ml" begin
           let prefix = name^"_" in
           let p = String.length prefix in
           fun _ _ ->
@@ -99,7 +99,7 @@ let _ =
             Cmd
               (S [A"sed";
                   A"-e"; A (sprintf "s/@STATIC_FRONTENDS@/%s/" static);
-                  P"bin/stm.mlp"; Sh">"; P"bin/stm.ml"])
+                  P"bin/ben.mlp"; Sh">"; P"bin/ben.ml"])
         end;
 
         (* rule for dependency graph *)

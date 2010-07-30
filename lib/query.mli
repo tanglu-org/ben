@@ -19,10 +19,10 @@
 
 type t
 
-val of_expr : Stml_types.expr -> t
+val of_expr : Benl_types.expr -> t
 val of_string : string -> t
 val to_string : t -> string
-val fields : Stml_base.Fields.t -> t -> Stml_base.Fields.t
+val fields : Benl_base.Fields.t -> t -> Benl_base.Fields.t
 
 val eval : ([> `source] as 'a) -> 'a Package.t -> t -> bool
 val eval_source : [`source] Package.t -> t -> bool

@@ -18,7 +18,7 @@
 ##########################################################################
 
 # Configuration
-NAME := stm
+NAME := ben
 PREFIX := /usr/local
 
 # Auto-detection
@@ -28,7 +28,7 @@ ARCH := $(if $(HAS_OPT),native,byte)
 OCAMLBUILD := ocamlbuild $(CLASSIC) $(if $(HAS_OPT),,-byte-plugin)
 
 # Build
-TARGETS := lib/stml.cma bin/$(NAME).$(ARCH) modules.dot
+TARGETS := lib/benl.cma bin/$(NAME).$(ARCH) modules.dot
 GENERATED := modules.png
 
 # C stubs magic for bytecode
