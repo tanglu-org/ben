@@ -21,6 +21,7 @@ open Printf
 open Stml_core
 open Stml_base
 open Stml_marshal
+open XHTML.M
 
 module M = Package.Map
 module S = Package.Set
@@ -42,7 +43,10 @@ let is_bad = lazy (Query.of_expr (Stml_clflags.get_config "is_bad"))
 let to_keep =
   lazy begin
     let (@@) x y = Query.fields y x in
-    !!is_affected @@ !!is_good @@ !!is_bad @@ core_fields
+       !!is_affected
+    @@ !!is_good
+    @@ !!is_bad
+    @@ (Stml_base.Fields.add "directory" core_fields)
   end
 
 let src_webbrowse_url =
@@ -204,6 +208,173 @@ let print_text_monitor sources binaries rounds =
     printf "\n"
   end monitor_data
 
+let a_link url text =
+  a ~a:[a_href (uri_of_string url)] [pcdata text]
+
+let pts src =
+  a_link (sprintf "http://packages.qa.debian.org/%s" src) src
+
+let buildd show src =
+  if show
+  then a_link
+    (sprintf "https://buildd.debian.org/status/package.php?p=%s&compact=compact" src)
+    "buildd"
+  else small [ pcdata "arch:all" ]
+
+let changelog src dir =
+  small [ a_link
+    (sprintf "http://packages.debian.org/changelogs/%s/current/changelog" dir)
+    src ]
+
+module SS = Set.Make(String)
+
+let uniq l =
+  let s = List.fold_left
+    begin fun s state -> SS.add (Stml_base.class_of_status state) s end
+    (SS.empty) l in
+  SS.elements s
+
+let overrall_state l =
+  match uniq l with
+    | _ as l when List.for_all (fun s -> s = "unknown") l -> [ "unknown" ]
+    | _ as l when List.for_all (fun s -> s = "good") l -> [ "good" ; "all_ok" ]
+    | _ as l when List.mem "good" l -> [ "good" ]
+    | _ -> [ "bad" ]
+
+let print_html_monitor sources binaries rounds =
+  let monitor_data = compute_monitor_data sources binaries rounds in
+  let mytitle =
+    try
+      Query.to_string (Query.of_expr (Stml_clflags.get_config "title"))
+    with _ -> "(no title)" in
+  let is_affected = Query.to_string (Lazy.force is_affected) in
+  let is_good = Query.to_string (Lazy.force is_good) in
+  let is_bad = Query.to_string (Lazy.force is_bad) in
+  let archs_count = List.length !Stml_clflags.architectures in
+  let html hbody =
+    html ~a:[a_xmlns `W3_org_1999_xhtml]
+      (head (title (pcdata (sprintf "Transition: %s" mytitle))) [
+        script
+          ~contenttype:"text/javascript"
+          (pcdata (sprintf
+                    "var nb_columns = %d; var nb_rounds = %d;"
+                    (2 + archs_count)
+                    (List.length monitor_data))
+          );
+        script
+          ~contenttype:"text/javascript"
+          ~a:[a_src (uri_of_string "http://code.jquery.com/jquery-latest.js")]
+          (pcdata "");
+        script
+          ~contenttype:"text/javascript"
+          ~a:[a_src (uri_of_string ("script.js"))]
+          (pcdata "");
+        link
+          ~a:[a_rel [`Stylesheet];
+              a_href (uri_of_string ("https://buildd.debian.org/gfx/revamp.css"))
+             ]
+          ();
+        link
+          ~a:[a_rel [`Stylesheet];
+              a_href (uri_of_string ("styles.css"))
+             ]
+          ();
+        meta
+          ~content:"text/html;charset=utf-8"
+          ~a:[a_http_equiv "Content-Type"]
+          ();
+      ])
+      (body [
+        h1 ~a:[a_id "title"] [pcdata "Debian Release Management"];
+        h2 ~a:[a_id "subtitle"] [pcdata (sprintf "Transition: %s" mytitle)];
+        div ~a:[a_id "body"] [
+          b [ pcdata "Parameters:" ];
+          ul~a:[ a_id "parameters" ]
+            (li [ small [ b [ pcdata "Affected: " ]; pcdata is_affected ] ])
+            [li [ small [ b [ pcdata "Good: " ]; pcdata is_good ] ];
+             li [ small [ b [ pcdata "Bad: " ]; pcdata is_bad ] ];
+            ];
+          div
+            [
+              pcdata "Filter by status: ";
+              input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "good"] ();
+              pcdata "good ";
+              input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "bad"] ();
+              pcdata "bad ";
+              input ~a:[a_input_type `Checkbox; a_id "unknown"] (); pcdata "unknown";
+              span ~a:[a_id "count"] [];
+              br ();
+              input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "hide_all_ok"] ();
+              pcdata "hide fully (re-)built packages";
+            ];
+          hbody;
+        ];
+        div ~a:[a_id "footer"] [
+          small [ pcdata (sprintf "Page generated on %s" (Stml_core.get_rfc2822_date ())) ]
+        ]
+      ]) in
+  let abrege = function
+    | "hurd-i386" -> "hurd"
+    | "kfreebsd-amd64" -> "kbsd64"
+    | "kfreebsd-i386" -> "kbsd32"
+    | "powerpc" -> "ppc"
+    | x -> x in
+  let archs_columns = List.map begin fun arch ->
+    th [ small [ pcdata (abrege arch) ] ]
+  end !Stml_clflags.architectures in
+  let empty_col = td [ pcdata "" ] in
+  let archs_columns header =
+    tr
+      header
+      (empty_col :: archs_columns) in
+  let rows, _ =
+    List.fold_left begin fun (rows, i) xs ->
+      let names, rows =
+      (List.fold_left begin fun (arch_any_s, acc) (src, states) ->
+        let classes = [ "src"; sprintf "round%d" i ] in
+        let source = M.find src sources in
+        let version = Package.get "version" source in
+        let directory = Package.get "directory" source in
+        let arch_any = Package.get "architecture" source <> "all" in
+        let arch_any_s = if arch_any then !!!src::arch_any_s else arch_any_s in
+        let overrall_state = overrall_state states in
+        let src = !!!src in
+        arch_any_s,
+        tr (td ~a:[ a_class ("srcname" :: (overrall_state @ classes)) ; a_id src ] [ pts src ])
+          (
+          td
+            ~a:[ a_class [ "src"] ]
+            [ pcdata "[";
+              buildd arch_any src;
+              pcdata "] (";
+              changelog (sprintf "%s" version) directory;
+              pcdata ")" ]
+          ::
+          (List.map begin fun state ->
+            (td ~a:[ a_class [ Stml_base.class_of_status state ] ]
+               [ small [ pcdata (Stml_base.string_of_status state) ] ])
+          end states)
+          )
+        :: acc
+      end ([], rows) (List.rev xs)) in
+      let link =
+        if names = []
+        then small [ pcdata "arch:all" ]
+        else buildd true (String.concat "," names) in
+      archs_columns
+        (th ~a:[ a_class [ "level" ] ]
+           [ pcdata (sprintf "Dependency level %d" i);
+             pcdata " (";
+             link;
+             pcdata ")"
+           ]
+        )
+      :: rows, (i - 1)
+    end ([], (List.length monitor_data)) (List.rev monitor_data) in
+  let table = table (tr (td [ pcdata "" ]) []) rows in
+  printf "%s\n%!" (Xhtmlpretty.xhtml_print (html table))
+
+
 let print_dependency_levels dep_graph rounds =
   list_iteri begin fun i xs ->
     printf "===[ Dependency level %d ]=====\n" i;
@@ -240,7 +411,7 @@ let main args =
   match !output_type with
     | Levels -> print_dependency_levels dep_graph rounds
     | Text -> print_text_monitor sources binaries rounds
-    | Xhtml -> assert false
+    | Xhtml -> print_html_monitor sources binaries rounds
 
 let frontend = {
   Stml_frontend.name = "monitor";

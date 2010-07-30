@@ -1,0 +1,46 @@
+
+div.status {
+  text-align: center;
+  margin-top: 1em;
+}
+div.status table a {
+  text-decoration: none;
+}
+div.status table {
+  padding: 0px;
+  border-spacing: 1px;
+}
+div.footer {
+  margin-top: 2em;
+  font-size: 60%;
+}
+
+ul#parameters {
+  background: #eeeeee;
+  padding: 0.3em;
+}
+
+#footer {
+  border-top: 2px solid #d70751;
+  padding: 0.5em;
+}
+
+.src {
+  background: #eeeeee;
+}
+
+.good {
+  background: LightGreen;
+  text-align: center;
+}
+
+.bad {
+  background: Salmon;
+  text-align: center;
+}
+
+.unknown {
+  background: Cornsilk;
+  text-align: center;
+}
+
