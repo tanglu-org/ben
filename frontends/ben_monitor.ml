@@ -82,7 +82,7 @@ let format_arch x =
 
 let parse_binaries accu arch =
   Benl_utils.parse_control_file `binary
-    (!Benl_clflags.cache_dir // ("Packages."^arch))
+    (!Benl_clflags.cache_dir // ("Packages_"^arch))
     !!to_keep
     (fun name pkg accu ->
        if Query.eval_binary pkg !!is_affected then

@@ -58,7 +58,7 @@ let download_sources () =
 let download_binaries arch =
   if !Benl_clflags.areas = [] then raise Nothing_to_download;
   let wquiet = if !Benl_clflags.verbose then "" else "-s" in
-  let dst = !Benl_clflags.cache_dir/"Packages."^arch in
+  let dst = !Benl_clflags.cache_dir/"Packages_"^arch in
   let tmp = Filename.temp_file ("Packages.") "" in
   let commands =
     List.map
@@ -77,7 +77,7 @@ let download_binaries arch =
     (String.concat " && " commands) tmp dst
   in
   if not !Benl_clflags.dry_run then begin
-    if not !Benl_clflags.verbose then p "Downloading Packages.%s..." arch;
+    if not !Benl_clflags.verbose then p "Downloading Packages_%s..." arch;
     let r = Sys.command cmd in
     p "\n";
     if r <> 0 then
