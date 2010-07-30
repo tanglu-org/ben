@@ -30,24 +30,40 @@ let of_string s =
   let lexbuf = Lexing.from_string s in
   Stml_parser.full_expr Stml_lexer.token lexbuf
 
-let rec to_string = function
+let parens show expr =
+  if show
+  then sprintf "(%s)" expr
+  else expr
+
+let rec to_string_b last_op = function
   | EMatch (f, r) ->
       sprintf ".%s ~ %s" f (string_of_regexp r)
   | ENot e ->
-      sprintf "!%s" (to_string e)
+      sprintf "!%s" (to_string_b last_op e)
   | EAnd (e1, e2) ->
-      sprintf "(%s & %s)" (to_string e1) (to_string e2)
+    parens
+      (last_op <> "&" && last_op <> "")
+      (sprintf "%s & %s" (to_string_b "&" e1) (to_string_b "&" e2))
   | EOr (e1, e2) ->
-      sprintf "(%s | %s)" (to_string e1) (to_string e2)
+    parens
+      (last_op <> "|" && last_op <> "")
+      (sprintf "%s | %s" (to_string_b "|" e1) (to_string_b "|" e2))
   | EList xs ->
-      sprintf "[%s]" (String.concat "; " (List.map to_string xs))
+      sprintf "[%s]" (String.concat "; " (List.map (to_string_b "") xs))
   | ESource -> "source"
   | EString x -> string_of_string x
-  | EVersion (cmp, x) -> sprintf "(%s \"%s\")" (string_of_cmp cmp) x
+  | EVersion (cmp, x) ->
+    parens (last_op <> "") (sprintf "%s \"%s\"" (string_of_cmp cmp) x)
   | EDep (field, package, Some (cmp, ref_version)) ->
-    sprintf "(%s %% (\"%s\" %s \"%s\"))" field package (string_of_cmp cmp) ref_version
+    parens (last_op <> "") (sprintf "%s %% (\"%s\" %s \"%s\")"
+                field
+                package
+                (string_of_cmp cmp)
+                ref_version)
   | EDep (field, package, None) ->
-    sprintf "(%s %% (\"%s\"))" field package
+    parens (last_op <> "") (sprintf "%s %% (\"%s\")" field package)
+
+let to_string = to_string_b ""
 
 let rec eval kind pkg = function
   | EMatch (field, (r, rex)) ->
