@@ -30,7 +30,7 @@ end
 
 let print p =
   List.iter
-    (fun (f, v) -> printf "%s: %s\n" f v)
+    (fun (f, v) -> printf "%s: %s\n" (String.capitalize f) v)
     p;
   print_newline ()
 
