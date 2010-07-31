@@ -167,6 +167,9 @@ let help () =
       "--text", "Select text output format";
       "--html", "Select HTML output format" ]
 
+let relevant_arch arch_ref arch_pkg =
+  (arch_pkg = "all" && arch_ref = "i386") || arch_ref = arch_pkg
+
 let compute_monitor_data sources binaries rounds =
   List.map begin fun xs ->
     let packages = List.sort (fun x y -> compare !!!x !!!y) xs in
@@ -177,11 +180,17 @@ let compute_monitor_data sources binaries rounds =
           List.fold_left begin fun accu pkg ->
             try
               let pkg = PAMap.find (pkg, arch) binaries in
-              if accu = Outdated || Query.eval_binary pkg !!is_bad then
-                Outdated
-              else if accu <> Outdated && Query.eval_binary pkg !!is_good then
-                Up_to_date
-              else accu
+              (* let arch_pkg = Package.get "architecture" pkg in *)
+              (* if relevant_arch arch arch_pkg *)
+              (* then *)
+                if accu = Outdated || Query.eval_binary pkg !!is_bad then
+                  Outdated
+                else if accu <> Outdated && Query.eval_binary pkg !!is_good then
+                  Up_to_date
+                else accu
+              (* else if accu <> Outdated then *)
+                (* Up_to_date *)
+              (* else accu *)
             with Not_found -> accu
           end Unknown pkgs
         end !Benl_clflags.architectures
@@ -339,8 +348,8 @@ let print_html_monitor sources binaries rounds =
     th [ small [ pcdata (abrege arch) ] ]
   end !Benl_clflags.architectures in
   let empty_col = td [ pcdata "" ] in
-  let archs_columns header =
-    tr
+  let archs_columns round header =
+    tr ~a:[ a_id (sprintf "header%d" round) ]
       header
       (empty_col :: archs_columns) in
   let rows, _ =
@@ -377,16 +386,16 @@ let print_html_monitor sources binaries rounds =
         if names = []
         then small [ pcdata "arch:all" ]
         else buildd true (String.concat "," names) in
-      archs_columns
+      archs_columns i
         (th ~a:[ a_class [ "level" ] ]
-           [ pcdata (sprintf "Dependency level %d" i);
+           [ pcdata (sprintf "Dependency level %d" (i+1));
              pcdata " (";
              link;
              pcdata ")"
            ]
         )
       :: rows, (i - 1)
-    end ([], (List.length monitor_data)) (List.rev monitor_data) in
+    end ([], (List.length monitor_data - 1)) (List.rev monitor_data) in
   let table = table (tr (td [ pcdata "" ]) []) rows in
   printf "%s\n%!" (Xhtmlpretty.xhtml_print (html table))
 
