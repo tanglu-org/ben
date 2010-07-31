@@ -283,7 +283,7 @@ let print_html_monitor sources binaries rounds =
           (pcdata "");
         script
           ~contenttype:"text/javascript"
-          ~a:[a_src (uri_of_string ("script.js"))]
+          ~a:[a_src (uri_of_string ("media/script.js"))]
           (pcdata "");
         link
           ~a:[a_rel [`Stylesheet];
@@ -292,7 +292,7 @@ let print_html_monitor sources binaries rounds =
           ();
         link
           ~a:[a_rel [`Stylesheet];
-              a_href (uri_of_string ("styles.css"))
+              a_href (uri_of_string ("media/styles.css"))
              ]
           ();
         meta
