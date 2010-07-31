@@ -85,9 +85,8 @@ let parse_binaries accu arch =
     (!Benl_clflags.cache_dir // ("Packages_"^arch))
     !!to_keep
     (fun name pkg accu ->
-       if Query.eval_binary pkg !!is_affected then
-         PAMap.add (name, arch) pkg accu
-       else accu)
+      PAMap.add (name, arch) pkg accu
+    )
     accu
 
 let parse_sources accu =
@@ -95,9 +94,8 @@ let parse_sources accu =
     (!Benl_clflags.cache_dir // "Sources")
     !!to_keep
     (fun name pkg accu ->
-       if Query.eval_source pkg !!is_affected then
-         M.add name pkg accu
-       else accu)
+      M.add name pkg accu
+    )
     accu
 
 let get_data () =
@@ -105,11 +103,32 @@ let get_data () =
   if !use_cache && Sys.file_exists file then
     Marshal.load file
   else
+    let src_raw = parse_sources M.empty in
+    let src_map = M.fold begin fun name src accu ->
+      if Query.eval_source src !!is_affected then
+        M.add name src accu
+      else accu
+    end src_raw M.empty in
+    let bin_raw = List.fold_left
+      parse_binaries PAMap.empty !Benl_clflags.architectures
+    in
+    let bin_map = PAMap.fold begin fun (name, arch) pkg accu ->
+      let src = Package.get "source" pkg in
+      let src =
+        try
+          M.find (Package.Name.of_string src) src_raw
+        with Not_found ->
+          failwith (sprintf "Binary (%s,%s) without Source!\n%!" !!!name arch);
+      in
+      if Query.eval_binary pkg !!is_affected
+      || Query.eval_source src !!is_affected
+      then
+        PAMap.add (name, arch) pkg accu
+      else accu
+    end bin_raw PAMap.empty in
     let data = {
-      src_map = parse_sources M.empty;
-      bin_map =
-        List.fold_left
-          parse_binaries PAMap.empty !Benl_clflags.architectures;
+      src_map = src_map;
+      bin_map = bin_map;
     } in
     Marshal.dump file data;
     data

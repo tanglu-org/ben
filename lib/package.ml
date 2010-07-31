@@ -49,18 +49,31 @@ module Set = struct
   let fold = S.fold
 end
 
+let rex = Pcre.regexp "^(\\S+)(?: \\((\\S+)\\))?$"
+
 let of_assoc sort ~debcheck_data x =
   match sort with
     | `binary ->
-        let source =
-          try get "source" x
-          with Not_found -> get "package" x
+        let source, version =
+          try
+            let name = get "source" x in
+            let r = Pcre.exec ~rex name in
+            let name = Pcre.get_substring r 1 in
+            let version =
+              try
+                Pcre.get_substring r 2
+              with Not_found ->
+                get "version" x
+            in
+            name, version
+          with Not_found ->
+            get "package" x, get "version" x
         in
-        let source =
-          try String.sub source 0 (String.index source ' ')
-          with Not_found -> source
+        let x =
+          ("source", source) ::
+          ("source-version", version) ::
+          (List.remove_assoc "source" x)
         in
-        let x = ("source", source)::(List.remove_assoc "source" x) in
         begin match debcheck_data with
           | None -> x
           | Some data ->
