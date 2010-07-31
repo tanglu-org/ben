@@ -179,9 +179,9 @@ let compute_monitor_data sources binaries rounds =
               let pkg = PAMap.find (pkg, arch) binaries in
               if accu = Outdated || Query.eval_binary pkg !!is_bad then
                 Outdated
-              else if Query.eval_binary pkg !!is_good then
+              else if accu <> Outdated && Query.eval_binary pkg !!is_good then
                 Up_to_date
-              else Unknown
+              else accu
             with Not_found -> accu
           end Unknown pkgs
         end !Benl_clflags.architectures
