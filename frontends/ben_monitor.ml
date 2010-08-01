@@ -326,7 +326,7 @@ let print_html_monitor sources binaries rounds =
               pcdata "good ";
               input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "bad"] ();
               pcdata "bad ";
-              input ~a:[a_input_type `Checkbox; a_id "unknown"] (); pcdata "unknown";
+              input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "unknown"] (); pcdata "unknown";
               span ~a:[a_id "count"] [];
               br ();
               input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "hide_all_ok"] ();
