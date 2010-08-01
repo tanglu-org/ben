@@ -55,7 +55,7 @@ let core_fields =
     Fields.empty
 
 let debian_architectures =
-  [ "alpha"; "amd64"; "armel";
+  [ "amd64"; "armel";
     "hppa"; "i386"; "ia64";
     "kfreebsd-amd64"; "kfreebsd-i386";
     "mips"; "mipsel"; "powerpc"; "s390"; "sparc" ]
