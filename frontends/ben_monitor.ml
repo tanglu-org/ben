@@ -104,20 +104,24 @@ let filter_data { src_map = srcs; bin_map = bins } =
       M.add name src accu
     else accu
   end srcs M.empty in
-  let bin_map = PAMap.fold begin fun (name, arch) pkg accu ->
-    let src = Package.get "source" pkg in
+  let src_map, bin_map = PAMap.fold begin fun (name, arch) pkg (saccu, baccu) ->
+    let src_name = Package.get "source" pkg in
+    let src_name = Package.Name.of_string src_name in
     let src =
       try
-        M.find (Package.Name.of_string src) srcs
+        M.find src_name srcs
       with Not_found ->
         failwith (sprintf "Binary (%s,%s) without Source!\n%!" !!!name arch);
     in
     if Query.eval_binary pkg !!is_affected
     || Query.eval_source src !!is_affected
-    then
-      PAMap.add (name, arch) pkg accu
-    else accu
-  end bins PAMap.empty in
+    then begin
+      M.add src_name src saccu
+      ,
+      PAMap.add (name, arch) pkg baccu;
+    end
+    else (saccu, baccu)
+  end bins (src_map, PAMap.empty) in
   { src_map = src_map; bin_map = bin_map }
 
 let get_data () =
