@@ -23,6 +23,8 @@ type regexp = string * Pcre.regexp
 type comparison = Le | Lt | Eq | Gt | Ge
 
 type expr =
+  | Etrue
+  | Efalse
   | EMatch of field * regexp
   | ENot of expr
   | EAnd of expr * expr

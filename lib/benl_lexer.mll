@@ -23,6 +23,13 @@
   open Benl_base
   open Benl_parser
   module Name = Package.Name
+
+  let id_from_token s =
+    match (String.lowercase s) with
+      | "true" -> TRUE
+      | "false" -> FALSE
+      | _ -> IDENT s
+
 }
 
 let space = [' ' '\t']
@@ -62,7 +69,7 @@ and token = parse
   | '[' { LBRACKET }
   | ']' { RBRACKET }
   | ';' { SEMICOLON }
-  | field_name as id { IDENT id }
+  | field_name as id { id_from_token id }
   | '#' { comment lexbuf }
   | ('"'|"'") as c { STRING (string c (Buffer.create 128) lexbuf) }
   | '@' (_ as c) | ('/' as c) { REGEXP (regexp c (Buffer.create 32) lexbuf) }

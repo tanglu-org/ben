@@ -24,7 +24,7 @@
 %token <Benl_types.field> FIELD
 %token <Benl_types.regexp> REGEXP
 %token MATCH OR AND NOT LPAREN RPAREN EOF SOURCE
-%token LBRACKET RBRACKET SEMICOLON
+%token TRUE FALSE LBRACKET RBRACKET SEMICOLON
 %token <string> STRING IDENT
 %token LE LT GT GE EQ DEPMATCH
 
@@ -43,6 +43,8 @@ full_expr:
 expr:
 | e1 = expr OR e2 = expr { EOr (e1, e2) }
 | e1 = expr AND e2 = expr { EAnd (e1, e2) }
+| TRUE { Etrue }
+| FALSE { Efalse }
 | c = comparison x = STRING { EVersion (c, x) }
 | NOT e = expr { ENot e }
 | n = FIELD MATCH v = REGEXP { EMatch (n, v) }

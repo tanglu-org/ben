@@ -40,6 +40,8 @@ let rec to_string_b last_op = function
       sprintf ".%s ~ %s" f (string_of_regexp r)
   | ENot e ->
       sprintf "!%s" (to_string_b last_op e)
+  | Etrue -> sprintf "true"
+  | Efalse -> sprintf "false"
   | EAnd (e1, e2) ->
     parens
       (last_op <> "&" && last_op <> "")
@@ -74,6 +76,8 @@ let rec eval kind pkg = function
       with Not_found ->
         false
       end
+  | Etrue -> true
+  | Efalse -> false
   | ESource ->
       kind = `source
   | EOr (e1, e2) ->
@@ -115,6 +119,7 @@ let rec fields accu = function
       Fields.add f accu
   | ENot e ->
       fields accu e
+  | Etrue | Efalse -> accu
   | EAnd (e1, e2) | EOr (e1, e2) ->
       fields (fields accu e1) e2
   | EList xs ->
