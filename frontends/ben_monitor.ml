@@ -270,8 +270,9 @@ let overrall_state l =
     | _ as l when List.mem "good" l -> [ "good" ]
     | _ -> [ "bad" ]
 
-let print_html_monitor sources binaries rounds =
+let print_html_monitor sources binaries dep_graph rounds =
   let monitor_data = compute_monitor_data sources binaries rounds in
+  let affected = List.map fst (List.flatten monitor_data) in
   let mytitle =
     try
       Query.to_string (Query.of_expr (Benl_clflags.get_config "title"))
@@ -361,6 +362,11 @@ let print_html_monitor sources binaries rounds =
       let names, rows =
       (List.fold_left begin fun (arch_any_s, acc) (src, states) ->
         let classes = [ "src"; sprintf "round%d" i ] in
+        let deps = S.elements (Package.Map.find src dep_graph) in
+        let deps = List.filter (fun p -> List.mem p affected) deps in
+        let deps = match (List.map (!!!) deps) with
+          | [] -> ""
+          | _ as l-> "Dependencies: " ^ (String.concat ", " l) in
         let source = M.find src sources in
         let version = Package.get "version" source in
         let directory = Package.get "directory" source in
@@ -369,7 +375,11 @@ let print_html_monitor sources binaries rounds =
         let overrall_state = overrall_state states in
         let src = !!!src in
         arch_any_s,
-        tr (td ~a:[ a_class ("srcname" :: (overrall_state @ classes)) ; a_id src ] [ pts src ])
+        tr (td ~a:[ a_class ("srcname" :: (overrall_state @ classes));
+                    a_id src;
+                    a_title deps
+                  ]
+              [ pts src ])
           (
           td
             ~a:[ a_class [ "src"] ]
@@ -440,7 +450,7 @@ let main args =
   match !output_type with
     | Levels -> print_dependency_levels dep_graph rounds
     | Text -> print_text_monitor sources binaries rounds
-    | Xhtml -> print_html_monitor sources binaries rounds
+    | Xhtml -> print_html_monitor sources binaries dep_graph rounds
 
 let frontend = {
   Benl_frontend.name = "monitor";
