@@ -85,7 +85,15 @@ let parse_binaries accu arch =
     (!Benl_clflags.cache_dir // ("Packages_"^arch))
     !!to_keep
     (fun name pkg accu ->
-      PAMap.add (name, arch) pkg accu
+      try
+        let old_pkg = PAMap.find (name, arch) accu in
+        let old_ver = Package.get "version" old_pkg in
+        let ver = Package.get "version" pkg in
+        if Benl_base.Version.compare old_ver ver < 0
+        then PAMap.add (name, arch) pkg accu
+        else accu
+      with _ ->
+        PAMap.add (name, arch) pkg accu
     )
     accu
 
