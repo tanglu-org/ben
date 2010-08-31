@@ -102,7 +102,15 @@ let parse_sources accu =
     (!Benl_clflags.cache_dir // "Sources")
     !!to_keep
     (fun name pkg accu ->
-      M.add name pkg accu
+      try
+        let old_pkg = M.find name accu in
+        let old_ver = Package.get "version" old_pkg in
+        let ver = Package.get "version" pkg in
+        if Benl_base.Version.compare old_ver ver < 0
+        then M.add name pkg accu
+        else accu
+      with _ ->
+        M.add name pkg accu
     )
     accu
 
