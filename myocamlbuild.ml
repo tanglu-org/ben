@@ -65,7 +65,6 @@ let _ =
           packages;
 
         (* C stubs *)
-        flag ["ocamlmklib"; "c"] (S[A "-ldpkg"]);
         flag ["link"; "library"; "ocaml"; "byte"; "use_libbenl"]
           (S[A"-dllib"; A"-lbenl"; A"-cclib"; A"-lbenl"]);
         flag ["link"; "library"; "ocaml"; "native"; "use_libbenl"]
