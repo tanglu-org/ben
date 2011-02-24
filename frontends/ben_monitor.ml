@@ -256,8 +256,10 @@ let print_text_monitor sources binaries rounds =
 let a_link url text =
   a ~a:[a_href (uri_of_string url)] [pcdata text]
 
+let escape = Netencoding.Url.encode
+
 let pts src =
-  a_link (sprintf "http://packages.qa.debian.org/%s" src) src
+  a_link (sprintf "http://packages.qa.debian.org/%s" (escape src)) src
 
 let buildd show src =
   if show
@@ -400,7 +402,7 @@ let print_html_monitor sources binaries dep_graph rounds =
           td
             ~a:[ a_class [ "src"] ]
             [ pcdata "[";
-              buildd arch_any src;
+              buildd arch_any (escape src);
               pcdata "] (";
               changelog (sprintf "%s" version) directory;
               pcdata ")" ]
@@ -415,7 +417,7 @@ let print_html_monitor sources binaries dep_graph rounds =
       let link =
         if names = []
         then small [ pcdata "arch:all" ]
-        else buildd true (String.concat "," names) in
+        else buildd true (String.concat "," (List.map escape names)) in
       archs_columns i
         (th ~a:[ a_class [ "level" ] ]
            [ pcdata (sprintf "Dependency level %d" (i+1));
