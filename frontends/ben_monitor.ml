@@ -264,7 +264,7 @@ let pts src =
 let buildd show src =
   if show
   then a_link
-    (sprintf "https://buildd.debian.org/status/package.php?p=%s&compact=compact" src)
+    (sprintf "https://buildd.debian.org/status/package.php?p=%s" src)
     "buildd"
   else small [ pcdata "arch:all" ]
 
@@ -417,7 +417,7 @@ let print_html_monitor sources binaries dep_graph rounds =
       let link =
         if names = []
         then small [ pcdata "arch:all" ]
-        else buildd true (String.concat "," (List.map escape names)) in
+        else buildd true (sprintf "%s&compact=compact" (String.concat "," (List.map escape names))) in
       archs_columns i
         (th ~a:[ a_class [ "level" ] ]
            [ pcdata (sprintf "Dependency level %d" (i+1));
