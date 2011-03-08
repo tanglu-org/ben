@@ -60,6 +60,10 @@ let debian_architectures =
     "kfreebsd-amd64"; "kfreebsd-i386";
     "mips"; "mipsel"; "powerpc"; "s390"; "sparc" ]
 
+let debian_ports_architectures =
+  [ "armhf"; "avr32"; "m68k"; "powerpcspe";
+    "sh4"; "sparc64" ]
+
 type status = Unknown | Up_to_date | Outdated
 
 let string_of_status = function

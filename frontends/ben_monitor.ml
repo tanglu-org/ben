@@ -319,7 +319,7 @@ let print_html_monitor sources binaries dep_graph rounds =
           (pcdata "");
         link
           ~a:[a_rel [`Stylesheet];
-              a_href (uri_of_string ("https://buildd.debian.org/gfx/revamp.css"))
+              a_href (uri_of_string ("media/revamp.css"))
              ]
           ();
         link

@@ -34,7 +34,7 @@ let download_sources () =
     List.map
       (fun area ->
          let url = sprintf "%s/dists/%s/%s/source/Sources.bz2"
-           !Benl_clflags.mirror !Benl_clflags.suite area
+           !Benl_clflags.mirror_sources !Benl_clflags.suite area
          in
          if !Benl_clflags.dry_run then p "Would download %s\n" url;
          let cmd = sprintf "{ curl %s %s | bzcat >> %s; }"
@@ -64,7 +64,7 @@ let download_binaries arch =
     List.map
       (fun area ->
          let url = sprintf "%s/dists/%s/%s/binary-%s/Packages.bz2"
-           !Benl_clflags.mirror !Benl_clflags.suite area arch
+           !Benl_clflags.mirror_binaries !Benl_clflags.suite area arch
          in
          if !Benl_clflags.dry_run then p "Would download %s\n" url;
          let cmd = sprintf "{ curl %s %s | bzcat >> %s; }"

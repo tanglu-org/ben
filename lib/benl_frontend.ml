@@ -64,7 +64,14 @@ let read_config_file filename =
   let config = Benl_utils.parse_config_file filename in
   let rec process = function
     | ("mirror", x)::xs ->
-        Benl_clflags.mirror := check_string "mirror" x;
+        Benl_clflags.mirror_binaries := check_string "mirror" x;
+        Benl_clflags.mirror_sources  := check_string "mirror" x;
+        process xs
+    | ("mirror-binaries", x)::xs ->
+        Benl_clflags.mirror_binaries := check_string "mirror-binaries" x;
+        process xs
+    | ("mirror-sources", x)::xs ->
+        Benl_clflags.mirror_sources := check_string "mirror-sources" x;
         process xs
     | ("areas", x)::xs ->
         Benl_clflags.areas := check_string_list "areas" x;
@@ -91,7 +98,14 @@ let rec parse_common_args = function
       Benl_clflags.verbose := true;
       parse_common_args xs
   | "--mirror"::x::xs ->
-      Benl_clflags.mirror := x;
+      Benl_clflags.mirror_binaries := x;
+      Benl_clflags.mirror_sources := x;
+      parse_common_args xs
+  | "--mirror-binaries"::x::xs ->
+      Benl_clflags.mirror_binaries := x;
+      parse_common_args xs
+  | "--mirror-sources"::x::xs ->
+      Benl_clflags.mirror_sources := x;
       parse_common_args xs
   | "--areas"::x::xs ->
       Benl_clflags.areas := Benl_core.simple_split ',' x;
@@ -129,6 +143,8 @@ let print_help () =
       "--quiet|-q", "Quiet mode";
       "--verbose", "Verbose mode";
       "--mirror", "Mirror to use";
+      "--mirror-binaries", "Mirror to use for binaries";
+      "--mirror-sources", "Mirror to use for sources";
       "--areas", "Areas to consider";
       "--archs", "Architectures to consider";
       "--suite", "Suite";
