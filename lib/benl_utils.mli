@@ -19,7 +19,7 @@
 
 val parse_control_file :
   ([< `binary | `source] as 'a) ->
-  string -> Benl_base.Fields.t ->
+  string -> bool -> Benl_base.Fields.t ->
   ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
   'b -> 'b
 

@@ -49,11 +49,6 @@ let string_of_string string =
   let escape = choose_escape string ['"'; '\''] in
   sprintf "%c%s%c" escape string escape
 
-let core_fields =
-  List.fold_right Fields.add
-    ["package"; "source"; "binary"; "provides"; "version"; "architecture"; "build-depends"]
-    Fields.empty
-
 let debian_architectures =
   [ "amd64"; "armel";
     "i386"; "ia64";

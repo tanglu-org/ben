@@ -40,10 +40,9 @@ let main args =
     | _ -> usage (sprintf "%s query" Sys.argv.(0))
   in
   let query = Query.of_string query in
-  let to_keep = Query.fields core_fields query in
   let sources, packages = List.partition is_source files in
   let print kind filename =
-    Benl_utils.parse_control_file kind filename to_keep
+    Benl_utils.parse_control_file kind filename false Fields.empty
       (fun _ p () -> if Query.eval kind p query then Package.print p)
       ()
   in

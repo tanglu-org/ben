@@ -28,6 +28,7 @@ module S = Package.Set
 
 let use_cache = ref false
 let use_colors = ref false
+let run_debcheck = ref false
 
 type output_type = Text | Xhtml | Levels
 let output_type = ref Levels
@@ -40,14 +41,11 @@ let ( !!! ) = Package.Name.to_string
 let is_affected = lazy (Query.of_expr (Benl_clflags.get_config "is_affected"))
 let is_good = lazy (Query.of_expr (Benl_clflags.get_config "is_good"))
 let is_bad = lazy (Query.of_expr (Benl_clflags.get_config "is_bad"))
-let to_keep =
-  lazy begin
-    let (@@) x y = Query.fields y x in
-       !!is_affected
-    @@ !!is_good
-    @@ !!is_bad
-    @@ (Benl_base.Fields.add "directory" core_fields)
-  end
+let to_forget = List.fold_left
+  (fun accu x -> Benl_base.Fields.add x accu) Benl_base.Fields.empty
+  [
+    "description";
+  ]
 
 module PAIndex = struct
   type t = [`binary] Package.Name.t * string
@@ -83,7 +81,8 @@ let format_arch x =
 let parse_binaries accu arch =
   Benl_utils.parse_control_file `binary
     (!Benl_clflags.cache_dir // ("Packages_"^arch))
-    !!to_keep
+    !run_debcheck
+    to_forget
     (fun name pkg accu ->
       try
         let old_pkg = PAMap.find (name, arch) accu in
@@ -100,7 +99,8 @@ let parse_binaries accu arch =
 let parse_sources accu =
   Benl_utils.parse_control_file `source
     (!Benl_clflags.cache_dir // "Sources")
-    !!to_keep
+    !run_debcheck
+    to_forget
     (fun name pkg accu ->
       try
         let old_pkg = M.find name accu in
@@ -164,6 +164,9 @@ let rec parse_local_args = function
   | "--use-cache"::xs ->
       use_cache := true;
       parse_local_args xs
+  | "--run-debcheck"::xs ->
+      run_debcheck := true;
+      parse_local_args xs
   | "--color"::xs ->
       use_colors := true;
       output_type := Text;
@@ -183,6 +186,7 @@ let help () =
       Printf.printf "    %s: %s\n%!" option desc
     )
     [ "--use-cache", "Use cache";
+      "--run-debcheck", "Run edos-debcheck and add virtual .edos-debcheck field";
       "--color", "Color if text output";
       "--text", "Select text output format";
       "--html", "Select HTML output format" ]

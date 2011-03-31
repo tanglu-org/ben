@@ -60,12 +60,12 @@ let debcheck =
             "%sW: subprocess edos-debcheck stopped with signal %d%s%!" a i b
     end; result
 
-let parse_control_file kind filename to_keep f accu =
+let parse_control_file kind filename do_debcheck to_forget f accu =
   let base = Filename.basename filename in
   let debcheck_data =
     match kind with
       | `binary ->
-        if Benl_base.Fields.mem "edos-debcheck" to_keep then begin
+        if do_debcheck then begin
           p "Running edos-debcheck on %s..." base;
           let result = debcheck filename in
           p "\n"; Some result
@@ -75,7 +75,7 @@ let parse_control_file kind filename to_keep f accu =
   p "Parsing %s..." base;
   let result =
     with_in_file filename begin fun ic ->
-      Benl_lexer.stanza_fold to_keep begin fun name p accu ->
+      Benl_lexer.stanza_fold to_forget begin fun name p accu ->
         f
           (Package.Name.of_string name)
           (Package.of_assoc ~debcheck_data kind p)
