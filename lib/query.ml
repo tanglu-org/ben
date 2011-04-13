@@ -39,7 +39,7 @@ let rec to_string_b last_op = function
   | EMatch (f, r) ->
       sprintf ".%s ~ %s" f (string_of_regexp r)
   | ENot e ->
-      sprintf "!%s" (to_string_b last_op e)
+      sprintf "!%s" (to_string_b "!" e)
   | Etrue -> sprintf "true"
   | Efalse -> sprintf "false"
   | EAnd (e1, e2) ->
