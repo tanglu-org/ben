@@ -43,7 +43,7 @@ let main args =
   let sources, packages = List.partition is_source files in
   let print kind filename =
     Benl_utils.parse_control_file kind filename false Fields.empty
-      (fun _ p () -> if Query.eval kind p query then Package.print p)
+      (fun _ p () -> if Query.eval kind p query then Package.print stdout p)
       ()
   in
   List.iter (print `source) sources;

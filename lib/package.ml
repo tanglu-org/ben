@@ -28,11 +28,11 @@ module Name = struct
   let to_string x = x
 end
 
-let print p =
+let print outc p =
   List.iter
-    (fun (f, v) -> printf "%s: %s\n" (String.capitalize f) v)
+    (fun (f, v) -> fprintf outc "%s: %s\n" (String.capitalize f) v)
     p;
-  print_newline ()
+  fprintf outc "\n"
 
 let get = List.assoc
 

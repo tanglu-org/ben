@@ -28,7 +28,7 @@ module Name : sig
 end
 
 val get : string -> 'a t -> string
-val print : 'a t -> unit
+val print : out_channel -> 'a t -> unit
 
 module Set : sig
   type 'a t
