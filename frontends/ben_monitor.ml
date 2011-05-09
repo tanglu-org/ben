@@ -194,6 +194,22 @@ let help () =
 let relevant_arch arch_ref arch_pkg =
   (arch_pkg = "all" && arch_ref = "i386") || arch_ref = arch_pkg
 
+let compute_state pkg =
+  if Query.eval_binary pkg !!is_bad then
+    Outdated
+  else if Query.eval_binary pkg !!is_good then
+    Up_to_date
+  else
+    Unknown
+
+let combine_states state1 state2 =
+  match state1, state2 with
+    | Outdated, _
+    | _, Outdated -> Outdated
+    | Up_to_date, _
+    | _, Up_to_date -> Up_to_date
+    | Unknown, Unknown -> state2
+
 let compute_monitor_data sources binaries rounds =
   List.map begin fun xs ->
     let packages = List.sort (fun x y -> compare !!!x !!!y) xs in
@@ -204,17 +220,8 @@ let compute_monitor_data sources binaries rounds =
           List.fold_left begin fun accu pkg ->
             try
               let pkg = PAMap.find (pkg, arch) binaries in
-              (* let arch_pkg = Package.get "architecture" pkg in *)
-              (* if relevant_arch arch arch_pkg *)
-              (* then *)
-                if accu = Outdated || Query.eval_binary pkg !!is_bad then
-                  Outdated
-                else if accu <> Outdated && Query.eval_binary pkg !!is_good then
-                  Up_to_date
-                else accu
-              (* else if accu <> Outdated then *)
-                (* Up_to_date *)
-              (* else accu *)
+              let state = compute_state pkg in
+              combine_states accu state
             with Not_found -> accu
           end Unknown pkgs
         end !Benl_clflags.architectures
@@ -288,8 +295,7 @@ let uniq l =
 let overrall_state l =
   match uniq l with
     | _ as l when List.for_all (fun s -> s = "unknown") l -> [ "unknown" ]
-    | _ as l when List.for_all (fun s -> s = "good") l -> [ "good" ; "all_ok" ]
-    | _ as l when List.mem "good" l -> [ "good" ]
+    | _ as l when List.for_all (fun s -> s <> "bad") l -> [ "good" ]
     | _ -> [ "bad" ]
 
 let print_html_monitor sources binaries dep_graph rounds =
@@ -349,15 +355,12 @@ let print_html_monitor sources binaries dep_graph rounds =
           div
             [
               pcdata "Filter by status: ";
-              input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "good"] ();
+              input ~a:[a_input_type `Checkbox; a_id "good"] ();
               pcdata "good ";
               input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "bad"] ();
               pcdata "bad ";
               input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "unknown"] (); pcdata "unknown";
               span ~a:[a_id "count"] [];
-              br ();
-              input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "hide_all_ok"] ();
-              pcdata "hide fully (re-)built packages";
             ];
           hbody;
         ];

@@ -26,9 +26,6 @@ function update () {
     } else {
         $(".src").filter(".unknown").parent().hide();
     }
-    if ($("#hide_all_ok").is(":checked")) {
-        $(".all_ok").parent().hide();
-    }
     for (i = 0; i < nb_rounds; i++) {
         if ($(".round"+i).filter(":visible").length > 0) {
             $("#header"+i).show();
@@ -43,7 +40,6 @@ function init () {
     $("#good").click(update);
     $("#bad").click(update);
     $("#unknown").click(update);
-    $("#hide_all_ok").click(update);
     update();
 }
 
