@@ -69,13 +69,14 @@ let help () =
 
 exception Unknown_profile of string
 
-type profile = Planned | Ongoing | Permanent | Finished | Unknown
+type profile = Planned | Ongoing | Permanent | Finished | Old | Unknown
 
 let string_of_profile = function
   | Planned -> "planned"
   | Ongoing -> "ongoing"
   | Permanent -> "permanent"
   | Finished -> "finished"
+  | Old -> "old"
   | Unknown -> "unknown"
 
 let profile_of_string = function
@@ -83,6 +84,7 @@ let profile_of_string = function
   | "ongoing" -> Ongoing
   | "permanent" -> Permanent
   | "finished" -> Finished
+  | "old" -> Old
   | _ -> Unknown
 
 let profiles_desc = [
@@ -90,6 +92,7 @@ let profiles_desc = [
   Ongoing   , ( "Ongoing transitions"          , true  );
   Permanent , ( "Permanent trackers"           , false );
   Finished  , ( "(almost) Finished transitions", true  );
+  Old       , ( "Old trackers"                 , false );
   Unknown   , ( "Miscellaneous transitions"    , false );
 ]
 
@@ -237,6 +240,8 @@ let tracker profiles =
   in
   let mybody = SMap.fold
     (fun profile tlist acc ->
+      if (profile_of_string profile) = Old then acc
+      else
       let title, show_score =
         try
           let profile = profile_of_string profile in
