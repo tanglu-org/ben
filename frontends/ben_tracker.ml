@@ -192,8 +192,9 @@ let dump_lists (smap, file) =
     ""
   in
   try
-    rm [file];
-    dump_to_file file string
+    let newfile = FilePath.add_extension file "new" in
+    dump_to_file newfile string;
+    mv newfile file
   with _ ->
     eprintf "Something bad happened while generating %s!\n" file
 
