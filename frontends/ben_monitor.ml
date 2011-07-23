@@ -297,8 +297,27 @@ let overrall_state l =
     | _ as l when List.for_all (fun s -> s <> "bad") l -> [ "good" ]
     | _ -> [ "bad" ]
 
+let generate_stats monitor_data =
+  List.fold_left
+    (fun (all, bad, packages) level ->
+      List.fold_left
+        (fun (all, bad, packages) (package, statuses) ->
+          if List.mem Outdated statuses then
+            all+1, bad+1, package::packages
+          else if List.mem Up_to_date statuses then
+            all+1, bad, package::packages
+          else
+            all, bad, package::packages
+        )
+        (all, bad, packages)
+        level
+    )
+    (0, 0, [])
+    monitor_data
+
 let print_html_monitor sources binaries dep_graph rounds =
   let monitor_data = compute_monitor_data sources binaries rounds in
+  let all, bad, packages = generate_stats monitor_data in
   let affected = List.map fst (List.flatten monitor_data) in
   let mytitle =
     try
@@ -435,8 +454,7 @@ let print_html_monitor sources binaries dep_graph rounds =
       :: rows, (i - 1)
     end ([], (List.length monitor_data - 1)) (List.rev monitor_data) in
   let table = table (tr (td [ pcdata "" ]) []) rows in
-  printf "%s\n%!" (Xhtmlpretty.xhtml_print (html table))
-
+  (all, bad, packages, Xhtmlpretty.xhtml_print (html table))
 
 let print_dependency_levels dep_graph rounds =
   list_iteri begin fun i xs ->
@@ -448,8 +466,7 @@ let print_dependency_levels dep_graph rounds =
     end packages
   end rounds
 
-let main args =
-  let _ = parse_local_args (Benl_frontend.parse_common_args args) in
+let compute_graph () =
   let {src_map = sources; bin_map = binaries} = get_data () in
   let src_of_bin : ([`binary], [`source] Package.Name.t) M.t =
     PAMap.fold
@@ -471,10 +488,19 @@ let main args =
   in
   let dep_graph = Dependencies.get_dep_graph sources src_of_bin in
   let rounds = Dependencies.topo_split dep_graph in
+  rounds, sources, binaries, dep_graph
+
+let main args =
+  let _ = parse_local_args (Benl_frontend.parse_common_args args) in
+  let rounds, sources, binaries, dep_graph =
+    compute_graph () in
   match !output_type with
     | Levels -> print_dependency_levels dep_graph rounds
     | Text -> print_text_monitor sources binaries rounds
-    | Xhtml -> print_html_monitor sources binaries dep_graph rounds
+    | Xhtml ->
+      let (_, _, _, output) =
+        print_html_monitor sources binaries dep_graph rounds
+      in printf "%s\n" output
 
 let frontend = {
   Benl_frontend.name = "monitor";
