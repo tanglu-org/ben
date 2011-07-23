@@ -38,9 +38,12 @@ let ( // ) = Filename.concat
 let ( !! ) = Lazy.force
 let ( !!! ) = Package.Name.to_string
 
-let is_affected = lazy (Query.of_expr (Benl_clflags.get_config "is_affected"))
-let is_good = lazy (Query.of_expr (Benl_clflags.get_config "is_good"))
-let is_bad = lazy (Query.of_expr (Benl_clflags.get_config "is_bad"))
+let is_affected () =
+  lazy (Query.of_expr (Benl_clflags.get_config "is_affected"))
+let is_good () =
+  lazy (Query.of_expr (Benl_clflags.get_config "is_good"))
+let is_bad () =
+  lazy (Query.of_expr (Benl_clflags.get_config "is_bad"))
 let to_forget = List.fold_left
   (fun accu x -> Benl_base.Fields.add x accu) Benl_base.Fields.empty
   [
@@ -116,7 +119,7 @@ let parse_sources accu =
 
 let filter_data { src_map = srcs; bin_map = bins } =
   let src_map = M.fold begin fun name src accu ->
-    if Query.eval_source src !!is_affected then
+    if Query.eval_source src !!(is_affected ()) then
       M.add name src accu
     else accu
   end srcs M.empty in
@@ -125,8 +128,8 @@ let filter_data { src_map = srcs; bin_map = bins } =
     let src_name = Package.Name.of_string src_name in
     try
       let src = M.find src_name srcs in
-      if Query.eval_binary pkg !!is_affected
-      || Query.eval_source src !!is_affected
+      if Query.eval_binary pkg !!(is_affected ())
+      || Query.eval_source src !!(is_affected ())
       then begin
         M.add src_name src saccu
         ,
@@ -194,9 +197,9 @@ let relevant_arch arch_ref arch_pkg =
   (arch_pkg = "all" && arch_ref = "i386") || arch_ref = arch_pkg
 
 let compute_state pkg =
-  if Query.eval_binary pkg !!is_bad then
+  if Query.eval_binary pkg !!(is_bad ()) then
     Outdated
-  else if Query.eval_binary pkg !!is_good then
+  else if Query.eval_binary pkg !!(is_good ()) then
     Up_to_date
   else
     Unknown
@@ -323,9 +326,9 @@ let print_html_monitor sources binaries dep_graph rounds =
     try
       Query.to_string (Query.of_expr (Benl_clflags.get_config "title"))
     with _ -> "(no title)" in
-  let is_affected = Query.to_string (Lazy.force is_affected) in
-  let is_good = Query.to_string (Lazy.force is_good) in
-  let is_bad = Query.to_string (Lazy.force is_bad) in
+  let is_affected = Query.to_string (Lazy.force (is_affected ())) in
+  let is_good = Query.to_string (Lazy.force (is_good ())) in
+  let is_bad = Query.to_string (Lazy.force (is_bad ())) in
   let archs_count = List.length !Benl_clflags.architectures in
   let html hbody =
     html ~a:[a_xmlns `W3_org_1999_xhtml]
