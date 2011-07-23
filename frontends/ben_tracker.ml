@@ -301,9 +301,9 @@ let main args =
         [transitions, Filename.concat !base "transitions.yaml";
          packages    , Filename.concat !base "packages.yaml"]
       in
-      match !tconfig with
+      (match !tconfig with
         | None -> tracker profiles
-        | Some _ -> ();
+        | Some _ -> ());
       rm [lockf]
     with exc ->
       eprintf "E: %s\n" $ Printexc.to_string exc;
