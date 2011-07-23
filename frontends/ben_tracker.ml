@@ -144,7 +144,7 @@ let run_monitor file =
     Benl_utils.dump_to_file html output;
     result
   with _ ->
-    p "Something bad happened while generating %s!\n" html;
+    eprintf "Something bad happened while generating %s!\n" html;
     result
 
 module SMap = Map.Make(String)
@@ -191,7 +191,7 @@ let dump_lists (smap, file) =
   try
     dump_to_file file string
   with _ ->
-    p "Something bad happened while generating %s!\n" file
+    eprintf "Something bad happened while generating %s!\n" file
 
 let tracker profiles =
   let html mybody =
@@ -259,13 +259,13 @@ let tracker profiles =
     p "Generating index...\n";
     dump_to_file index output
   with _ ->
-    p "Something bad happened while generating index.html!\n"
+    eprintf "Something bad happened while generating index.html!\n"
 
 let main args =
   let _ = parse_local_args (Benl_frontend.parse_common_args args) in
   let lockf = FilePath.concat !cache_dir !lock in
   if test Exists lockf then
-    p "Please wait until %s is removed!\n" lockf
+    eprintf "Please wait until %s is removed!\n" lockf
   else
     try
       touch lockf;
@@ -301,7 +301,7 @@ let main args =
         | Some _ -> ();
       rm [lockf]
     with exc ->
-      p "E: %s\n" $ Printexc.to_string exc;
+      eprintf "E: %s\n" $ Printexc.to_string exc;
       Printexc.print_backtrace stderr;
       rm [lockf]
 
