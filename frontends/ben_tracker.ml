@@ -240,8 +240,6 @@ let tracker profiles =
   in
   let mybody = SMap.fold
     (fun profile tlist acc ->
-      if (profile_of_string profile) = Old then acc
-      else
       let title, show_score =
         try
           let profile = profile_of_string profile in
@@ -291,8 +289,10 @@ let main args =
           | None ->
             find test_cond confd
               (fun results transition ->
-                let result = run_monitor transition in
-                result :: results
+                match profile_of_file transition with
+                  | Old -> results
+                  | _ -> let result = run_monitor transition in
+                         result :: results
               )
               []
       in
