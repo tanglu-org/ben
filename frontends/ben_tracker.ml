@@ -192,6 +192,7 @@ let dump_lists (smap, file) =
     ""
   in
   try
+    rm [file];
     dump_to_file file string
   with _ ->
     eprintf "Something bad happened while generating %s!\n" file
