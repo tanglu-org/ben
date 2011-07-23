@@ -26,3 +26,5 @@ val parse_control_file :
 val parse_config_file : string -> Benl_types.config
 
 val debcheck : string -> [`binary] Package.Set.t
+val file_content : string -> string
+val dump_to_file : string -> string -> unit

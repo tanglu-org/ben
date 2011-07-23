@@ -98,3 +98,19 @@ let parse_config_file filename =
                 pos.pos_lnum,
                 pos.pos_cnum-pos.pos_bol))
   end
+
+let file_content file =
+  let lines = ref "" in
+  let inchan = open_in file in
+  try
+    while true; do
+      lines := Printf.sprintf "%s%s\n" !lines (input_line inchan)
+    done; ""
+  with End_of_file ->
+    close_in inchan;
+    !lines
+
+let dump_to_file name string =
+  let outchan = open_out name in
+  let () = output_string outchan string in
+  close_out outchan
