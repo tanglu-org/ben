@@ -181,16 +181,18 @@ let generate_stats results =
     results
 
 let dump_lists (smap, file) =
+  let file = Filename.concat !base (Filename.concat "export" file) in
   let string = SMap.fold
     (fun key list string ->
-      sprintf "%s\n%s: %s"
+      sprintf "%s'%s': [%s]\n"
         string
         key
-        (String.concat " " list)
+        (String.concat ", " list)
     )
     smap
     ""
   in
+  let string = sprintf "{\n%s}" string in
   try
     let newfile = FilePath.add_extension file "new" in
     dump_to_file newfile string;
@@ -300,8 +302,8 @@ let main args =
       in
       let transitions, packages, profiles = generate_stats results in
       let () = List.iter dump_lists
-        [transitions, Filename.concat !base "transitions.yaml";
-         packages    , Filename.concat !base "packages.yaml"]
+        [transitions, "transitions.yaml";
+         packages   , "packages.yaml"]
       in
       (match !tconfig with
         | None -> tracker profiles
