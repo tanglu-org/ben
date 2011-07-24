@@ -197,7 +197,9 @@ let dump_lists (smap, file) =
     let newfile = FilePath.add_extension file "new" in
     dump_to_file newfile string;
     mv newfile file
-  with _ ->
+  with exc ->
+    eprintf "E: %s\n" $ Printexc.to_string exc;
+    Printexc.print_backtrace stderr;
     eprintf "Something bad happened while generating %s!\n" file
 
 let tracker profiles =
@@ -265,7 +267,9 @@ let tracker profiles =
   try
     p "Generating index...\n";
     dump_to_file index output
-  with _ ->
+  with exc ->
+    eprintf "E: %s\n" $ Printexc.to_string exc;
+    Printexc.print_backtrace stderr;
     eprintf "Something bad happened while generating index.html!\n"
 
 let main args =
