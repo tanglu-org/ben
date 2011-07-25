@@ -318,6 +318,24 @@ let generate_stats monitor_data =
     (0, 0, [])
     monitor_data
 
+let beautify_text =
+  let r_link = Pcre.regexp "#[0-9]{4,}|[a-z]{3,}://[^\\s><]+" in
+  fun text ->
+    let t = Pcre.full_split ~rex:r_link text in
+    List.map
+      (function
+        | Pcre.Text s -> pcdata s
+        | Pcre.Delim s ->
+          if s.[0] = '#' then
+            let s = String.sub s 1 (String.length s -1) in
+            let link = sprintf "http://bugs.debian.org/%s" s in
+            a_link link s
+          else
+            a_link s s
+        | Pcre.Group _ | Pcre.NoGroup -> (* Ignore this case *) pcdata ""
+      )
+      t
+
 let print_html_monitor sources binaries dep_graph rounds =
   let monitor_data = compute_monitor_data sources binaries rounds in
   let all, bad, packages = generate_stats monitor_data in
@@ -376,10 +394,13 @@ let print_html_monitor sources binaries dep_graph rounds =
             [li [ small [ b [ pcdata "Good: " ]; pcdata is_good ] ];
              li [ small [ b [ pcdata "Bad: " ]; pcdata is_bad ] ];
             ];
-          div ~a:[ a_class ["parameters"] ] [
-            small [ b [ pcdata "Notes: " ] ];
-            pre [ small [ pcdata notes ] ]
-          ];
+          if String.length notes = 0 then
+            div [ ]
+          else
+            div ~a:[ a_class ["parameters"] ]
+              [ small [ b [ pcdata "Notes: " ] ];
+                pre ( beautify_text notes ) ]
+          ;
           div
             [
               pcdata "Filter by status: ";
