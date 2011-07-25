@@ -21,7 +21,7 @@ type t
 
 val of_expr : Benl_types.expr -> t
 val of_string : string -> t
-val to_string : t -> string
+val to_string : ?escape:bool -> t -> string
 val fields : Benl_base.Fields.t -> t -> Benl_base.Fields.t
 
 val eval : ([> `source] as 'a) -> 'a Package.t -> t -> bool

@@ -35,7 +35,7 @@ let parens show expr =
   then sprintf "(%s)" expr
   else expr
 
-let rec to_string_b last_op = function
+let rec to_string_b ?(escape = true) last_op = function
   | EMatch (f, r) ->
       sprintf ".%s ~ %s" f (string_of_regexp r)
   | ENot e ->
@@ -53,7 +53,7 @@ let rec to_string_b last_op = function
   | EList xs ->
       sprintf "[%s]" (String.concat "; " (List.map (to_string_b "") xs))
   | ESource -> "source"
-  | EString x -> string_of_string x
+  | EString x -> string_of_string escape x
   | EVersion (cmp, x) ->
     parens (last_op <> "") (sprintf "%s \"%s\"" (string_of_cmp cmp) x)
   | EDep (field, package, Some (cmp, ref_version)) ->
@@ -65,7 +65,7 @@ let rec to_string_b last_op = function
   | EDep (field, package, None) ->
     parens (last_op <> "") (sprintf "%s %% (\"%s\")" field package)
 
-let to_string = to_string_b ""
+let to_string ?(escape = true) = to_string_b ~escape ""
 
 let rec eval kind pkg = function
   | EMatch (field, (r, rex)) ->

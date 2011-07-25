@@ -45,9 +45,12 @@ let string_of_cmp = function
   | Gt -> ">>"
   | Ge -> ">="
 
-let string_of_string string =
-  let escape = choose_escape string ['"'; '\''] in
-  sprintf "%c%s%c" escape string escape
+let string_of_string escaping string =
+  if escaping then
+    let escape = choose_escape string ['"'; '\''] in
+    sprintf "%c%s%c" escape string escape
+  else
+    string
 
 let debian_architectures =
   [ "amd64"; "armel";
