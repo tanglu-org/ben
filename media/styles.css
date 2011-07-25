@@ -15,9 +15,10 @@ div.footer {
   font-size: 60%;
 }
 
-ul#parameters {
+.parameters {
   background: #eeeeee;
   padding: 0.3em;
+  margin: 0.2em;
 }
 
 #footer {

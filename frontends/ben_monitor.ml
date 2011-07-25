@@ -324,8 +324,11 @@ let print_html_monitor sources binaries dep_graph rounds =
   let affected = List.map fst (List.flatten monitor_data) in
   let mytitle =
     try
-      Query.to_string (Query.of_expr (Benl_clflags.get_config "title"))
+      Query.to_string ~escape:false (Query.of_expr (Benl_clflags.get_config "title"))
     with _ -> "(no title)" in
+  let notes =
+    try Query.to_string ~escape:false (Query.of_expr (Benl_clflags.get_config "notes"))
+    with _ -> "" in
   let is_affected = Query.to_string (Lazy.force (is_affected ())) in
   let is_good = Query.to_string (Lazy.force (is_good ())) in
   let is_bad = Query.to_string (Lazy.force (is_bad ())) in
@@ -368,11 +371,14 @@ let print_html_monitor sources binaries dep_graph rounds =
         h2 ~a:[a_id "subtitle"] [pcdata (sprintf "Transition: %s" mytitle)];
         div ~a:[a_id "body"] [
           b [ pcdata "Parameters:" ];
-          ul~a:[ a_id "parameters" ]
+          ul~a:[ a_class ["parameters"] ]
             (li [ small [ b [ pcdata "Affected: " ]; pcdata is_affected ] ])
             [li [ small [ b [ pcdata "Good: " ]; pcdata is_good ] ];
              li [ small [ b [ pcdata "Bad: " ]; pcdata is_bad ] ];
             ];
+          div ~a:[ a_class ["parameters"] ] [
+            small [ b [ pcdata "Notes: " ]; pcdata notes ]
+          ];
           div
             [
               pcdata "Filter by status: ";
