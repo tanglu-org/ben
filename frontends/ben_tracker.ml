@@ -257,7 +257,11 @@ let tracker profiles =
       match tlist with
         | [] -> acc
         | h::l ->
-          (b [ pcdata title ])::(ul h l)::acc
+          let tdiv = div ~a:[ a_class [ "transitions" ] ]
+            [ b [ pcdata title ];
+              ul h l
+            ] in
+          tdiv::acc
     )
     profiles
     []
