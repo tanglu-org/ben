@@ -318,17 +318,36 @@ let generate_stats monitor_data =
     (0, 0, [])
     monitor_data
 
+let starts_with text head =
+  let s = try String.sub text 0 (String.length head) with _ -> text in
+  s = head
+
+let cut_head text head =
+  try
+    let len = String.length head in
+    String.sub text len (String.length text - len)
+  with _ -> text
+
 let beautify_text =
-  let r_link = Pcre.regexp "#[0-9]{4,}|[a-z]{3,}://[^\\s><]+" in
+  let r_link = Pcre.regexp "#[0-9]{4,}|[a-z]{3,}://[^\\s><]+|[Pp][Tt][Ss]:[a-z0-9+\\-\\.]+|[Bb][Uu][Ii][Ll][Dd][Dd]:[a-z0-9+\\-\\.]+" in
   fun text ->
     let t = Pcre.full_split ~rex:r_link text in
     List.map
       (function
         | Pcre.Text s -> pcdata s
         | Pcre.Delim s ->
+          let l = String.lowercase s in
           if s.[0] = '#' then
-            let s = String.sub s 1 (String.length s -1) in
-            let link = sprintf "http://bugs.debian.org/%s" s in
+            let ss = String.sub s 1 (String.length s -1) in
+            let link = sprintf "http://bugs.debian.org/%s" ss in
+            a_link link s
+          else if starts_with l "pts" then
+            let text = cut_head s "pts:" in
+            let link = sprintf "http://packages.qa.debian.org/%s" text in
+            a_link link s
+          else if starts_with l "buildd" then
+            let text = cut_head s "buildd:" in
+            let link = sprintf "https://buildd.debian.org/%s" text in
             a_link link s
           else
             a_link s s
