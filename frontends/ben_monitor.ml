@@ -377,7 +377,8 @@ let print_html_monitor sources binaries dep_graph rounds =
              li [ small [ b [ pcdata "Bad: " ]; pcdata is_bad ] ];
             ];
           div ~a:[ a_class ["parameters"] ] [
-            small [ b [ pcdata "Notes: " ]; pcdata notes ]
+            small [ b [ pcdata "Notes: " ] ];
+            pre [ small [ pcdata notes ] ]
           ];
           div
             [

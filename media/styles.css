@@ -21,6 +21,10 @@ div.footer {
   margin: 0.2em;
 }
 
+.parameters pre {
+  font-size: 90%;
+}
+
 #footer {
   border-top: 2px solid #d70751;
   padding: 0.5em;
