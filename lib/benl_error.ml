@@ -63,6 +63,13 @@ let string_of_exn = function
         "parse error in file %S, line %d, character %d"
         file line column
 
+let _ =
+  Printexc.register_printer
+    (function
+      | Error exn -> Some (string_of_exn exn)
+      | _ -> None
+    )
+
 let raise e = Pervasives.raise (Error e)
 let not_found () = Pervasives.raise Not_found
 
