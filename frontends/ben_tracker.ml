@@ -137,9 +137,7 @@ let run_monitor file =
   let rounds, sources, binaries, dep_graph = compute_graph () in
   let all, bad, packages, output =
     Ben_monitor.print_html_monitor sources binaries dep_graph rounds in
-  let sprofile = string_of_profile profile in
-  let newfile = sprintf "%s-%s" sprofile !!file in
-  let htmlf = FilePath.replace_extension newfile "html" in
+  let htmlf = FilePath.replace_extension !!file "html" in
   let htmlp = "html" $ htmlf in
   let html = !base $ htmlp in
   let result = all, bad, htmlp, profile, transition, packages in
