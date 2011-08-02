@@ -93,12 +93,10 @@ let parse_config_file filename =
       Benl_parser.config_file Benl_lexer.token lexbuf
     with Benl_parser.Error ->
       let pos = Lexing.lexeme_start_p lexbuf in
-      let exn = Parsing_error
-        (pos.pos_fname,
-         pos.pos_lnum,
-         pos.pos_cnum-pos.pos_bol) in
-      Printf.eprintf "E: %s\n" (string_of_exn exn);
-      exit 1
+      raise (Parsing_error
+               (pos.pos_fname,
+                pos.pos_lnum,
+                pos.pos_cnum-pos.pos_bol))
   end
 
 let file_content file =
