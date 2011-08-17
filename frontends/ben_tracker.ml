@@ -133,6 +133,9 @@ let run_monitor file =
   let profile = profile_of_file file in
   let transition = FilePath.chop_extension !!file in
   let _ = p "Generating (%s) %s\n" (string_of_profile profile) transition in
+  (* Reset config variables before reading .ben files *)
+  let () = Benl_clflags.reset () in
+  (* Read a .ben file *)
   let () = Benl_clflags.config := Benl_frontend.read_config_file file in
   let rounds, sources, binaries, dep_graph = compute_graph () in
   let all, bad, packages, output =

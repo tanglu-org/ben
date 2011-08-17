@@ -34,6 +34,12 @@ let suite = ref "unstable"
 let areas = ref ["main"; "contrib"; "non-free"]
 let quiet = ref false
 
+let reset () =
+  let () = architectures := Benl_base.debian_architectures in
+  let () = suite := "unstable" in
+  let () = areas := ["main"; "contrib"; "non-free"] in
+  ()
+
 let config : Benl_types.config ref = ref []
 let get_config key =
   try List.assoc key !config
