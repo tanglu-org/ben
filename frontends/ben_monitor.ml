@@ -140,6 +140,54 @@ let filter_affected { src_map = srcs; bin_map = bins } =
   end bins (src_map, PAMap.empty) in
   { src_map = src_map; bin_map = bin_map }
 
+let inject_debcheck_data =
+  let rex = Pcre.regexp "^([^ ]+) \\(= ([^)]+)\\): FAILED$" in
+  fun (bins : [`binary] Package.t PAMap.t)  architectures ->
+    let a, b = if !Benl_clflags.quiet then ("\n", "") else ("", "\n") in
+    let all_uninstallable_packages = List.map (fun arch_ref ->
+      Benl_clflags.progress "Running edos-debcheck on %s..." arch_ref;
+      let (ic, oc) as p = Unix.open_process "edos-debcheck -quiet -failures" in
+      (* inefficiency: for each architecture, we iterate on all binary
+         packages, not only on binary packages of said architectures *)
+      PAMap.iter (fun (name, arch) pkg ->
+        if arch = arch_ref then Package.print oc pkg
+      ) bins;
+      close_out oc;
+      let rec loop accu =
+        begin match (try Some (input_line ic) with End_of_file -> None) with
+          | None -> accu
+          | Some line ->
+            try
+              let r = Pcre.exec ~rex line in
+              loop (Package.Set.add (Package.Name.of_string (Pcre.get_substring r 1)) accu)
+            with Not_found ->
+              Printf.eprintf "%sW: ignored line: %s%s%!" a line b;
+              loop accu
+        end
+      in
+      let result = loop Package.Set.empty in
+      begin match Unix.close_process p with
+        | Unix.WEXITED (0|1) -> ()
+        | Unix.WEXITED i ->
+          Printf.eprintf
+            "%sW: subprocess edos-debcheck exited with code %d%s%!" a i b
+        | Unix.WSIGNALED i ->
+          Printf.eprintf
+            "%sW: subprocess edos-debcheck died with signal %d%s%!" a i b
+        | Unix.WSTOPPED i ->
+          Printf.eprintf
+            "%sW: subprocess edos-debcheck stopped with signal %d%s%!" a i b
+      end;
+      Benl_clflags.progress "\n";
+      (arch_ref, result)
+    ) architectures in
+    PAMap.mapi (fun (name, arch) pkg ->
+      let uninstallable_packages = List.assoc arch all_uninstallable_packages in
+      if Package.Set.mem name uninstallable_packages
+      then Package.add "edos-debcheck" "uninstallable" pkg
+      else pkg
+    ) bins
+
 let get_data () =
   let file = !Benl_clflags.cache_dir // "monitor.cache" in
   if !use_cache && Sys.file_exists file then
@@ -148,6 +196,10 @@ let get_data () =
     let src_raw = parse_sources M.empty in
     let bin_raw = List.fold_left
       parse_binaries PAMap.empty !Benl_clflags.architectures
+    in
+    let bin_raw = if !run_debcheck
+      then inject_debcheck_data bin_raw !Benl_clflags.architectures
+      else bin_raw
     in
     let data = { src_map = src_raw; bin_map = bin_raw; } in
     Marshal.dump file data;
