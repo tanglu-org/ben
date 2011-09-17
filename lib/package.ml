@@ -36,6 +36,8 @@ let print outc p =
 
 let get = List.assoc
 
+let add k v pkg = (k, v) :: pkg
+
 module Set = struct
   module S = Set.Make(String)
   type 'a t = S.t
