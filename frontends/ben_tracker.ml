@@ -33,12 +33,15 @@ let update = ref false
 let tconfig = ref None
 
 let _ (* Setting up options *) =
-  Benl_clflags.cache_dir := "/srv/release.debian.org/tmp/ben_cache";
-  Benl_clflags.mirror_binaries := "file:///srv/ftp-master.debian.org/mirror";
-  Benl_clflags.mirror_sources := "file:///srv/ftp-master.debian.org/mirror";
-  Ben_monitor.use_cache := true;
-  Ben_monitor.run_debcheck := true;
-  Ben_monitor.output_type := Xhtml
+  (* Hack for the release team *)
+  if Sys.file_exists "/srv/release.debian.org" then begin
+    Benl_clflags.cache_dir := "/srv/release.debian.org/tmp/ben_cache";
+    Benl_clflags.mirror_binaries := "file:///srv/ftp-master.debian.org/mirror";
+    Benl_clflags.mirror_sources := "file:///srv/ftp-master.debian.org/mirror";
+    Ben_monitor.use_cache := true;
+    Ben_monitor.run_debcheck := true;
+    Ben_monitor.output_type := Xhtml;
+  end
 
 let rec parse_local_args = function
   | ("--config-dir"|"-cd")::x::xs ->
