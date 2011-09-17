@@ -22,7 +22,7 @@ open Printf
 open Ocamlbuild_plugin
 
 let name = "ben"
-let packages = ["unix"; "pcre"; "ocamlgraph"; "ocsigen_xhtml"; "fileutils" ]
+let packages = ["unix"; "pcre"; "ocamlgraph"; "ocsigen_xhtml"; "fileutils"; "threads"; "postgresql"]
 
 exception Require_findlib
 exception Missing_findlib_package of string
@@ -63,6 +63,9 @@ let _ =
              let flag x = flag (x::["ocaml"]) & S[A"-package"; A pkg] in
              List.iter flag ["ocamldep"; "compile"; "link"; "doc"])
           packages;
+
+        (* why isn't this done by default? *)
+        flag ["library"; "link"; "thread"] (A"-thread");
 
         (* C stubs *)
         flag ["link"; "library"; "ocaml"; "byte"; "use_libbenl"]

@@ -1,4 +1,4 @@
-<**/*>: debug
+<**/*>: debug, thread
 <**/*.ml*>: annot
 <lib/benlib/*.cmx>: for-pack(Benlib)
 <lib/benl.cm{x,}a>: use_libbenl
