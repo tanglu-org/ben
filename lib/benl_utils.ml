@@ -24,61 +24,15 @@ open Lexing
 module S = Package.Set
 let p = Benl_clflags.progress
 
-let debcheck =
-  let rex = Pcre.regexp "^([^ ]+) \\(= ([^)]+)\\): FAILED$" in
-  fun filename ->
-    let a, b = if !Benl_clflags.quiet then ("\n", "") else ("", "\n") in
-    let ic = Printf.ksprintf
-      Unix.open_process_in
-      "edos-debcheck -quiet -failures < %s" filename
-    in
-    let rec loop accu =
-      begin match (try Some (input_line ic) with End_of_file -> None) with
-        | None ->
-            accu
-        | Some line ->
-            begin try
-              let r = Pcre.exec ~rex line in
-              loop (S.add (Package.Name.of_string (Pcre.get_substring r 1)) accu)
-            with Not_found ->
-              Printf.eprintf "%sW: ignored line: %s%s%!" a line b;
-              loop accu
-            end
-      end
-    in
-    let result = loop S.empty in
-    begin match Unix.close_process_in ic with
-      | Unix.WEXITED (0|1) -> ()
-      | Unix.WEXITED i ->
-          Printf.eprintf
-            "%sW: subprocess edos-debcheck exited with code %d%s%!" a i b
-      | Unix.WSIGNALED i ->
-          Printf.eprintf
-            "%sW: subprocess edos-debcheck died with signal %d%s%!" a i b
-      | Unix.WSTOPPED i ->
-          Printf.eprintf
-            "%sW: subprocess edos-debcheck stopped with signal %d%s%!" a i b
-    end; result
-
-let parse_control_file kind filename do_debcheck to_forget f accu =
+let parse_control_file kind filename to_forget f accu =
   let base = Filename.basename filename in
-  let debcheck_data =
-    match kind with
-      | `binary ->
-        if do_debcheck then begin
-          p "Running edos-debcheck on %s..." base;
-          let result = debcheck filename in
-          p "\n"; Some result
-        end else None
-      | `source -> None
-  in
   p "Parsing %s..." base;
   let result =
     with_in_file filename begin fun ic ->
       Benl_lexer.stanza_fold to_forget begin fun name p accu ->
         f
           (Package.Name.of_string name)
-          (Package.of_assoc ~debcheck_data kind p)
+          (Package.of_assoc kind p)
           accu
       end (from_channel ic) accu
     end

@@ -45,7 +45,6 @@ end
 
 val of_assoc :
   ([< `binary | `source] as 'a) ->
-  debcheck_data : [`binary] Set.t option ->
   (string * string) list -> 'a t
 
 module BinaryMap : Map.S

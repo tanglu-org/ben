@@ -84,7 +84,6 @@ let format_arch x =
 let parse_binaries accu arch =
   Benl_utils.parse_control_file `binary
     (!Benl_clflags.cache_dir // ("Packages_"^arch))
-    !run_debcheck
     to_forget
     (fun name pkg accu ->
       try
@@ -102,7 +101,6 @@ let parse_binaries accu arch =
 let parse_sources accu =
   Benl_utils.parse_control_file `source
     (!Benl_clflags.cache_dir // "Sources")
-    !run_debcheck
     to_forget
     (fun name pkg accu ->
       try

@@ -19,12 +19,11 @@
 
 val parse_control_file :
   ([< `binary | `source] as 'a) ->
-  string -> bool -> Benl_base.Fields.t ->
+  string -> Benl_base.Fields.t ->
   ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
   'b -> 'b
 
 val parse_config_file : string -> Benl_types.config
 
-val debcheck : string -> [`binary] Package.Set.t
 val file_content : string -> string
 val dump_to_file : string -> string -> unit

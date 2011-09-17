@@ -53,7 +53,7 @@ end
 
 let rex = Pcre.regexp "^(\\S+)(?: \\((\\S+)\\))?$"
 
-let of_assoc sort ~debcheck_data x =
+let of_assoc sort x =
   match sort with
     | `binary ->
         let source, version =
@@ -71,21 +71,9 @@ let of_assoc sort ~debcheck_data x =
           with Not_found ->
             get "package" x, get "version" x
         in
-        let x =
-          ("source", source) ::
-          ("source-version", version) ::
-          (List.remove_assoc "source" x)
-        in
-        begin match debcheck_data with
-          | None -> x
-          | Some data ->
-              let name = get "package" x in
-              try
-                if Set.mem name data then
-                  ("edos-debcheck", "uninstallable")::x
-                else x
-              with Not_found -> x
-        end
+        ("source", source) ::
+        ("source-version", version) ::
+        (List.remove_assoc "source" x)
     | `source -> x
 
 module BinaryIndex = struct
