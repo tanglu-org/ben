@@ -135,6 +135,131 @@ module FileOrigin : ORIGIN = struct
 
 end
 
+(* Effectful functor *)
+module ProjectbOrigin (X : sig end) : ORIGIN = struct
+
+  (* psql service=projectb must work, e.g. on ries.debian.org. To make
+     it work elsewhere, copy ries:/etc/postgresql-common/pg_service.conf
+     to your ~/.pg_service.conf and set up tunnels accordingly. *)
+  let projectb = new Postgresql.connection ~conninfo:"service=projectb" ()
+
+  module StringMap = Map.Make(String)
+  module StringSet = Set.Make(String)
+  module IntMap = Map.Make(struct
+    type t = int
+    let compare : t -> t -> int = compare
+  end)
+
+  let mk_wrapper_maps transform sql =
+    let r = projectb#exec sql in
+    assert (r#status = Postgresql.Tuples_ok);
+    Array.fold_left (fun (a, b) row ->
+      match row with
+        | [| key_id; key |] ->
+          let key = transform key
+          and key_id = int_of_string key_id in (
+            IntMap.add key_id key a,
+            StringMap.add key key_id b
+          )
+        | _ -> assert false
+    ) (IntMap.empty, StringMap.empty) r#get_all
+
+  let string_identity x = x
+
+  let mk_wrappers name (key_of_id_map, id_of_key_map) =
+    ((fun x ->
+      try IntMap.find x key_of_id_map
+      with Not_found -> ksprintf invalid_arg "%s_of_id(%d)" name x),
+     (fun x ->
+       try StringMap.find x id_of_key_map
+       with Not_found -> ksprintf invalid_arg "id_of_%s(%s)" name x))
+
+  let key_of_id, id_of_key = mk_wrappers "key"
+    (mk_wrapper_maps String.lowercase "select key_id, key from metadata_keys")
+
+  let suite_of_id, id_of_suite = mk_wrappers "suite"
+    (mk_wrapper_maps string_identity "select id, suite_name from suite")
+
+  let maintainer_of_id, id_of_maintainer = mk_wrappers "maintainer"
+    (mk_wrapper_maps string_identity "select id, name from maintainer")
+
+  let arch_of_id, id_of_arch = mk_wrappers "arch"
+    (mk_wrapper_maps string_identity "select id, arch_string from architecture")
+
+  let relevant_binary_key_ids = List.map id_of_key relevant_binary_keys
+
+  let get_binaries accu arch =
+    Benl_clflags.progress "Querying projectb for %s binaries in unstable..." arch;
+    let sql = sprintf
+      "select b.bin_id, b.key_id, b.value from bin_associations as a join (select * from binaries_metadata where key_id in (%s)) as b on b.bin_id = a.bin join (select * from binaries) as c on c.id = a.bin where a.suite = %d and c.architecture in (%d,%d)"
+      (String.concat "," (List.map string_of_int relevant_binary_key_ids))
+      (id_of_suite "unstable") (id_of_arch "all") (id_of_arch arch)
+    in
+    let r = projectb#exec sql in
+    assert (r#status = Postgresql.Tuples_ok);
+    let id_indexed_map = Array.fold_left (fun a row ->
+      match row with
+        | [| src_id; key_id; value |] ->
+          let src_id = int_of_string src_id
+          and key_id = int_of_string key_id in
+          let old = try IntMap.find src_id a with Not_found -> [] in
+          IntMap.add src_id ((key_of_id key_id, value)::old) a
+        | _ -> assert false
+    ) IntMap.empty r#get_all in
+    let result = IntMap.fold (fun _ assoc accu ->
+      let pkg = Package.of_assoc `binary assoc in
+      let name = Package.Name.of_string (Package.get "package" pkg) in
+      let ver = Package.get "version" pkg in
+      try
+        let old_pkg = PAMap.find (name, arch) accu in
+        let old_ver = Package.get "version" old_pkg in
+        if Benl_base.Version.compare old_ver ver < 0
+        then PAMap.add (name, arch) pkg accu
+        else accu
+      with Not_found ->
+        PAMap.add (name, arch) pkg accu
+    ) id_indexed_map accu in
+    Benl_clflags.progress "\n";
+    result
+
+  let relevant_source_key_ids = List.map id_of_key relevant_source_keys
+
+  let get_sources accu =
+    Benl_clflags.progress "Querying projectb for sources in unstable...";
+    let sql = sprintf
+      "select b.src_id, b.key_id, b.value from src_associations as a join (select * from source_metadata where key_id in (%s)) as b on b.src_id = a.source where a.suite = %d"
+      (String.concat "," (List.map string_of_int relevant_source_key_ids))
+      (id_of_suite "unstable")
+    in
+    let r = projectb#exec sql in
+    assert (r#status = Postgresql.Tuples_ok);
+    let id_indexed_map = Array.fold_left (fun a row ->
+      match row with
+        | [| src_id; key_id; value |] ->
+          let src_id = int_of_string src_id
+          and key_id = int_of_string key_id in
+          let old = try IntMap.find src_id a with Not_found -> [] in
+          IntMap.add src_id ((key_of_id key_id, value)::old) a
+        | _ -> assert false
+    ) IntMap.empty r#get_all in
+    let result = IntMap.fold (fun _ assoc accu ->
+      let pkg = Package.of_assoc `source assoc in
+      let name = Package.Name.of_string (Package.get "source" pkg) in
+      let ver = Package.get "version" pkg in
+      try
+        let old_pkg = M.find name accu in
+        let old_ver = Package.get "version" old_pkg in
+        if Benl_base.Version.compare old_ver ver < 0
+        then M.add name pkg accu
+        else accu
+      with Not_found ->
+        M.add name pkg accu
+    ) id_indexed_map accu in
+    Benl_clflags.progress "\n";
+    result
+
+end
+
 let filter_affected { src_map = srcs; bin_map = bins } =
   let src_map = M.fold begin fun name src accu ->
     if Query.eval_source src !!(is_affected ()) then
