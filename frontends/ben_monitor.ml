@@ -117,7 +117,7 @@ let parse_sources accu =
     )
     accu
 
-let filter_data { src_map = srcs; bin_map = bins } =
+let filter_affected { src_map = srcs; bin_map = bins } =
   let src_map = M.fold begin fun name src accu ->
     if Query.eval_source src !!(is_affected ()) then
       M.add name src accu
@@ -145,7 +145,7 @@ let filter_data { src_map = srcs; bin_map = bins } =
 let get_data () =
   let file = !Benl_clflags.cache_dir // "monitor.cache" in
   if !use_cache && Sys.file_exists file then
-    filter_data (Marshal.load file)
+    filter_affected (Marshal.load file)
   else
     let src_raw = parse_sources M.empty in
     let bin_raw = List.fold_left
@@ -153,7 +153,7 @@ let get_data () =
     in
     let data = { src_map = src_raw; bin_map = bin_raw; } in
     Marshal.dump file data;
-    filter_data data
+    filter_affected data
 
 let print_dep_line src deps =
   printf "%s:" !!!src;
