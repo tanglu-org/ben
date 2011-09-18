@@ -262,7 +262,11 @@ let mk_projectb_origin () =
           let src_id = int_of_string src_id
           and key_id = int_of_string key_id in
           let old = try IntMap.find src_id a with Not_found -> [] in
-          IntMap.add src_id ((key_of_id key_id, value)::old) a
+          let key = key_of_id key_id in
+          (* translate "source" to "package" for consistency with
+             Sources files *)
+          let key = if key = "source" then "package" else key in
+          IntMap.add src_id ((key, value)::old) a
         | _ -> assert false
     ) IntMap.empty r#get_all in
     (* get .dsc paths to compute directories *)
@@ -288,7 +292,7 @@ let mk_projectb_origin () =
     ) id_indexed_map in
     let result = IntMap.fold (fun _ assoc accu ->
       let pkg = Package.of_assoc `source assoc in
-      let sname = Package.get "source" pkg in
+      let sname = Package.get "package" pkg in
       let is_in_testing =
         if StringSet.mem sname sources_in_testing
         then "yes" else "no"
@@ -515,7 +519,7 @@ let print_text_monitor sources binaries rounds =
         try not (Package.get "is-in-testing" src = "no")
         with Not_found -> true
       in
-      let sname = Package.get "source" src in
+      let sname = Package.get "package" src in
       let sname = if in_testing then sname else "_"^sname in
       printf src_fmt sname;
       List.iter begin fun (arch, state) ->
@@ -570,7 +574,7 @@ let generate_stats monitor_data =
             with _ -> false
           in
           let package =
-            Package.Name.of_string (Package.get "source" package)
+            Package.Name.of_string (Package.get "package" package)
           in
           if List.mem Outdated statuses && is_in_testing then
             all+1, bad+1, package::packages
@@ -626,7 +630,7 @@ let print_html_monitor sources binaries dep_graph rounds =
   let monitor_data = compute_monitor_data sources binaries rounds in
   let all, bad, packages = generate_stats monitor_data in
   let affected = List.map (fun x ->
-    Package.Name.of_string (Package.get "source" (fst x))
+    Package.Name.of_string (Package.get "package" (fst x))
   ) (List.flatten monitor_data) in
   let mytitle =
     try
@@ -738,7 +742,7 @@ let print_html_monitor sources binaries dep_graph rounds =
     List.fold_left begin fun (rows, i) xs ->
       let names, rows =
       (List.fold_left begin fun (arch_any_s, acc) (source, states) ->
-        let src = Package.get "source" source in
+        let src = Package.get "package" source in
         let in_testing =
           try not (Package.get "is-in-testing" source = "no")
           with Not_found -> true
