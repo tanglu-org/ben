@@ -40,6 +40,7 @@ let _ (* Setting up options *) =
     Benl_clflags.mirror_sources := "file:///srv/ftp-master.debian.org/mirror";
     Ben_monitor.use_cache := true;
     Ben_monitor.run_debcheck := true;
+    Ben_monitor.use_projectb := true;
     Ben_monitor.output_type := Xhtml;
   end
 
@@ -55,6 +56,9 @@ let rec parse_local_args = function
       parse_local_args xs
   | ("--base"|"-b")::x::xs ->
       base := x;
+      parse_local_args xs
+  | ("--do-not-use-projectb"|"-np")::xs ->
+      Ben_monitor.use_projectb := false;
       parse_local_args xs
   | x::xs -> x::(parse_local_args xs)
   | [] -> []
@@ -123,7 +127,7 @@ let update_test () =
 
 let update_cache () =
   let () = clear_cache () in
-  Ben_download.download_all ()
+  if not !Ben_monitor.use_projectb then Ben_download.download_all ()
 
 let profile_of_file file =
   try
