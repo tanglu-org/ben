@@ -67,12 +67,12 @@ end
 module Marshal = Benl_marshal.Make(Marshallable)
 open Marshallable
 
-module type ORIGIN = sig
-  val get_binaries :
-    ([ `binary ] as 'a) Package.t PAMap.t -> string -> 'a Package.t PAMap.t
-  val get_sources :
-    ([ `source ] as 'a, 'a Package.t) M.t -> ('a, 'a Package.t) M.t
-end
+type origin = {
+  get_binaries :
+    ([ `binary ] as 'a) Package.t PAMap.t -> string -> 'a Package.t PAMap.t;
+  get_sources :
+    ([ `source ] as 'b, 'b Package.t) M.t -> ('b, 'b Package.t) M.t;
+}
 
 let format_arch x =
   let f = match x with
@@ -98,8 +98,8 @@ let relevant_source_keys =
   [ "package"; "source"; "version"; "maintainer"; "binary";
     "build-depends"; "build-depends-indep" ]
 
-module FileOrigin : ORIGIN = struct
 
+let file_origin =
   let get_binaries accu arch =
     Benl_utils.parse_control_file `binary
       (!Benl_clflags.cache_dir // ("Packages_"^arch))
@@ -116,7 +116,7 @@ module FileOrigin : ORIGIN = struct
           PAMap.add (name, arch) pkg accu
       )
       accu
-
+  in
   let get_sources accu =
     Benl_utils.parse_control_file `source
       (!Benl_clflags.cache_dir // "Sources")
@@ -133,23 +133,24 @@ module FileOrigin : ORIGIN = struct
           M.add name pkg accu
       )
       accu
+  in
+  { get_binaries = get_binaries; get_sources = get_sources }
 
-end
 
-(* Effectful functor *)
-module ProjectbOrigin (X : sig end) : ORIGIN = struct
+module StringMap = Map.Make(String)
+module StringSet = Set.Make(String)
+module IntMap = Map.Make(struct
+  type t = int
+  let compare : t -> t -> int = compare
+end)
+
+
+let mk_projectb_origin () =
 
   (* psql service=projectb must work, e.g. on ries.debian.org. To make
      it work elsewhere, copy ries:/etc/postgresql-common/pg_service.conf
      to your ~/.pg_service.conf and set up tunnels accordingly. *)
-  let projectb = new Postgresql.connection ~conninfo:"service=projectb" ()
-
-  module StringMap = Map.Make(String)
-  module StringSet = Set.Make(String)
-  module IntMap = Map.Make(struct
-    type t = int
-    let compare : t -> t -> int = compare
-  end)
+  let projectb = new Postgresql.connection ~conninfo:"service=projectb" () in
 
   let mk_wrapper_maps transform sql =
     let r = projectb#exec sql in
@@ -164,8 +165,9 @@ module ProjectbOrigin (X : sig end) : ORIGIN = struct
           )
         | _ -> assert false
     ) (IntMap.empty, StringMap.empty) r#get_all
+  in
 
-  let string_identity x = x
+  let string_identity x = x in
 
   let mk_wrappers name (key_of_id_map, id_of_key_map) =
     ((fun x ->
@@ -174,20 +176,21 @@ module ProjectbOrigin (X : sig end) : ORIGIN = struct
      (fun x ->
        try StringMap.find x id_of_key_map
        with Not_found -> ksprintf invalid_arg "id_of_%s(%s)" name x))
+  in
 
   let key_of_id, id_of_key = mk_wrappers "key"
     (mk_wrapper_maps String.lowercase "select key_id, key from metadata_keys")
+  in
 
   let suite_of_id, id_of_suite = mk_wrappers "suite"
     (mk_wrapper_maps string_identity "select id, suite_name from suite")
-
-  let maintainer_of_id, id_of_maintainer = mk_wrappers "maintainer"
-    (mk_wrapper_maps string_identity "select id, name from maintainer")
+  in
 
   let arch_of_id, id_of_arch = mk_wrappers "arch"
     (mk_wrapper_maps string_identity "select id, arch_string from architecture")
+  in
 
-  let relevant_binary_key_ids = List.map id_of_key relevant_binary_keys
+  let relevant_binary_key_ids = List.map id_of_key relevant_binary_keys in
 
   let get_binaries accu arch =
     Benl_clflags.progress "Querying projectb for %s binaries in unstable..." arch;
@@ -222,8 +225,9 @@ module ProjectbOrigin (X : sig end) : ORIGIN = struct
     ) id_indexed_map accu in
     Benl_clflags.progress "\n";
     result
+  in
 
-  let relevant_source_key_ids = List.map id_of_key relevant_source_keys
+  let relevant_source_key_ids = List.map id_of_key relevant_source_keys in
 
   let get_sources accu =
     Benl_clflags.progress "Querying projectb for sources in unstable...";
@@ -258,8 +262,10 @@ module ProjectbOrigin (X : sig end) : ORIGIN = struct
     ) id_indexed_map accu in
     Benl_clflags.progress "\n";
     result
+  in
 
-end
+  { get_binaries = get_binaries; get_sources = get_sources }
+
 
 let filter_affected { src_map = srcs; bin_map = bins } =
   let src_map = M.fold begin fun name src accu ->
@@ -339,14 +345,12 @@ let get_data () =
   if !use_cache && Sys.file_exists file then
     filter_affected (Marshal.load file)
   else
-    let module Origin = (val
-        if !use_projectb
-        then (module ProjectbOrigin (struct end) : ORIGIN)
-        else (module FileOrigin : ORIGIN)
-    : ORIGIN) in
-    let src_raw = Origin.get_sources M.empty in
+    let origin =
+      if !use_projectb then mk_projectb_origin () else file_origin
+    in
+    let src_raw = origin.get_sources M.empty in
     let bin_raw = List.fold_left
-      Origin.get_binaries PAMap.empty !Benl_clflags.architectures
+      origin.get_binaries PAMap.empty !Benl_clflags.architectures
     in
     let bin_raw = if !run_debcheck
       then inject_debcheck_data bin_raw !Benl_clflags.architectures
