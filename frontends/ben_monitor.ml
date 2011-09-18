@@ -96,6 +96,7 @@ let relevant_binary_keys =
 
 let relevant_source_keys =
   [ "package"; "source"; "version"; "maintainer"; "architecture";
+    "directory";
     "binary"; "build-depends"; "build-depends-indep" ]
 
 
@@ -244,7 +245,12 @@ let mk_projectb_origin () =
     result
   in
 
-  let relevant_source_key_ids = List.map id_of_key relevant_source_keys in
+  let relevant_source_key_ids =
+    (* beware! key "directory" does not exist in projectb and is
+       handled specifically below *)
+    List.map id_of_key
+      (List.filter (fun x -> x <> "directory") relevant_source_keys)
+  in
 
   let get_sources accu =
     Benl_clflags.progress "Querying projectb for sources in unstable...";
