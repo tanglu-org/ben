@@ -469,7 +469,7 @@ let print_text_monitor sources binaries rounds =
     let n = String.length !!!src in
     if n > accu then n else accu
   end sources 0 in
-  let src_fmt = Scanf.format_from_string (sprintf "%%%ds:" (nmax+2)) "%s" in
+  let src_fmt = Scanf.format_from_string (sprintf "%%%ds:" (nmax+3)) "%s" in
   let width =
     String.length (String.concat "   " !Benl_clflags.architectures)+6+nmax
   in
@@ -489,7 +489,12 @@ let print_text_monitor sources binaries rounds =
   list_iteri begin fun i xs ->
     printf header_fmt i;
     List.iter begin fun (src, states) ->
+      let in_testing =
+        try not (Package.get "is-in-testing" src = "no")
+        with Not_found -> true
+      in
       let sname = Package.get "source" src in
+      let sname = if in_testing then sname else "_"^sname in
       printf src_fmt sname;
       List.iter begin fun (arch, state) ->
         printf " %s" (format_arch state arch)
