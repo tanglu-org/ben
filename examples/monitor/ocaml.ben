@@ -1,0 +1,25 @@
+# Sample configuration file for monitor frontend
+title = "OCaml";
+
+# Run with "ben monitor -c ocaml.ben". With default settings, this
+# should be run after a download run. Additionally, the
+# "--run-debcheck" must be passed to be able to use the
+# "edos-debcheck" pseudo-field.
+
+# Sample of architectures representative of issues that arise with
+# OCaml packages: native, native without natdynlink, bytecode
+architectures = [ "amd64"; "armel"; "mips" ];
+
+is_affected = .maintainer ~ /debian-ocaml-maint/
+            | .build-depends ~ /ocaml/
+            | .build-depends-indep ~ /ocaml/
+            | .depends ~ /ocaml(-base)?(-nox)?-3\.1(1|2)\../;
+is_good = !.edos-debcheck ~ /uninstallable/;
+is_bad = .edos-debcheck ~ /uninstallable/;
+
+# Comment appearing in HTML output, with various linkifications
+notes = "This is a permanent tracker for the OCaml stack. For an example OCaml
+release bug, see #633304.  Further details about the language can be
+found at http://caml.inria.fr and the source package is pts:ocaml
+(buildd:ocaml). More on
+http://wiki.debian.org/Teams/OCamlTaskForce/OCamlTransitions";

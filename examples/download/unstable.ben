@@ -1,0 +1,12 @@
+# Sample configuration file for download frontend
+
+# Run with "ben download -c unstable.ben", and it will download Sources and
+# Packages for listed architectures into current directory.
+
+mirror = "http://ftp.fr.debian.org/debian";
+suite = "unstable";
+areas = [ "main"; "contrib"; "non-free" ];
+
+architectures = [
+    "amd64"; "i386"; "armel"; "mips"
+];

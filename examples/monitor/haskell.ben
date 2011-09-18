@@ -1,0 +1,10 @@
+title = "Haskell";
+
+architectures = [ "amd64" ];
+
+is_affected = .source ~ /ghc/
+            | .build-depends ~ /ghc/
+            | .build-depends ~ /haskell-devscripts/
+            | .depends ~ /libghc-/;
+is_good = !.edos-debcheck ~ /uninstallable/;
+is_bad = .edos-debcheck ~ /uninstallable/;
