@@ -95,8 +95,8 @@ let relevant_binary_keys =
     "conflicts"; "breaks" ]
 
 let relevant_source_keys =
-  [ "package"; "source"; "version"; "maintainer"; "binary";
-    "build-depends"; "build-depends-indep" ]
+  [ "package"; "source"; "version"; "maintainer"; "architecture";
+    "binary"; "build-depends"; "build-depends-indep" ]
 
 
 let file_origin =
