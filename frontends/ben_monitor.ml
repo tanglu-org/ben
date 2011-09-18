@@ -635,6 +635,14 @@ let print_html_monitor sources binaries dep_graph rounds =
   let is_good = Query.to_string (Lazy.force (is_good ())) in
   let is_bad = Query.to_string (Lazy.force (is_bad ())) in
   let archs_count = List.length !Benl_clflags.architectures in
+  let has_testing_data = match monitor_data with
+    | ((src, _) :: _) :: _ ->
+      (* if is-in-testing has been injected, it has been injected into
+         all packages, so just pick any *)
+      (try let _ = Package.get "is-in-testing" src in true
+       with Not_found -> false)
+    | _ -> false
+  in
   let html hbody =
     html ~a:[a_xmlns `W3_org_1999_xhtml]
       (head (title (pcdata (sprintf "Transition: %s" mytitle))) [
@@ -695,6 +703,13 @@ let print_html_monitor sources binaries dep_graph rounds =
               input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "unknown"] (); pcdata "unknown";
               span ~a:[a_id "count"] [];
             ];
+          div (if has_testing_data
+            then [
+              input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "notintesting"] ();
+              pcdata "ignore packages that are not in testing";
+            ]
+            else []
+          );
           hbody;
         ];
         div ~a:[a_id "footer"] [
@@ -720,7 +735,14 @@ let print_html_monitor sources binaries dep_graph rounds =
       let names, rows =
       (List.fold_left begin fun (arch_any_s, acc) (source, states) ->
         let src = Package.get "source" source in
-        let classes = [ "src"; sprintf "round%d" i ] in
+        let in_testing =
+          try not (Package.get "is-in-testing" source = "no")
+          with Not_found -> true
+        in
+        let classes =
+          [ "src"; sprintf "round%d" i ] @
+            (if in_testing then [] else ["notintesting"])
+        in
         let deps = S.elements
           (Package.Map.find (Package.Name.of_string src) dep_graph)
         in

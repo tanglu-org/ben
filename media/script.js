@@ -26,6 +26,11 @@ function update () {
     } else {
         $(".src").filter(".unknown").parent().hide();
     }
+    if ($("#notintesting").is(":checked")) {
+        $(".src").filter(".notintesting").parent().hide();
+    } else {
+        $(".src").filter(".notintesting").parent().show();
+    }
     for (i = 0; i < nb_rounds; i++) {
         if ($(".round"+i).filter(":visible").length > 0) {
             $("#header"+i).show();
@@ -40,6 +45,7 @@ function init () {
     $("#good").click(update);
     $("#bad").click(update);
     $("#unknown").click(update);
+    $("#notintesting").click(update);
     update();
 }
 
