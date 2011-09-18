@@ -565,10 +565,14 @@ let generate_stats monitor_data =
     (fun (all, bad, packages) level ->
       List.fold_left
         (fun (all, bad, packages) (package, statuses) ->
+          let is_in_testing =
+            try Package.get "is-in-testing" package = "yes"
+            with _ -> false
+          in
           let package =
             Package.Name.of_string (Package.get "source" package)
           in
-          if List.mem Outdated statuses then
+          if List.mem Outdated statuses && is_in_testing then
             all+1, bad+1, package::packages
           else if List.mem Up_to_date statuses then
             all+1, bad, package::packages
