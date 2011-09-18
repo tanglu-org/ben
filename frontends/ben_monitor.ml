@@ -29,6 +29,7 @@ module S = Package.Set
 let use_cache = ref false
 let use_colors = ref false
 let run_debcheck = ref false
+let use_projectb = ref false
 
 type output_type = Text | Xhtml | Levels
 let output_type = ref Levels
@@ -338,7 +339,11 @@ let get_data () =
   if !use_cache && Sys.file_exists file then
     filter_affected (Marshal.load file)
   else
-    let module Origin = FileOrigin in
+    let module Origin = (val
+        if !use_projectb
+        then (module ProjectbOrigin (struct end) : ORIGIN)
+        else (module FileOrigin : ORIGIN)
+    : ORIGIN) in
     let src_raw = Origin.get_sources M.empty in
     let bin_raw = List.fold_left
       Origin.get_binaries PAMap.empty !Benl_clflags.architectures
@@ -374,6 +379,9 @@ let rec parse_local_args = function
       parse_local_args xs
   | "--html"::xs ->
       output_type := Xhtml;
+      parse_local_args xs
+  | "--use-projectb"::xs ->
+      use_projectb := true;
       parse_local_args xs
   | x::xs -> x::(parse_local_args xs)
   | [] -> []
