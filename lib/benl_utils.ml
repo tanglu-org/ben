@@ -24,12 +24,12 @@ open Lexing
 module S = Package.Set
 let p = Benl_clflags.progress
 
-let parse_control_file kind filename to_forget f accu =
+let parse_control_file kind filename keep f accu =
   let base = Filename.basename filename in
   p "Parsing %s..." base;
   let result =
     with_in_file filename begin fun ic ->
-      Benl_lexer.stanza_fold to_forget begin fun name p accu ->
+      Benl_lexer.stanza_fold keep begin fun name p accu ->
         f
           (Package.Name.of_string name)
           (Package.of_assoc kind p)

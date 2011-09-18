@@ -81,10 +81,15 @@ let format_arch x =
     else f
   in f
 
+let relevant_binary_keys =
+  [ "package"; "source"; "version"; "maintainer"; "architecture";
+    "provides"; "depends"; "pre-depends";
+    "conflicts"; "breaks" ]
+
 let parse_binaries accu arch =
   Benl_utils.parse_control_file `binary
     (!Benl_clflags.cache_dir // ("Packages_"^arch))
-    to_forget
+    (fun x -> List.mem x relevant_binary_keys)
     (fun name pkg accu ->
       try
         let old_pkg = PAMap.find (name, arch) accu in
@@ -98,10 +103,14 @@ let parse_binaries accu arch =
     )
     accu
 
+let relevant_source_keys =
+  [ "package"; "source"; "version"; "maintainer"; "binary";
+    "build-depends"; "build-depends-indep" ]
+
 let parse_sources accu =
   Benl_utils.parse_control_file `source
     (!Benl_clflags.cache_dir // "Sources")
-    to_forget
+    (fun x -> List.mem x relevant_source_keys)
     (fun name pkg accu ->
       try
         let old_pkg = M.find name accu in

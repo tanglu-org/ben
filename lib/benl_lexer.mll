@@ -36,14 +36,14 @@ let space = [' ' '\t']
 let field_name = ['a'-'z' 'A'-'Z' '-' '_' '0'-'9']+
 let field_value = ([^ '\n'] | '\n' space)*
 
-rule stanza to_forget empty accu = parse
+rule stanza keep empty accu = parse
   | (field_name as name) space* ":" space* (field_value as value) '\n'?
       {
         let name = String.lowercase name in
-        if Fields.mem name to_forget then
-          stanza to_forget false accu lexbuf
+        if keep name then
+          stanza keep false ((name, value)::accu) lexbuf
         else
-          stanza to_forget false ((name, value)::accu) lexbuf
+          stanza keep false accu lexbuf
       }
   | '\n'+ | eof
         {
@@ -116,10 +116,10 @@ and comment = parse
   | _ { comment lexbuf }
 
 {
-  let stanza_fold headers_to_forget f lexbuf accu =
+  let stanza_fold keep f lexbuf accu =
     let rec loop accu =
       let stanza =
-        try Some (stanza headers_to_forget true [] lexbuf)
+        try Some (stanza keep true [] lexbuf)
         with End_of_file -> None
       in
       match stanza with
