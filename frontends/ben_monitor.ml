@@ -709,7 +709,7 @@ let print_html_monitor sources binaries dep_graph rounds =
             ];
           div (if has_testing_data
             then [
-              input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "notintesting"] ();
+              input ~a:[a_input_type `Checkbox; a_id "notintesting"] ();
               pcdata "ignore packages that are not in testing";
             ]
             else []
@@ -759,12 +759,15 @@ let print_html_monitor sources binaries dep_graph rounds =
         let arch_any = Package.get "architecture" source <> "all" in
         let arch_any_s = if arch_any then src::arch_any_s else arch_any_s in
         let overrall_state = overrall_state states in
+        let src_text =
+          (pts src)::(if in_testing then [] else [pcdata " (sid only)"])
+        in
         arch_any_s,
         tr (td ~a:[ a_class ("srcname" :: (overrall_state @ classes));
                     a_id src;
                     a_title deps
                   ]
-              [ pts src ])
+              src_text)
           (
           td
             ~a:[ a_class [ "src"] ]
