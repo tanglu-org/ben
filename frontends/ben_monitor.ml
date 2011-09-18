@@ -227,6 +227,23 @@ let mk_projectb_origin () =
     result
   in
 
+  let sources_in_testing =
+    Benl_clflags.progress "Querying projectb for sources in testing...";
+    let sql = sprintf
+      "select (select value from source_metadata as b where key_id = %d and b.src_id = a.source) from src_associations as a where a.suite = %d"
+      (id_of_key "source") (id_of_suite "testing")
+    in
+    let r = projectb#exec sql in
+    assert (r#status = Postgresql.Tuples_ok);
+    let result = Array.fold_left (fun a row ->
+      match row with
+        | [| source |] -> StringSet.add source a
+        | _ -> assert false
+    ) StringSet.empty r#get_all in
+    Benl_clflags.progress "\n";
+    result
+  in
+
   let relevant_source_key_ids = List.map id_of_key relevant_source_keys in
 
   let get_sources accu =
@@ -249,7 +266,13 @@ let mk_projectb_origin () =
     ) IntMap.empty r#get_all in
     let result = IntMap.fold (fun _ assoc accu ->
       let pkg = Package.of_assoc `source assoc in
-      let name = Package.Name.of_string (Package.get "source" pkg) in
+      let sname = Package.get "source" pkg in
+      let is_in_testing =
+        if StringSet.mem sname sources_in_testing
+        then "yes" else "no"
+      in
+      let pkg = Package.add "is-in-testing" is_in_testing pkg in
+      let name = Package.Name.of_string sname in
       let ver = Package.get "version" pkg in
       try
         let old_pkg = M.find name accu in
