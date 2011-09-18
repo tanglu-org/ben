@@ -86,7 +86,7 @@ let relevant_binary_keys =
     "provides"; "depends"; "pre-depends";
     "conflicts"; "breaks" ]
 
-let parse_binaries accu arch =
+let get_binaries accu arch =
   Benl_utils.parse_control_file `binary
     (!Benl_clflags.cache_dir // ("Packages_"^arch))
     (fun x -> List.mem x relevant_binary_keys)
@@ -107,7 +107,7 @@ let relevant_source_keys =
   [ "package"; "source"; "version"; "maintainer"; "binary";
     "build-depends"; "build-depends-indep" ]
 
-let parse_sources accu =
+let get_sources accu =
   Benl_utils.parse_control_file `source
     (!Benl_clflags.cache_dir // "Sources")
     (fun x -> List.mem x relevant_source_keys)
@@ -202,9 +202,9 @@ let get_data () =
   if !use_cache && Sys.file_exists file then
     filter_affected (Marshal.load file)
   else
-    let src_raw = parse_sources M.empty in
+    let src_raw = get_sources M.empty in
     let bin_raw = List.fold_left
-      parse_binaries PAMap.empty !Benl_clflags.architectures
+      get_binaries PAMap.empty !Benl_clflags.architectures
     in
     let bin_raw = if !run_debcheck
       then inject_debcheck_data bin_raw !Benl_clflags.architectures
