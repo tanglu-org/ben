@@ -446,10 +446,11 @@ let combine_states state1 state2 =
 let compute_monitor_data sources binaries rounds =
   List.map begin fun xs ->
     let packages = List.sort (fun x y -> compare !!!x !!!y) xs in
-    List.map begin fun src ->
+    List.map begin fun sname ->
+      let src = M.find sname sources in
       let states =
         List.map begin fun arch ->
-          let pkgs = Package.binaries (M.find src sources) in
+          let pkgs = Package.binaries src in
           List.fold_left begin fun accu pkg ->
             try
               let pkg = PAMap.find (pkg, arch) binaries in
@@ -488,7 +489,8 @@ let print_text_monitor sources binaries rounds =
   list_iteri begin fun i xs ->
     printf header_fmt i;
     List.iter begin fun (src, states) ->
-      printf src_fmt !!!src;
+      let sname = Package.get "source" src in
+      printf src_fmt sname;
       List.iter begin fun (arch, state) ->
         printf " %s" (format_arch state arch)
       end (List.combine !Benl_clflags.architectures states);
@@ -536,6 +538,9 @@ let generate_stats monitor_data =
     (fun (all, bad, packages) level ->
       List.fold_left
         (fun (all, bad, packages) (package, statuses) ->
+          let package =
+            Package.Name.of_string (Package.get "source" package)
+          in
           if List.mem Outdated statuses then
             all+1, bad+1, package::packages
           else if List.mem Up_to_date statuses then
@@ -589,7 +594,9 @@ let beautify_text =
 let print_html_monitor sources binaries dep_graph rounds =
   let monitor_data = compute_monitor_data sources binaries rounds in
   let all, bad, packages = generate_stats monitor_data in
-  let affected = List.map fst (List.flatten monitor_data) in
+  let affected = List.map (fun x ->
+    Package.Name.of_string (Package.get "source" (fst x))
+  ) (List.flatten monitor_data) in
   let mytitle =
     try
       Query.to_string ~escape:false (Query.of_expr (Benl_clflags.get_config "title"))
@@ -684,20 +691,21 @@ let print_html_monitor sources binaries dep_graph rounds =
   let rows, _ =
     List.fold_left begin fun (rows, i) xs ->
       let names, rows =
-      (List.fold_left begin fun (arch_any_s, acc) (src, states) ->
+      (List.fold_left begin fun (arch_any_s, acc) (source, states) ->
+        let src = Package.get "source" source in
         let classes = [ "src"; sprintf "round%d" i ] in
-        let deps = S.elements (Package.Map.find src dep_graph) in
+        let deps = S.elements
+          (Package.Map.find (Package.Name.of_string src) dep_graph)
+        in
         let deps = List.filter (fun p -> List.mem p affected) deps in
         let deps = match (List.map (!!!) deps) with
           | [] -> ""
           | _ as l-> "Dependencies: " ^ (String.concat ", " l) in
-        let source = M.find src sources in
         let version = Package.get "version" source in
         let directory = Package.get "directory" source in
         let arch_any = Package.get "architecture" source <> "all" in
-        let arch_any_s = if arch_any then !!!src::arch_any_s else arch_any_s in
+        let arch_any_s = if arch_any then src::arch_any_s else arch_any_s in
         let overrall_state = overrall_state states in
-        let src = !!!src in
         arch_any_s,
         tr (td ~a:[ a_class ("srcname" :: (overrall_state @ classes));
                     a_id src;
