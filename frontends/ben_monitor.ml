@@ -248,6 +248,7 @@ let mk_projectb_origin () =
 
   let get_sources accu =
     Benl_clflags.progress "Querying projectb for sources in unstable...";
+    (* get general metadata *)
     let sql = sprintf
       "select b.src_id, b.key_id, b.value from src_associations as a join (select * from source_metadata where key_id in (%s)) as b on b.src_id = a.source where a.suite = %d"
       (String.concat "," (List.map string_of_int relevant_source_key_ids))
@@ -264,6 +265,27 @@ let mk_projectb_origin () =
           IntMap.add src_id ((key_of_id key_id, value)::old) a
         | _ -> assert false
     ) IntMap.empty r#get_all in
+    (* get .dsc paths to compute directories *)
+    let sql = sprintf
+      "select a.source, c.filename from src_associations as a join (select * from dsc_files) as b on b.source = a.source, files as c where a.suite = %d and b.file = c.id and c.filename like '%%dsc'"
+      (id_of_suite "unstable")
+    in
+    let r = projectb#exec sql in
+    assert (r#status = Postgresql.Tuples_ok);
+    let id_indexed_dscs = Array.fold_left (fun a row ->
+      match row with
+        | [| src_id; filename |] ->
+          let src_id = int_of_string src_id in
+          IntMap.add src_id filename a
+        | _ -> assert false
+    ) IntMap.empty r#get_all in
+    (* fake directory entry by merging id_indexed_{map,dscs} *)
+    let id_indexed_map = IntMap.mapi (fun src_id pkg ->
+      let directory = Filename.concat "pool"
+        (Filename.dirname (IntMap.find src_id id_indexed_dscs))
+      in
+      ("directory", directory) :: pkg
+    ) id_indexed_map in
     let result = IntMap.fold (fun _ assoc accu ->
       let pkg = Package.of_assoc `source assoc in
       let sname = Package.get "source" pkg in
