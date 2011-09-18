@@ -66,6 +66,13 @@ end
 module Marshal = Benl_marshal.Make(Marshallable)
 open Marshallable
 
+module type ORIGIN = sig
+  val get_binaries :
+    ([ `binary ] as 'a) Package.t PAMap.t -> string -> 'a Package.t PAMap.t
+  val get_sources :
+    ([ `source ] as 'a, 'a Package.t) M.t -> ('a, 'a Package.t) M.t
+end
+
 let format_arch x =
   let f = match x with
     | Unknown -> (fun x -> "."^x^".")
@@ -86,43 +93,47 @@ let relevant_binary_keys =
     "provides"; "depends"; "pre-depends";
     "conflicts"; "breaks" ]
 
-let get_binaries accu arch =
-  Benl_utils.parse_control_file `binary
-    (!Benl_clflags.cache_dir // ("Packages_"^arch))
-    (fun x -> List.mem x relevant_binary_keys)
-    (fun name pkg accu ->
-      try
-        let old_pkg = PAMap.find (name, arch) accu in
-        let old_ver = Package.get "version" old_pkg in
-        let ver = Package.get "version" pkg in
-        if Benl_base.Version.compare old_ver ver < 0
-        then PAMap.add (name, arch) pkg accu
-        else accu
-      with _ ->
-        PAMap.add (name, arch) pkg accu
-    )
-    accu
-
 let relevant_source_keys =
   [ "package"; "source"; "version"; "maintainer"; "binary";
     "build-depends"; "build-depends-indep" ]
 
-let get_sources accu =
-  Benl_utils.parse_control_file `source
-    (!Benl_clflags.cache_dir // "Sources")
-    (fun x -> List.mem x relevant_source_keys)
-    (fun name pkg accu ->
-      try
-        let old_pkg = M.find name accu in
-        let old_ver = Package.get "version" old_pkg in
-        let ver = Package.get "version" pkg in
-        if Benl_base.Version.compare old_ver ver < 0
-        then M.add name pkg accu
-        else accu
-      with _ ->
-        M.add name pkg accu
-    )
-    accu
+module FileOrigin : ORIGIN = struct
+
+  let get_binaries accu arch =
+    Benl_utils.parse_control_file `binary
+      (!Benl_clflags.cache_dir // ("Packages_"^arch))
+      (fun x -> List.mem x relevant_binary_keys)
+      (fun name pkg accu ->
+        try
+          let old_pkg = PAMap.find (name, arch) accu in
+          let old_ver = Package.get "version" old_pkg in
+          let ver = Package.get "version" pkg in
+          if Benl_base.Version.compare old_ver ver < 0
+          then PAMap.add (name, arch) pkg accu
+          else accu
+        with _ ->
+          PAMap.add (name, arch) pkg accu
+      )
+      accu
+
+  let get_sources accu =
+    Benl_utils.parse_control_file `source
+      (!Benl_clflags.cache_dir // "Sources")
+      (fun x -> List.mem x relevant_source_keys)
+      (fun name pkg accu ->
+        try
+          let old_pkg = M.find name accu in
+          let old_ver = Package.get "version" old_pkg in
+          let ver = Package.get "version" pkg in
+          if Benl_base.Version.compare old_ver ver < 0
+          then M.add name pkg accu
+          else accu
+        with _ ->
+          M.add name pkg accu
+      )
+      accu
+
+end
 
 let filter_affected { src_map = srcs; bin_map = bins } =
   let src_map = M.fold begin fun name src accu ->
@@ -202,9 +213,10 @@ let get_data () =
   if !use_cache && Sys.file_exists file then
     filter_affected (Marshal.load file)
   else
-    let src_raw = get_sources M.empty in
+    let module Origin = FileOrigin in
+    let src_raw = Origin.get_sources M.empty in
     let bin_raw = List.fold_left
-      get_binaries PAMap.empty !Benl_clflags.architectures
+      Origin.get_binaries PAMap.empty !Benl_clflags.architectures
     in
     let bin_raw = if !run_debcheck
       then inject_debcheck_data bin_raw !Benl_clflags.architectures
