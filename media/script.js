@@ -11,25 +11,30 @@
 */
 
 function update () {
+    $(".src").removeClass("mark");
     if ($("#good").is(":checked")) {
         $(".src").filter(".good").parent().show();
     } else {
-        $(".src").filter(".good").parent().hide();
+        $(".src").filter(".good").addClass("mark").parent().hide();
     }
     if ($("#bad").is(":checked")) {
         $(".src").filter(".bad").parent().show();
     } else {
-        $(".src").filter(".bad").parent().hide();
+        $(".src").filter(".bad").addClass("mark").parent().hide();
     }
     if ($("#unknown").is(":checked")) {
         $(".src").filter(".unknown").parent().show();
     } else {
-        $(".src").filter(".unknown").parent().hide();
+        $(".src").filter(".unknown").addClass("mark").parent().hide();
     }
     if ($("#notintesting").is(":checked")) {
         $(".src").filter(".notintesting").parent().hide();
     } else {
-        $(".src").filter(".notintesting").parent().show();
+        $(".src").filter(".notintesting").each(function() {
+            if(!$(this).hasClass("mark")) {
+                $(this).parent().show();
+            }
+        });
     }
     for (i = 0; i < nb_rounds; i++) {
         if ($(".round"+i).filter(":visible").length > 0) {
