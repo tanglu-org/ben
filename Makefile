@@ -34,6 +34,9 @@ GENERATED := modules.png
 # C stubs magic for bytecode
 export CAML_LD_LIBRARY_PATH=$(PWD)/_build/lib
 
+# Installation
+BINDIR := $(DESTDIR)$(PREFIX)/bin
+
 all: ocamlbuild $(GENERATED)
 
 .PHONY: ocamlbuild clean env
@@ -49,3 +52,9 @@ clean:
 
 env:
 	@echo export CAML_LD_LIBRARY_PATH=$(CAML_LD_LIBRARY_PATH)
+
+.PHONY: install
+install:
+	install -d $(BINDIR)
+	install $(NAME).$(ARCH) $(BINDIR)/ben
+	ocamlfind install $(NAME) $(wildcard $(addprefix _build/lib/,*.cmi *.mli *.cma *.cmx *.cmxa *.a *.so)) META

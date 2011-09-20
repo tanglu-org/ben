@@ -1,0 +1,5 @@
+name = "ben"
+version = "0.6"
+description = "Libraries for Debian maintainers"
+archive(byte) = "benl.cma"
+archive(native) = "benl.cmxa"
