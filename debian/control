@@ -1,0 +1,55 @@
+Source: ben
+Priority: optional
+Maintainer: Debian OCaml Maintainers <debian-ocaml-maint@lists.debian.org>
+Uploaders:
+ Stéphane Glondu <glondu@debian.org>,
+ Mehdi Dogguy <mehdi@debian.org>
+Build-Depends:
+ debhelper (>= 8),
+ dh-ocaml (>= 0.9.6~),
+ graphviz,
+ ocaml-findlib,
+ menhir,
+ libpcre-ocaml-dev,
+ libocamlgraph-ocaml-dev,
+ libfileutils-ocaml-dev,
+ libocsigen-xhtml-ocaml-dev,
+ libpostgresql-ocaml-dev,
+ ocaml-nox (>= 3.11.1-3~)
+Standards-Version: 3.9.2
+Section: ocaml
+Vcs-Browser: http://git.debian.org/?p=collab-maint/ben.git
+Vcs-Git: git://git.debian.org/git/collab-maint/ben.git
+
+Package: libben-ocaml-dev
+Architecture: any
+Depends:
+ ${ocaml:Depends},
+ ${shlibs:Depends},
+ ${misc:Depends}
+Provides: ${ocaml:Provides}
+Recommends: ocaml-findlib
+Description: OCaml libraries for Debian maintainers
+ This package contains miscellaneous OCaml libraries to make the life
+ of an OCaml-aware Debian package maintainer easier.
+
+Package: ben
+Architecture: any
+Depends:
+ ${ocaml:Depends},
+ ${shlibs:Depends},
+ ${misc:Depends}
+Provides: ${ocaml:Provides}
+Enhances: devscripts
+Description: toolbox for Debian maintainers
+ This is a collection of useful tools that Debian maintainers can use
+ to make their packaging work easier. They all work with regular
+ Debian package list files, and should be useful for Debian
+ derivatives as well. This package ships a single executable, "ben",
+ with the following subcommands:
+  * download: download a set of package list files from a mirror
+  * monitor: monitor the status of a set of packages across several
+    architectures (useful for transitions)
+  * query: query packages using their metadata (similar to grep-dctrl,
+    but uses a dedicated query language)
+  * tracker: frontend to multiple monitors

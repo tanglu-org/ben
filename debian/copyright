@@ -1,0 +1,38 @@
+Packaged-By: Stéphane Glondu <steph@glondu.net>
+Packaged-Date: Tue, 20 Sep 2011 20:24:13 +0200
+Upstream-Author: Stéphane Glondu <steph@glondu.net>
+
+Files: *
+Copyright: © 2009-2011 Stéphane Glondu <steph@glondu.net>
+           © 2010-2011 Mehdi Dogguy <mehdi@dogguy.org>
+License: AGPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version, with the additional
+ exemption that compiling, linking, and/or using OpenSSL is allowed.
+ .
+ This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Affero General Public License for more details.
+ .
+ You should have received a copy of the GNU Affero General Public
+ License along with this program.  If not, see
+ <http://www.gnu.org/licenses/>.
+
+Files: lib/benl_dpkg.c
+Copyright: © 1995 Ian Jackson <ian@chiark.greenend.org.uk>
+License: GPL-2+
+ This is free software; you can redistribute it and/or modify it under
+ the terms of the GNU General Public License as published by the Free
+ Software Foundation; either version 2 of the License, or (at your
+ option) any later version.
+ .
+ This is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ for more details.
+ .
+ The complete text of the GNU General Public License can be found in
+ `/usr/share/common-licenses/GPL-2'.

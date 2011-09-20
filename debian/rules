@@ -1,0 +1,25 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+include /usr/share/ocaml/ocamlvars.mk
+
+export DESTDIR := $(CURDIR)/debian/tmp
+export OCAMLFIND_DESTDIR := $(DESTDIR)$(OCAML_STDLIB_DIR)
+
+# FIXME: xhtmlpretty.cmxa is only available on natdynlink architectures
+ifeq ($(OCAML_NATDYNLINK),yes)
+export OCAMLBEST := native
+else
+export OCAMLBEST := byte
+endif
+
+%:
+	dh $@ --with ocaml
+
+.PHONY: override_dh_auto_install
+override_dh_auto_install:
+	mkdir -p $(OCAMLFIND_DESTDIR) $(DESTDIR)$(OCAML_DLL_DIR)
+	$(MAKE) install PREFIX=/usr
+
+.PHONY: override_dh_install
+override_dh_install:
+	dh_install --fail-missing -X.so.owner
