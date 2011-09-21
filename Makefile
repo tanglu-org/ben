@@ -35,7 +35,7 @@ ARCH := $(if $(HAS_OPT),native,byte)
 OCAMLBUILD := ocamlbuild $(CLASSIC) $(if $(HAS_OPT),,-byte-plugin)
 
 # Build
-TARGETS := lib/benl.cma bin/$(NAME).$(ARCH) modules.dot
+TARGETS := lib/benl.cma $(if $(HAS_OPT),lib/benl.cmxa) bin/$(NAME).$(ARCH) modules.dot
 GENERATED := modules.png
 
 # C stubs magic for bytecode
