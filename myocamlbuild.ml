@@ -37,7 +37,9 @@ let require pkg =
 
 let ocamlfind x = S[A"ocamlfind"; A x]
 let has_ocamlopt = try_exec "which ocamlopt"
-let best = if has_ocamlopt then "native" else "byte"
+let best =
+  try Sys.getenv "OCAMLBEST"
+  with Not_found -> if has_ocamlopt then "native" else "byte"
 let _ = if not (try_exec "ocamlfind printconf") then raise Require_findlib
 let _ = List.iter require packages
 let main_executable = sprintf "bin/%s.%s" name best
