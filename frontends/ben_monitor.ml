@@ -691,8 +691,8 @@ let print_html_monitor sources binaries dep_graph rounds =
           ();
       ])
       (body [
-        h1 ~a:[a_id "title"] [pcdata "Debian Release Management"];
-        h2 ~a:[a_id "subtitle"] [pcdata (sprintf "Transition: %s" mytitle)];
+        h1 ~a:[a_id "title"] [a_link "http://release.debian.org/"  "Debian Release Management"];
+        h2 ~a:[a_id "subtitle"] [a_link "http://release.debian.org/transitions/" "Transitions"; pcdata (sprintf " → %s" mytitle)];
         div ~a:[a_id "body"] [
           b [ pcdata "Parameters:" ];
           ul~a:[ a_class ["parameters"] ]

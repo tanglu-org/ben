@@ -230,7 +230,7 @@ let tracker profiles =
           ();
       ])
       (body [
-        h1 ~a:[a_id "title"] [pcdata "Debian Release Management"];
+        h1 ~a:[a_id "title"] [a_link "http://release.debian.org/" "Debian Release Management"];
         h2 ~a:[a_id "subtitle"] [pcdata "Transition tracker"];
         div ~a:[a_id "body"] (
           b [ a_link
