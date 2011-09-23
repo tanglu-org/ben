@@ -32,7 +32,7 @@ TARGETS := lib/benl.cma bin/$(NAME).$(ARCH) modules.dot
 GENERATED := modules.png
 
 # C stubs magic for bytecode
-export CAML_LD_LIBRARY_PATH=$(PWD)/_build/lib
+export CAML_LD_LIBRARY_PATH=$(CURDIR)/_build/lib
 
 # Installation
 BINDIR := $(DESTDIR)$(PREFIX)/bin
