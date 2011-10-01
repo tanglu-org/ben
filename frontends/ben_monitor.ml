@@ -669,7 +669,7 @@ let print_html_monitor sources binaries dep_graph rounds =
           );
         script
           ~contenttype:"text/javascript"
-          ~a:[a_src (uri_of_string "http://code.jquery.com/jquery-latest.js")]
+          ~a:[a_src (uri_of_string "media/jquery.min.js")]
           (pcdata "");
         script
           ~contenttype:"text/javascript"
