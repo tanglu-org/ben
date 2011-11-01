@@ -168,10 +168,9 @@ let sadd mp p t =
 
 let generate_stats results =
   List.fold_left
-    (fun (transitions, packages, profiles)
+    (fun (packages, profiles)
       (all, bad, htmlp, p, t, pkgs) ->
         let pkgs = List.map Package.Name.to_string pkgs in
-        let transitions = SMap.add t pkgs transitions in
         let profiles = sadd
           profiles
           (string_of_profile p)
@@ -179,28 +178,32 @@ let generate_stats results =
         in
         let packages = List.fold_left
           (fun packages package ->
-            sadd packages package t
+            sadd packages package (t, p)
           )
           packages
           pkgs in
-        transitions, packages, profiles
+        packages, profiles
     )
-    (SMap.empty, SMap.empty, SMap.empty)
+    (SMap.empty, SMap.empty)
     results
 
-let dump_lists (smap, file) =
+let dump_yaml smap file =
+  let transition (name, profile) =
+    sprintf "[ '%s' , '%s' ]"
+      name
+      (string_of_profile profile)
+  in
   let file = Filename.concat !base (Filename.concat "export" file) in
   let string = SMap.fold
     (fun key list string ->
-      sprintf "%s'%s': [%s]\n"
+      sprintf "%s- {'name': '%s',\n   'list': [%s]\n  }\n"
         string
         key
-        (String.concat ", " list)
+        (String.concat ", " (List.map transition list))
     )
     smap
     ""
   in
-  let string = sprintf "{\n%s}" string in
   try
     let newfile = FilePath.add_extension file "new" in
     dump_to_file newfile string;
@@ -316,11 +319,8 @@ let main args =
               )
               []
       in
-      let transitions, packages, profiles = generate_stats results in
-      let () = List.iter dump_lists
-        [transitions, "transitions.yaml";
-         packages   , "packages.yaml"]
-      in
+      let packages, profiles = generate_stats results in
+      let () = dump_yaml packages "transitions.yaml" in
       (match !tconfig with
         | None -> tracker profiles
         | Some _ -> ());
