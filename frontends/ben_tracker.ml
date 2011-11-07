@@ -320,7 +320,7 @@ let main args =
               []
       in
       let packages, profiles = generate_stats results in
-      let () = dump_yaml packages "transitions.yaml" in
+      let () = dump_yaml packages "packages.yaml" in
       (match !tconfig with
         | None -> tracker profiles
         | Some _ -> ());
