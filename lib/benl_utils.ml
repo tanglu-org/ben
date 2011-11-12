@@ -68,3 +68,8 @@ let dump_to_file name string =
   let outchan = open_out name in
   let () = output_string outchan string in
   close_out outchan
+
+let dump_xhtml_to_file filename xhtml =
+  let outchan = open_out filename in
+  let () = XHTML.P.print (output_string outchan) xhtml in
+  close_out outchan

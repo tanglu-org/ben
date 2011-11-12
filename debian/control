@@ -13,7 +13,7 @@ Build-Depends:
  libpcre-ocaml-dev,
  libocamlgraph-ocaml-dev,
  libfileutils-ocaml-dev,
- libocsigen-xhtml-ocaml-dev,
+ libtyxml-ocaml-dev,
  libpostgresql-ocaml-dev,
  ocaml-nox (>= 3.11.1-3~)
 Standards-Version: 3.9.2

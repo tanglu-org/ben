@@ -27,3 +27,4 @@ val parse_config_file : string -> Benl_types.config
 
 val file_content : string -> string
 val dump_to_file : string -> string -> unit
+val dump_xhtml_to_file : string -> XHTML.M.html -> unit

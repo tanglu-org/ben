@@ -22,7 +22,7 @@ open Printf
 open Ocamlbuild_plugin
 
 let name = "ben"
-let packages = ["unix"; "pcre"; "ocamlgraph"; "ocsigen_xhtml"; "fileutils"; "threads"; "postgresql"]
+let packages = ["unix"; "pcre"; "ocamlgraph"; "tyxml"; "fileutils"; "threads"; "postgresql"]
 
 exception Require_findlib
 exception Missing_findlib_package of string

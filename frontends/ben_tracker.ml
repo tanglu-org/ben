@@ -195,7 +195,7 @@ let run_monitor file =
   let html = !base $ htmlp in
   let result = all, bad, htmlp, profile, transition, packages in
   try
-    Benl_utils.dump_to_file html output;
+    Benl_utils.dump_xhtml_to_file html output;
     result
   with _ ->
     eprintf "Something bad happened while generating %s!\n" html;
@@ -321,10 +321,10 @@ let tracker profiles =
     []
   in
   let index = Filename.concat !base "index.html" in
-  let output = Xhtmlpretty.xhtml_print (html mybody) in
+  let output = html mybody in
   try
     p "Generating index...\n";
-    dump_to_file index output
+    dump_xhtml_to_file index output
   with exc ->
     eprintf "E: %s\n" $ Printexc.to_string exc;
     Printexc.print_backtrace stderr;

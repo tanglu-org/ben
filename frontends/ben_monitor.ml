@@ -809,7 +809,7 @@ let print_html_monitor sources binaries dep_graph rounds =
       :: rows, (i - 1)
     end ([], (List.length monitor_data - 1)) (List.rev monitor_data) in
   let table = table (tr (td [ pcdata "" ]) []) rows in
-  (all, bad, packages, Xhtmlpretty.xhtml_print (html table))
+  (all, bad, packages, html table)
 
 let print_dependency_levels dep_graph rounds =
   list_iteri begin fun i xs ->
@@ -845,7 +845,9 @@ let main args =
     | Xhtml ->
       let (_, _, _, output) =
         print_html_monitor sources binaries dep_graph rounds
-      in printf "%s\n" output
+      in
+      XHTML.P.print print_string output;
+      print_newline ()
 
 let frontend = {
   Benl_frontend.name = "monitor";
