@@ -44,6 +44,9 @@ let _ (* Setting up options *) =
     Ben_monitor.output_type := Xhtml;
   end
 
+let lockf () =
+  FilePath.concat !cache_dir !lock
+
 let rec parse_local_args = function
   | ("--config-dir"|"-cd")::x::xs ->
       config_dir := x;
@@ -287,9 +290,13 @@ let tracker profiles =
     Printexc.print_backtrace stderr;
     eprintf "Something bad happened while generating index.html!\n"
 
+let _ = at_exit (fun () ->
+  rm [lockf ()]
+)
+
 let main args =
   let _ = parse_local_args (Benl_frontend.parse_common_args args) in
-  let lockf = FilePath.concat !cache_dir !lock in
+  let lockf = lockf () in
   if test Exists lockf then
     eprintf "Please wait until %s is removed!\n" lockf
   else
@@ -323,12 +330,10 @@ let main args =
       let () = dump_yaml packages "packages.yaml" in
       (match !tconfig with
         | None -> tracker profiles
-        | Some _ -> ());
-      rm [lockf]
+        | Some _ -> ())
     with exc ->
       eprintf "E: %s\n" $ Printexc.to_string exc;
-      Printexc.print_backtrace stderr;
-      rm [lockf]
+      Printexc.print_backtrace stderr
 
 let frontend = {
   Benl_frontend.name = "tracker";
