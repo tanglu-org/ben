@@ -480,16 +480,21 @@ let compute_monitor_data sources binaries rounds =
     let packages = List.sort (fun x y -> compare !!!x !!!y) xs in
     List.map begin fun sname ->
       let src = M.find sname sources in
+      let src_name = Package.get "package" src in
+      let src_version = Package.get "version" src in
       let states =
         List.map begin fun arch ->
-          let pkgs = Package.binaries src in
-          List.fold_left begin fun accu pkg ->
-            try
-              let pkg = PAMap.find (pkg, arch) binaries in
+          (* FIXME: indexing by name+arch is not a good idea after all *)
+          PAMap.fold (fun (_, arch') pkg accu ->
+            if arch' = arch &&
+              Package.get "source" pkg = src_name &&
+              Package.get "source-version" pkg = src_version
+            then
               let state = compute_state pkg in
               combine_states accu state
-            with Not_found -> accu
-          end Unknown pkgs
+            else
+              accu
+          ) binaries Unknown
         end !Benl_clflags.architectures
       in src, states
     end packages
@@ -830,16 +835,6 @@ let compute_graph () =
          M.add name (Package.Name.of_string source) accu)
       binaries
       M.empty
-  in
-  let src_of_bin =
-    M.fold
-      (fun name pkg accu ->
-         List.fold_left
-           (fun accu bin -> M.add bin name accu)
-           accu
-           (Package.binaries pkg))
-      sources
-      src_of_bin
   in
   let dep_graph = Dependencies.get_dep_graph sources src_of_bin in
   let rounds = Dependencies.topo_split dep_graph in

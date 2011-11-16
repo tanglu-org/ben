@@ -108,9 +108,6 @@ let get_and_split =
 let build_depends x =
   get_and_split "build-depends-indep" x @ get_and_split "build-depends" x
 
-let binaries x =
-  get_and_split "binary" x
-
 type dependency = {
   dep_name : string;
   dep_version : (comparison * string) option;
