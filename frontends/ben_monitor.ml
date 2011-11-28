@@ -492,7 +492,7 @@ let compute_monitor_data sources binaries rounds =
             then
               let state = compute_state pkg in
               if List.mem arch !ignored_architectures then
-                combine_states accu Up_to_date
+                combine_states accu Unknown
               else
                 combine_states accu state
             else
