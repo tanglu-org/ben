@@ -52,7 +52,7 @@ let string_of_string escaping string =
   else
     string
 
-let debian_architectures =
+let debian_architectures = ref
   [ "amd64"; "armel";
     "i386"; "ia64";
     "kfreebsd-amd64"; "kfreebsd-i386";

@@ -25,23 +25,65 @@ open Ben_monitor
 
 let ($) f x = f x
 
-let base = ref "/srv/release.debian.org/www/transitions"
-let config_dir = ref "/srv/release.debian.org/www/transitions/config"
+let base = ref "."
+let config_dir = ref "config"
+let global_config = ref (FilePath.concat !config_dir "global.conf")
 let cache_file = ref "monitor.cache"
 let lock = ref "ben.lock"
 let update = ref false
 let tconfig = ref None
 
-let _ (* Setting up options *) =
-  (* Hack for the release team *)
-  if Sys.file_exists "/srv/release.debian.org" then begin
-    Benl_clflags.cache_dir := "/srv/release.debian.org/tmp/ben_cache";
-    Benl_clflags.mirror_binaries := "file:///srv/ftp-master.debian.org/mirror";
-    Benl_clflags.mirror_sources := "file:///srv/ftp-master.debian.org/mirror";
-    Ben_monitor.use_cache := true;
-    Ben_monitor.run_debcheck := true;
-    Ben_monitor.use_projectb := true;
-    Ben_monitor.output_type := Xhtml;
+open Benl_types
+
+let read_global_config () =
+  let is_string = function
+    | EString _ -> true
+    | _ -> false
+  in
+  let is_strings = List.for_all is_string
+  in
+  let strings_of_elist l =
+    List.map (function EString s -> s | _ -> "") l
+  in
+  if Sys.file_exists !global_config then begin
+    let config = Benl_utils.parse_config_file !global_config in
+    List.iter (function
+        | "architectures", (EList archs) when (is_strings archs) ->
+          Benl_base.debian_architectures := strings_of_elist archs
+        | "suite", (EString suite) ->
+          Benl_clflags.suite := suite
+        | "areas", (EList areas) when (is_strings areas) ->
+          Benl_clflags.areas := strings_of_elist areas
+        | "base", (EString path) ->
+          base := path
+        | "config_dir", (EString path) ->
+          config_dir := path
+        | "cache_dir", (EString dir) ->
+          Benl_clflags.cache_dir := dir
+        | "mirror_binaries", (EString mirror) ->
+          Benl_clflags.mirror_binaries := mirror
+        | "mirror_sources", (EString mirror) ->
+          Benl_clflags.mirror_sources := mirror
+        | "mirror", (EString mirror) ->
+          Benl_clflags.mirror_sources := mirror;
+          Benl_clflags.mirror_binaries := mirror
+        | "use_cache", Etrue ->
+          Ben_monitor.use_cache := true
+        | "run_debcheck", Etrue ->
+          Ben_monitor.run_debcheck := true
+        | "use_projectb", Etrue ->
+          Ben_monitor.use_projectb := true
+        | "output_type", (EString format) ->
+          (match String.lowercase format with
+            (* FIXME: do something intelligent when format is not xhtml *)
+            | "text" -> Ben_monitor.output_type := Text
+            | "levels" -> Ben_monitor.output_type := Levels
+            | _ -> Ben_monitor.output_type := Xhtml
+          )
+        | _ -> ()
+          (* FIXME: Do something smarter for remaining cases *)
+    )
+    config
   end
 
 let lockf () =
@@ -50,6 +92,9 @@ let lockf () =
 let rec parse_local_args = function
   | ("--config-dir"|"-cd")::x::xs ->
       config_dir := x;
+      parse_local_args xs
+  | ("--global-conf"|"-g")::x::xs ->
+      global_config := x;
       parse_local_args xs
   | ("--transition"|"-t")::x::xs ->
       tconfig := Some x;
@@ -60,8 +105,8 @@ let rec parse_local_args = function
   | ("--base"|"-b")::x::xs ->
       base := x;
       parse_local_args xs
-  | ("--do-not-use-projectb"|"-np")::xs ->
-      Ben_monitor.use_projectb := false;
+  | ("--use-projectb")::xs ->
+      Ben_monitor.use_projectb := true;
       parse_local_args xs
   | x::xs -> x::(parse_local_args xs)
   | [] -> []
@@ -74,7 +119,8 @@ let help () =
     [ "--base|-b [dir]", "Specifies the \"base\" directory.";
       "--config-dir|-cd [dir]", "Location of ben trackers";
       "--transition|-t [profile/transition]", "Generate only that tracker page";
-      "--update|-u", "Updates cache files"
+      "--update|-u", "Updates cache files";
+      "--use-projectb", "Use projectb to get content of various Packages files"
     ]
 
 exception Unknown_profile of string
@@ -296,6 +342,7 @@ let _ = at_exit (fun () ->
 
 let main args =
   let _ = parse_local_args (Benl_frontend.parse_common_args args) in
+  let _ = read_global_config () in
   let lockf = lockf () in
   if test Exists lockf then
     eprintf "Please wait until %s is removed!\n" lockf

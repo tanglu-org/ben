@@ -25,7 +25,7 @@ let get_env_default var default =
 
 let dry_run = ref false
 let verbose = ref false
-let architectures = ref Benl_base.debian_architectures
+let architectures = ref !Benl_base.debian_architectures
 let cache_dir = ref (get_env_default "BEN_CACHE_DIR" (Sys.getcwd ()))
 let mirror_binaries = ref "http://ftp.fr.debian.org/debian"
 let mirror_sources = ref "http://ftp.fr.debian.org/debian"
@@ -35,7 +35,7 @@ let areas = ref ["main"; "contrib"; "non-free"]
 let quiet = ref false
 
 let reset () =
-  let () = architectures := Benl_base.debian_architectures in
+  let () = architectures := !Benl_base.debian_architectures in
   let () = suite := "unstable" in
   let () = areas := ["main"; "contrib"; "non-free"] in
   ()
