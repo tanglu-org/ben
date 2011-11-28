@@ -58,7 +58,7 @@ let debian_architectures = ref
     "kfreebsd-amd64"; "kfreebsd-i386";
     "mips"; "mipsel"; "powerpc"; "s390"; "sparc" ]
 
-let fucked_architectures : string list ref = ref []
+let ignored_architectures : string list ref = ref []
 
 let debian_ports_architectures =
   [ "armhf"; "avr32"; "m68k"; "powerpcspe";

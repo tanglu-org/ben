@@ -491,7 +491,7 @@ let compute_monitor_data sources binaries rounds =
               Package.get "source-version" pkg = src_version
             then
               let state = compute_state pkg in
-              if List.mem arch !fucked_architectures then
+              if List.mem arch !ignored_architectures then
                 combine_states accu Up_to_date
               else
                 combine_states accu state
