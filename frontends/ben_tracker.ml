@@ -50,6 +50,8 @@ let read_global_config () =
     List.iter (function
         | "architectures", (EList archs) when (is_strings archs) ->
           Benl_base.debian_architectures := strings_of_elist archs
+        | "fucked", (EList archs) when (is_strings archs) ->
+          Benl_base.fucked_architectures := strings_of_elist archs
         | "suite", (EString suite) ->
           Benl_clflags.suite := suite
         | "areas", (EList areas) when (is_strings areas) ->
