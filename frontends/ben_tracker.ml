@@ -58,24 +58,24 @@ let read_global_config () =
           Benl_clflags.areas := strings_of_elist areas
         | "base", (EString path) ->
           base := path
-        | "config_dir", (EString path) ->
+        | "config-dir", (EString path) ->
           config_dir := path
-        | "cache_dir", (EString dir) ->
+        | "cache-dir", (EString dir) ->
           Benl_clflags.cache_dir := dir
-        | "mirror_binaries", (EString mirror) ->
+        | "mirror-binaries", (EString mirror) ->
           Benl_clflags.mirror_binaries := mirror
-        | "mirror_sources", (EString mirror) ->
+        | "mirror-sources", (EString mirror) ->
           Benl_clflags.mirror_sources := mirror
         | "mirror", (EString mirror) ->
           Benl_clflags.mirror_sources := mirror;
           Benl_clflags.mirror_binaries := mirror
-        | "use_cache", Etrue ->
+        | "use-cache", Etrue ->
           Ben_monitor.use_cache := true
-        | "run_debcheck", Etrue ->
+        | "run-debcheck", Etrue ->
           Ben_monitor.run_debcheck := true
-        | "use_projectb", Etrue ->
+        | "use-projectb", Etrue ->
           Ben_monitor.use_projectb := true
-        | "output_type", (EString format) ->
+        | "output-type", (EString format) ->
           (match String.lowercase format with
             (* FIXME: do something intelligent when format is not xhtml *)
             | "text" -> Ben_monitor.output_type := Text
