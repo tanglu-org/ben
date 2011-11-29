@@ -34,28 +34,20 @@ let update = ref false
 let tconfig = ref None
 
 open Benl_types
+open Benl_frontend
 
 let read_global_config () =
-  let is_string = function
-    | EString _ -> true
-    | _ -> false
-  in
-  let is_strings = List.for_all is_string
-  in
-  let strings_of_elist l =
-    List.map (function EString s -> s | _ -> "") l
-  in
   if Sys.file_exists !global_config then begin
     let config = Benl_utils.parse_config_file !global_config in
     List.iter (function
-        | "architectures", (EList archs) when (is_strings archs) ->
-          Benl_base.debian_architectures := strings_of_elist archs
-        | "ignored", (EList archs) when (is_strings archs) ->
-          Benl_base.ignored_architectures := strings_of_elist archs
+        | "architectures", archs ->
+          Benl_base.debian_architectures := check_string_list "architectures" archs
+        | "ignored", archs ->
+          Benl_base.ignored_architectures := check_string_list "ignored" archs
         | "suite", (EString suite) ->
           Benl_clflags.suite := suite
-        | "areas", (EList areas) when (is_strings areas) ->
-          Benl_clflags.areas := strings_of_elist areas
+        | "areas", areas ->
+          Benl_clflags.areas := check_string_list "areas" areas
         | "base", (EString path) ->
           base := path
         | "config-dir", (EString path) ->

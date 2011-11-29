@@ -28,5 +28,7 @@ val register_frontend : frontend -> unit
 val get_frontend : string -> frontend
 val available_frontends : unit -> string list
 val parse_common_args : string list -> string list
+val check_string : string -> Benl_types.expr -> string
+val check_string_list : string -> Benl_types.expr -> string list
 val read_config_file : string -> (string * Benl_types.expr) list
 val main : unit -> unit
