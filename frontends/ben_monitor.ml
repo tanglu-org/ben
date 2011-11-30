@@ -485,16 +485,13 @@ let compute_monitor_data sources binaries rounds =
       let states =
         List.map begin fun arch ->
           (* FIXME: indexing by name+arch is not a good idea after all *)
-          PAMap.fold (fun (_, arch') pkg accu ->
+          arch, PAMap.fold (fun (_, arch') pkg accu ->
             if arch' = arch &&
               Package.get "source" pkg = src_name &&
               Package.get "source-version" pkg = src_version
             then
               let state = compute_state pkg in
-              if List.mem arch !ignored_architectures then
-                combine_states accu Unknown
-              else
-                combine_states accu state
+              combine_states accu state
             else
               accu
           ) binaries Unknown
@@ -538,7 +535,7 @@ let print_text_monitor sources binaries rounds =
       printf src_fmt sname;
       List.iter begin fun (arch, state) ->
         printf " %s" (format_arch state arch)
-      end (List.combine !Benl_clflags.architectures states);
+      end states;
       printf "\n";
     end xs;
     printf "\n"
@@ -566,16 +563,10 @@ let changelog src dir =
 
 module SS = Set.Make(String)
 
-let uniq l =
-  let s = List.fold_left
-    begin fun s state -> SS.add (Benl_base.class_of_status state) s end
-    (SS.empty) l in
-  SS.elements s
-
 let overrall_state l =
-  match uniq l with
-    | _ as l when List.for_all (fun s -> s = "unknown") l -> [ "unknown" ]
-    | _ as l when List.for_all (fun s -> s <> "bad") l -> [ "good" ]
+  match l with
+    | _ as l when List.for_all (fun (a,s) -> s = Unknown || List.mem a !Benl_base.ignored_architectures) l -> [ "unknown" ]
+    | _ as l when List.for_all (fun (a,s) -> s <> Outdated || List.mem a !Benl_base.ignored_architectures) l -> [ "good" ]
     | _ -> [ "bad" ]
 
 let generate_stats monitor_data =
@@ -590,6 +581,7 @@ let generate_stats monitor_data =
           let package =
             Package.Name.of_string (Package.get "package" package)
           in
+          let statuses = List.map snd statuses in
           if List.mem Outdated statuses && (not !use_projectb || is_in_testing) then
             all+1, bad+1, package::packages
           else if List.mem Up_to_date statuses then
@@ -795,7 +787,7 @@ let print_html_monitor sources binaries dep_graph rounds =
               changelog (sprintf "%s" version) directory;
               pcdata ")" ]
           ::
-          (List.map begin fun state ->
+          (List.map begin fun (_, state) ->
             (td ~a:[ a_class [ Benl_base.class_of_status state ] ]
                [ small [ pcdata (Benl_base.string_of_status state) ] ])
           end states)
