@@ -248,6 +248,7 @@ let dump_yaml smap file =
     ""
   in
   try
+    mkdir ~parent:true (Filename.dirname file);
     let newfile = FilePath.add_extension file "new" in
     dump_to_file newfile string;
     mv newfile file
