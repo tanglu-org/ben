@@ -481,14 +481,12 @@ let compute_monitor_data sources binaries rounds =
     List.map begin fun sname ->
       let src = M.find sname sources in
       let src_name = Package.get "package" src in
-      let src_version = Package.get "version" src in
       let states =
         List.map begin fun arch ->
           (* FIXME: indexing by name+arch is not a good idea after all *)
           arch, PAMap.fold (fun (_, arch') pkg accu ->
             if arch' = arch &&
-              Package.get "source" pkg = src_name &&
-              Package.get "source-version" pkg = src_version
+              Package.get "source" pkg = src_name
             then
               let state = compute_state pkg in
               combine_states accu state
