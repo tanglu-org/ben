@@ -114,7 +114,7 @@ let help () =
       "--config-dir|-cd [dir]", "Location of ben trackers";
       "--transition|-t [profile/transition]", "Generate only that tracker page";
       "--update|-u", "Updates cache files";
-      "--use-projectb", "Use projectb to get content of various Packages files"
+      "--use-projectb", "Get package lists from Projectb database";
     ]
 
 exception Unknown_profile of string

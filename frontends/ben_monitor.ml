@@ -452,6 +452,7 @@ let help () =
     )
     [ "--use-cache", "Use cache";
       "--run-debcheck", "Run edos-debcheck and add virtual .edos-debcheck field";
+      "--use-projectb", "Get package lists from Projectb database";
       "--color", "Color if text output";
       "--text", "Select text output format";
       "--html", "Select HTML output format" ]
