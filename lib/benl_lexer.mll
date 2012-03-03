@@ -22,7 +22,6 @@
   open Benl_error
   open Benl_base
   open Benl_parser
-  module Name = Package.Name
 
   let id_from_token s =
     match (String.lowercase s) with
