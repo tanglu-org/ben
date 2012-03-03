@@ -170,4 +170,4 @@ let main () = match Array.to_list Sys.argv with
           | _ ->
               print_help ()
       in
-      wrap (fun () -> sc.main args)
+      sc.main args

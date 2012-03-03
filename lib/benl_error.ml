@@ -35,7 +35,7 @@ type error =
 
 exception Error of error
 
-let string_of_exn = function
+let string_of_error = function
   | Illegal_escape c ->
       sprintf "illegal escape of %C" c
   | Unknown_error e ->
@@ -66,13 +66,8 @@ let string_of_exn = function
 let _ =
   Printexc.register_printer
     (function
-      | Error exn -> Some (string_of_exn exn)
+      | Error exn -> Some ("ben-specific error: " ^ (string_of_error exn))
       | _ -> None
     )
 
 let raise e = Pervasives.raise (Error e)
-let not_found () = Pervasives.raise Not_found
-
-let wrap f =
-  try f ()
-  with Error e -> eprintf "ben error: %s\n" (string_of_exn e)
