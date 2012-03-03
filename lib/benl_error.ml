@@ -63,7 +63,7 @@ let string_of_error = function
         "parse error in file %S, line %d, character %d"
         file line column
 
-let _ =
+let () =
   Printexc.register_printer
     (function
       | Error exn -> Some ("ben-specific error: " ^ (string_of_error exn))

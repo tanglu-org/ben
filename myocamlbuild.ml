@@ -40,11 +40,11 @@ let has_ocamlopt = try_exec "which ocamlopt"
 let best =
   try Sys.getenv "OCAMLBEST"
   with Not_found -> if has_ocamlopt then "native" else "byte"
-let _ = if not (try_exec "ocamlfind printconf") then raise Require_findlib
-let _ = List.iter require packages
+let () = if not (try_exec "ocamlfind printconf") then raise Require_findlib
+let () = List.iter require packages
 let main_executable = sprintf "bin/%s.%s" name best
 
-let _ =
+let () =
   dispatch begin function
 
     | Before_options ->

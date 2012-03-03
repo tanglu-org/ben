@@ -182,7 +182,7 @@ let run_monitor file =
   let (!!) = Filename.basename in
   let profile = profile_of_file file in
   let transition = FilePath.chop_extension !!file in
-  let _ = p "Generating (%s) %s\n" (string_of_profile profile) transition in
+  let () = p "Generating (%s) %s\n" (string_of_profile profile) transition in
   (* Reset config variables before reading .ben files *)
   let () = Benl_clflags.reset () in
   (* Read a .ben file *)
@@ -331,13 +331,13 @@ let tracker profiles =
     Printexc.print_backtrace stderr;
     eprintf "Something bad happened while generating index.html!\n"
 
-let _ = at_exit (fun () ->
+let () = at_exit (fun () ->
   rm [lockf ()]
 )
 
 let main args =
   let _ = parse_local_args (Benl_frontend.parse_common_args args) in
-  let _ = read_global_config () in
+  let () = read_global_config () in
   let lockf = lockf () in
   if test Exists lockf then
     eprintf "Please wait until %s is removed!\n" lockf
