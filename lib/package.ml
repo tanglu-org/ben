@@ -76,12 +76,6 @@ let of_assoc sort x =
         (List.remove_assoc "source" x)
     | `source -> x
 
-module BinaryIndex = struct
-  type t = [`binary] Name.t * string
-  let compare = Pervasives.compare
-end
-module BinaryMap = Map.Make(BinaryIndex)
-
 module Map = struct
   module M = Map.Make(String)
   type ('a, 'b) t = 'b M.t

@@ -47,9 +47,6 @@ val of_assoc :
   ([< `binary | `source] as 'a) ->
   (string * string) list -> 'a t
 
-module BinaryMap : Map.S
-  with type key = [`binary] Name.t * string
-
 module Map : sig
   type ('a, 'b) t
   val empty : ('a, 'b) t
