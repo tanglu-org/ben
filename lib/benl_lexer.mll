@@ -59,7 +59,6 @@ and token = parse
   | ">=" { GE }
   | (">" | ">>") { GT }
   | '~' { MATCH }
-  | '%' { DEPMATCH }
   | '|' { OR }
   | '&' { AND }
   | '!' { NOT }

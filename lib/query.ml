@@ -36,7 +36,7 @@ let parens show expr =
   else expr
 
 let rec to_string_b ?(escape = true) last_op = function
-  | EMatch (f, r) ->
+  | EMatch (f, ERegexp r) ->
       sprintf ".%s ~ %s" f (string_of_regexp r)
   | ENot e ->
       sprintf "!%s" (to_string_b "!" e)
@@ -56,19 +56,20 @@ let rec to_string_b ?(escape = true) last_op = function
   | EString x -> string_of_string escape x
   | EVersion (cmp, x) ->
     parens (last_op <> "") (sprintf "%s \"%s\"" (string_of_cmp cmp) x)
-  | EDep (field, package, Some (cmp, ref_version)) ->
-    parens (last_op <> "") (sprintf "%s %% (\"%s\" %s \"%s\")"
+  | EMatch (field, EDep (package, cmp, ref_version)) ->
+    parens (last_op <> "") (sprintf "%s ~ \"%s\" %s \"%s\""
                 field
                 package
                 (string_of_cmp cmp)
                 ref_version)
-  | EDep (field, package, None) ->
-    parens (last_op <> "") (sprintf "%s %% (\"%s\")" field package)
+  | EMatch (field, EString package) ->
+    parens (last_op <> "") (sprintf "%s ~ \"%s\"" field package)
+  | x -> raise (Unexpected_expression "<unable to convert to string>")
 
 let to_string ?(escape = true) = to_string_b ~escape ""
 
 let rec eval kind pkg = function
-  | EMatch (field, (r, rex)) ->
+  | EMatch (field, ERegexp (r, rex)) ->
       begin try
         let value = Package.get field pkg in
         ignore (Pcre.exec ~rex value);
@@ -86,12 +87,10 @@ let rec eval kind pkg = function
       eval kind pkg e1 && eval kind pkg e2
   | ENot e ->
       not (eval kind pkg e)
-  | (EString _ | EList _) as x ->
-      raise (Unexpected_expression (to_string x))
   | EVersion (cmp, ref_version) ->
       let value = Package.get "version" pkg in
       version_compare cmp value ref_version
-  | EDep (field, package, Some (cmp, refv)) ->
+  | EMatch (field, EDep (package, cmp, refv)) ->
     let deps = Package.dependencies field pkg in
     List.exists
       (fun x ->
@@ -105,11 +104,13 @@ let rec eval kind pkg = function
                 | _, _ -> false  (* FIXME: missing cases *)
         end)
       deps
-  | EDep (field, package, None) ->
+  | EMatch (field, EString package) ->
     let deps = Package.dependencies field pkg in
     List.exists
       (fun x -> x.Package.dep_name = package)
       deps
+  | x ->
+      raise (Unexpected_expression (to_string x))
 
 let eval_source x = eval `source x
 let eval_binary x = eval `binary x
@@ -124,9 +125,7 @@ let rec fields accu = function
       fields (fields accu e1) e2
   | EList xs ->
       List.fold_left fields accu xs
-  | ESource | EString _ ->
+  | ESource | EString _ | ERegexp _ | EDep _ ->
       accu
   | EVersion _ ->
       Fields.add "version" accu
-  | EDep (field, _, _) ->
-    Fields.add field accu

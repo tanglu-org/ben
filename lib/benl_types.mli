@@ -31,15 +31,16 @@ type comparison = Le | Lt | Eq | Gt | Ge
 type expr =
   | Etrue
   | Efalse
-  | EMatch of field * regexp
+  | EMatch of field * expr
   | ENot of expr
   | EAnd of expr * expr
   | EOr of expr * expr
   | ESource
   | EList of expr list
   | EString of string
+  | ERegexp of regexp
   | EVersion of comparison * string
-  | EDep of string * string * (comparison * string) option
+  | EDep of string * comparison * string
 (** The abstract syntax tree of configuration items. *)
 
 type config = (string * expr) list
