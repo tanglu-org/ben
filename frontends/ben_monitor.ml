@@ -91,8 +91,8 @@ let format_arch x =
 
 let relevant_binary_keys =
   [ "package"; "source"; "version"; "maintainer"; "architecture";
-    "provides"; "depends"; "pre-depends";
-    "conflicts"; "breaks" ]
+    "provides"; "depends"; "pre-depends"; "replaces";
+    "conflicts"; "breaks"; "suggests"; "recommends"; "enhances" ]
 
 let relevant_source_keys =
   [ "package"; "source"; "version"; "maintainer"; "architecture";
