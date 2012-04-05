@@ -55,15 +55,15 @@ let rec to_string_b ?(escape = true) last_op = function
   | ESource -> "source"
   | EString x -> string_of_string escape x
   | EVersion (cmp, x) ->
-    parens (last_op <> "") (sprintf "%s \"%s\"" (string_of_cmp cmp) x)
+    parens (last_op <> "") (sprintf ".%s \"%s\"" (string_of_cmp cmp) x)
   | EMatch (field, EDep (package, cmp, ref_version)) ->
-    parens (last_op <> "") (sprintf "%s ~ \"%s\" %s \"%s\""
+    parens (last_op <> "") (sprintf ".%s ~ \"%s\" %s \"%s\""
                 field
                 package
                 (string_of_cmp cmp)
                 ref_version)
   | EMatch (field, EString package) ->
-    parens (last_op <> "") (sprintf "%s ~ \"%s\"" field package)
+    parens (last_op <> "") (sprintf ".%s ~ \"%s\"" field package)
   | x -> raise (Unexpected_expression "<unable to convert to string>")
 
 let to_string ?(escape = true) = to_string_b ~escape ""
