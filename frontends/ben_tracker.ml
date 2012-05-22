@@ -281,6 +281,10 @@ let tracker profiles =
         h2 ~a:[a_id "subtitle"] [pcdata "Transition tracker"];
         div ~a:[a_id "body"] (
           b [ a_link
+                "http://wiki.debian.org/Teams/ReleaseTeam/Transitions"
+                "Transition documentation"
+            ] ::
+            b [ a_link
                 "http://bugs.debian.org/cgi-bin/pkgreport.cgi?users=release.debian.org@packages.debian.org;tag=transition"
                 "Bugs tagged \"transition\""
             ] ::
