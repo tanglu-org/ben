@@ -284,6 +284,7 @@ let tracker profiles =
                 "http://wiki.debian.org/Teams/ReleaseTeam/Transitions"
                 "Transition documentation"
             ] ::
+            br () ::
             b [ a_link
                 "http://bugs.debian.org/cgi-bin/pkgreport.cgi?users=release.debian.org@packages.debian.org;tag=transition"
                 "Bugs tagged \"transition\""
