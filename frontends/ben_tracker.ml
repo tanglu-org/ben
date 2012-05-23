@@ -193,7 +193,11 @@ let run_monitor file =
   let htmlf = FilePath.replace_extension !!file "html" in
   let htmlp = "html" $ htmlf in
   let html = !base $ htmlp in
-  let result = all, bad, htmlp, profile, transition, packages in
+  let export =
+    try
+      Benl_clflags.get_config "export" = Benl_types.Etrue
+    with _ -> true in
+  let result = all, bad, htmlp, profile, transition, packages, export in
   try
     Benl_utils.dump_xhtml_to_file html output;
     result
@@ -212,7 +216,7 @@ let sadd mp p t =
 let generate_stats results =
   List.fold_left
     (fun (packages, profiles)
-      (all, bad, htmlp, p, t, pkgs) ->
+      (all, bad, htmlp, p, t, pkgs, export) ->
         let pkgs = List.map Package.Name.to_string pkgs in
         let profiles = sadd
           profiles
@@ -221,7 +225,7 @@ let generate_stats results =
         in
         let packages = List.fold_left
           (fun packages package ->
-            sadd packages package (t, p)
+            sadd packages package (t, p, export)
           )
           packages
           pkgs in
@@ -231,7 +235,7 @@ let generate_stats results =
     results
 
 let dump_yaml smap file =
-  let transition (name, profile) =
+  let transition (name, profile, _) =
     sprintf "[ '%s' , '%s' ]"
       name
       (string_of_profile profile)
@@ -239,6 +243,7 @@ let dump_yaml smap file =
   let file = Filename.concat !base (Filename.concat "export" file) in
   let string = SMap.fold
     (fun key list string ->
+      let list = List.filter (fun (_,_,export) -> export) list in
       sprintf "%s- {'name': '%s',\n   'list': [%s]\n  }\n"
         string
         key
