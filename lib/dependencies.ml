@@ -31,6 +31,7 @@ module G = struct
     type t = [`source] Name.t
     let equal = (=)
     let hash = Hashtbl.hash
+    let compare = Pervasives.compare
   end
 
   type t = ([`source], [`source] S.t) M.t * ([`source], [`source] S.t) M.t
