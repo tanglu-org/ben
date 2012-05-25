@@ -605,7 +605,7 @@ let cut_head text head =
   with _ -> text
 
 let beautify_text =
-  let r_link = Pcre.regexp "#[0-9]{4,}|[a-z]{3,}://[^\\s><]+|[Pp][Tt][Ss]:[a-z0-9+\\-\\.]+|[Bb][Uu][Ii][Ll][Dd][Dd]:[a-z0-9+\\-\\.]+" in
+  let r_link = Pcre.regexp "#[0-9]{4,}|[a-z]{3,}://[^\\s><]+|<[^\\s><]+@[^\\s><]+>|[Pp][Tt][Ss]:[a-z0-9+\\-\\.]+|[Bb][Uu][Ii][Ll][Dd][Dd]:[a-z0-9+\\-\\.]+" in
   fun text ->
     let t = Pcre.full_split ~rex:r_link text in
     List.map
@@ -616,6 +616,10 @@ let beautify_text =
           if s.[0] = '#' then
             let ss = String.sub s 1 (String.length s -1) in
             let link = sprintf "http://bugs.debian.org/%s" ss in
+            a_link link s
+          else if s.[0] = '<' then
+            let ss = String.sub s 1 (String.length s - 2) in
+            let link = sprintf "http://lists.debian.org/%s" ss in
             a_link link s
           else if starts_with l "pts" then
             let text = cut_head s "pts:" in
