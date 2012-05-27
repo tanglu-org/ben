@@ -563,10 +563,16 @@ let changelog src dir =
 module SS = Set.Make(String)
 
 let overrall_state l =
-  match l with
-    | _ as l when List.for_all (fun (a,s) -> s = Unknown || List.mem a !Benl_base.ignored_architectures) l -> [ "unknown" ]
-    | _ as l when List.for_all (fun (a,s) -> s <> Outdated || List.mem a !Benl_base.ignored_architectures) l -> [ "good" ]
-    | _ -> [ "bad" ]
+  let _ (* ignored_archs *), release_archs =
+    List.partition
+      (fun (arch,_) -> List.mem arch !Benl_base.ignored_architectures)
+      l in
+  if List.for_all (fun (_,status) -> status = Unknown) release_archs then
+    Unknown
+  else if List.for_all (fun (_,status) -> status <> Outdated) release_archs then
+    Up_to_date
+  else
+    Outdated
 
 let generate_stats monitor_data =
   List.fold_left
@@ -580,13 +586,18 @@ let generate_stats monitor_data =
           let package =
             Package.Name.of_string (Package.get "package" package)
           in
-          let statuses = List.map snd statuses in
-          if List.mem Outdated statuses && (not !use_projectb || is_in_testing) then
-            all+1, bad+1, package::packages
-          else if List.mem Up_to_date statuses then
-            all+1, bad, package::packages
-          else
-            all, bad, package::packages
+          let overrall_state = overrall_state statuses in
+          let packages = package::packages in
+          let return all bad =
+            all, bad, packages
+          in
+          match overrall_state with
+          | Outdated when (not !use_projectb || is_in_testing) ->
+              return (all+1) (bad+1)
+          | Up_to_date ->
+              return (all+1) bad
+          | _ ->
+              return all bad
         )
         (all, bad, packages)
         level
@@ -771,7 +782,7 @@ let print_html_monitor sources binaries dep_graph rounds =
         let directory = Package.get "directory" source in
         let arch_any = Package.get "architecture" source <> "all" in
         let arch_any_s = if arch_any then src::arch_any_s else arch_any_s in
-        let overrall_state = overrall_state states in
+        let overrall_state = [ class_of_status (overrall_state states) ] in
         let src_text =
           (pts src)::(if in_testing then [] else [pcdata " (sid only)"])
         in
