@@ -225,7 +225,10 @@ let generate_stats results =
         in
         let packages = List.fold_left
           (fun packages package ->
-            sadd packages package (t, p, export)
+            if export then
+              sadd packages package (t, p, export)
+            else
+              packages
           )
           packages
           pkgs in
