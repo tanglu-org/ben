@@ -35,6 +35,10 @@ div.footer {
   padding: 0.5em;
 }
 
+.level {
+  text-align: left;
+}
+
 .src {
   background: #eeeeee;
 }
