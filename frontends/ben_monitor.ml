@@ -760,11 +760,9 @@ let print_html_monitor sources binaries dep_graph rounds =
   let archs_columns = List.map begin fun arch ->
     th [ small [ pcdata (abrege arch) ] ]
   end !Benl_clflags.architectures in
-  let empty_col = td [ pcdata "" ] in
   let archs_columns round header =
     tr ~a:[ a_id (sprintf "header%d" round) ]
-      header
-      (empty_col :: archs_columns) in
+      header archs_columns in
   let rows, _ =
     List.fold_left begin fun (rows, i) xs ->
       let names, rows =
@@ -821,7 +819,7 @@ let print_html_monitor sources binaries dep_graph rounds =
         else buildd true (sprintf "%s&compact=compact" (String.concat "," (List.map escape names))) in
       let rc_bugs_link = rc_bugs (String.concat ";src=" (List.map escape names)) in
       archs_columns i
-        (th ~a:[ a_class [ "level" ] ]
+        (th ~a:[ a_colspan 2; a_class [ "level" ] ]
            [ pcdata (sprintf "Dependency level %d" (i+1));
              pcdata " (";
              buildd_link; pcdata " "; rc_bugs_link;
