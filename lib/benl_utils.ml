@@ -71,5 +71,5 @@ let dump_to_file name string =
 
 let dump_xhtml_to_file filename xhtml =
   let outchan = open_out filename in
-  let () = XHTML.P.print (output_string outchan) xhtml in
+  let () = Xhtml.P.print (output_string outchan) xhtml in
   close_out outchan

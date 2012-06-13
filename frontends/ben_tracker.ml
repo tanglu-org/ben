@@ -17,7 +17,7 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-open XHTML.M
+open Xhtml.M
 open Printf
 open Benl_clflags
 open Benl_utils

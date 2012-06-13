@@ -21,7 +21,7 @@ open Printf
 open Benl_core
 open Benl_base
 open Benl_marshal
-open XHTML.M
+open Xhtml.M
 
 module M = Package.Map
 module S = Package.Set
@@ -866,7 +866,7 @@ let main args =
       let (_, _, _, output) =
         print_html_monitor sources binaries dep_graph rounds
       in
-      XHTML.P.print print_string output;
+      Xhtml.P.print print_string output;
       print_newline ()
 
 let frontend = {
