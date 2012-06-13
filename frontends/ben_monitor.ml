@@ -555,6 +555,13 @@ let buildd show src =
     "buildd"
   else small [ pcdata "arch:all" ]
 
+let rc_bugs src =
+  a_link
+    (sprintf
+       "http://bugs.debian.org/cgi-bin/pkgreport.cgi?sev-inc=serious;sev-inc=grave;sev-inc=critical;src=%s"
+       src)
+    "RC bugs"
+
 let changelog src dir =
   small [ a_link
     (sprintf "http://packages.debian.org/changelogs/%s/current/changelog" dir)
@@ -808,15 +815,16 @@ let print_html_monitor sources binaries dep_graph rounds =
           )
         :: acc
       end ([], rows) (List.rev xs)) in
-      let link =
+      let buildd_link =
         if names = []
         then small [ pcdata "arch:all" ]
         else buildd true (sprintf "%s&compact=compact" (String.concat "," (List.map escape names))) in
+      let rc_bugs_link = rc_bugs (String.concat ";src=" (List.map escape names)) in
       archs_columns i
         (th ~a:[ a_class [ "level" ] ]
            [ pcdata (sprintf "Dependency level %d" (i+1));
              pcdata " (";
-             link;
+             buildd_link; pcdata " "; rc_bugs_link;
              pcdata ")"
            ]
         )
