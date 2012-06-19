@@ -300,9 +300,7 @@ let tracker profiles =
             br () :: br () ::
           mybody
         );
-        div ~a:[a_id "footer"] [
-          small [ pcdata (sprintf "Page generated on %s" (Benl_core.get_rfc2822_date ())) ]
-        ]
+        div ~a:[a_id "footer"] [ small (generated_on_text ()) ]
       ]) in
   let tget show_score (path, name, all, bad) =
     li (
