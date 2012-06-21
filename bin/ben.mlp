@@ -22,4 +22,4 @@ open Benl_frontend
 let static_frontends = [ @STATIC_FRONTENDS@ ]
 
 let () = List.iter register_frontend static_frontends
-let () = main ()
+let () = Printexc.catch main ()
