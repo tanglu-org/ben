@@ -306,7 +306,11 @@ let tracker profiles =
     li (
       (Ben_monitor.a_link path name)::
       if show_score then
-        [ pcdata (sprintf " (%d%%)" (100*(all-bad)/all)) ]
+        let score =
+          if all = 0
+          then 0
+          else 100*(all-bad)/all in
+        [ pcdata (sprintf " (%d%%)" score) ]
       else []
     )
   in
