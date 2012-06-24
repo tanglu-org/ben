@@ -20,12 +20,19 @@
 open Benl_base
 open Printf
 
+open Benl_modules
+module Marshal = Benl_marshal.Make(Marshallable)
+open Marshallable
+
 let sources_re = Pcre.regexp "Sources"
 let is_source x =
   try
     ignore (Pcre.exec ~rex:sources_re x);
     true
   with Not_found -> false
+
+let is_cache x =
+  Benl_core.ends_with x ".cache"
 
 let usage cmd =
   fprintf stderr "Usage: %s <query> [ file ... ]\n" cmd;
@@ -40,12 +47,16 @@ let main args =
     | _ -> usage (sprintf "%s query" Sys.argv.(0))
   in
   let query = Query.of_string query in
+  let caches, files = List.partition is_cache files in
   let sources, packages = List.partition is_source files in
+  let sources = caches @ sources
+  and packages = caches @ packages in
   let print kind filename =
     let keep = fun _ -> true in
-    let accu = fun _ p () ->
-      if Query.eval kind p query then Package.print stdout p
-    in match filename with
+    let eval = fun _ p ->
+      if Query.eval kind p query then Package.print stdout p in
+    let accu = fun n p () -> eval n p in
+    match filename with
     | "-" ->
       Benl_utils.parse_control_in_channel kind "standard input" stdin keep accu ()
     | filename when Benl_core.ends_with filename ".gz" ->
@@ -57,6 +68,12 @@ let main args =
       let ic = Unix.open_process_in ("bzcat " ^ filename) in
       Benl_core.with_in_channel ic begin fun ic ->
         Benl_utils.parse_control_in_channel kind filename ic keep accu ()
+      end
+    | filename when is_cache filename ->
+      let { src_map = srcs; bin_map = bins } = Marshal.load filename in
+      begin match kind with
+      | `binary -> PAMap.iter (Obj.magic eval) bins
+      | `source -> Package.Map.iter (Obj.magic eval) srcs
       end
     | filename ->
       Benl_utils.parse_control_file kind filename keep accu ()
