@@ -24,19 +24,20 @@ open Lexing
 module S = Package.Set
 let p = Benl_clflags.progress
 
+let parse_control_in_channel kind filename ic keep f accu =
+  p "Parsing %s..." filename;
+  let result = Benl_lexer.stanza_fold keep begin fun name p accu ->
+    f (Package.Name.of_string name)
+      (Package.of_assoc kind p)
+      accu
+    end (from_channel ic) accu
+  in p "\n"; result
+
 let parse_control_file kind filename keep f accu =
   let base = Filename.basename filename in
-  p "Parsing %s..." base;
-  let result =
-    with_in_file filename begin fun ic ->
-      Benl_lexer.stanza_fold keep begin fun name p accu ->
-        f
-          (Package.Name.of_string name)
-          (Package.of_assoc kind p)
-          accu
-      end (from_channel ic) accu
-    end
-  in p "\n"; result
+  with_in_file filename begin fun ic ->
+    parse_control_in_channel kind base ic keep f accu
+  end
 
 let parse_config_file filename =
   with_in_file filename begin fun ic ->

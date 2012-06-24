@@ -23,6 +23,9 @@
     This module contains handy functions not specific to Ben.
 *)
 
+val with_in_channel : in_channel -> (in_channel -> 'a) -> 'a
+(** Run the function on the in_channel, taking care of exceptions. *)
+
 val with_in_file : string -> (in_channel -> 'a) -> 'a
 (** Run the function on the given file, taking care of exceptions. *)
 

@@ -17,6 +17,12 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
+val parse_control_in_channel :
+  ([< `binary | `source] as 'a) ->
+  string -> in_channel -> (string -> bool) ->
+  ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
+  'b -> 'b
+
 val parse_control_file :
   ([< `binary | `source] as 'a) ->
   string -> (string -> bool) ->

@@ -42,9 +42,24 @@ let main args =
   let query = Query.of_string query in
   let sources, packages = List.partition is_source files in
   let print kind filename =
-    Benl_utils.parse_control_file kind filename (fun _ -> true)
-      (fun _ p () -> if Query.eval kind p query then Package.print stdout p)
-      ()
+    let keep = fun _ -> true in
+    let accu = fun _ p () ->
+      if Query.eval kind p query then Package.print stdout p
+    in match filename with
+    | "-" ->
+      Benl_utils.parse_control_in_channel kind "standard input" stdin keep accu ()
+    | filename when Benl_core.ends_with filename ".gz" ->
+      let ic = Unix.open_process_in ("zcat " ^ filename) in
+      Benl_core.with_in_channel ic begin fun ic ->
+        Benl_utils.parse_control_in_channel kind filename ic keep accu ()
+      end
+    | filename when Benl_core.ends_with filename ".bz2" ->
+      let ic = Unix.open_process_in ("bzcat " ^ filename) in
+      Benl_core.with_in_channel ic begin fun ic ->
+        Benl_utils.parse_control_in_channel kind filename ic keep accu ()
+      end
+    | filename ->
+      Benl_utils.parse_control_file kind filename keep accu ()
   in
   List.iter (print `source) sources;
   List.iter (print `binary) packages;;

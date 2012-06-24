@@ -18,6 +18,12 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
+let with_in_channel chan f =
+  try
+    let res = f chan in
+    close_in chan; res
+  with e -> close_in chan; raise e
+
 let with_in_file file f =
   let chan = open_in_bin file in
   try
