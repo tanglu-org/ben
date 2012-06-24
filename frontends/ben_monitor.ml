@@ -51,19 +51,7 @@ let to_forget = List.fold_left
     "description";
   ]
 
-module PAIndex = struct
-  type t = [`binary] Package.Name.t * string
-  let compare = Pervasives.compare
-end
-module PAMap = Map.Make(PAIndex)
-
-module Marshallable = struct
-  let magic_number = "BENA0901"
-  type t = {
-    src_map : ([`source], [`source] Package.t) Package.Map.t;
-    bin_map : [`binary] Package.t PAMap.t
-  }
-end
+open Benl_modules
 module Marshal = Benl_marshal.Make(Marshallable)
 open Marshallable
 
