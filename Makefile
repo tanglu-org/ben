@@ -33,6 +33,7 @@ endif
 CLASSIC := $(if $(INSIDE_EMACS),-classic-display)
 ARCH := $(if $(HAS_OPT),native,byte)
 OCAMLBUILD := ocamlbuild $(CLASSIC) $(if $(HAS_OPT),,-byte-plugin)
+OCAMLBUILD_ENV :=
 
 # Build
 TARGETS := lib/benl.cma $(if $(HAS_OPT),lib/benl.cmxa) bin/$(NAME).$(ARCH) modules.dot
@@ -48,7 +49,10 @@ all: ocamlbuild $(GENERATED)
 
 .PHONY: ocamlbuild clean env
 ocamlbuild:
-	$(OCAMLBUILD) $(TARGETS)
+	$(OCAMLBUILD_ENV) $(OCAMLBUILD) $(TARGETS)
+
+typerex: OCAMLBUILD_ENV := OCAMLFIND_COMMANDS='ocamlc=ocp-ocamlc ocamlopt=ocp-ocamlopt'
+typerex: ocamlbuild
 
 %.png: ocamlbuild
 	dot -Tpng $(patsubst %.png,_build/%.dot,$@) > $@
