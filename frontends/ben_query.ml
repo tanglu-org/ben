@@ -87,6 +87,14 @@ let main args =
         Benl_utils.parse_control_in_channel kind filename ic keep accu ()
       end
     | filename when is_cache filename ->
+      let filename =
+        if Sys.file_exists filename
+        then filename
+        else let filecache = Filename.concat !Benl_clflags.cache_dir filename in
+        if Sys.file_exists filecache then
+          filecache
+        else filename (* Let the system generate an error *)
+      in
       let { src_map = srcs; bin_map = bins } = Marshal.load filename in
       begin match kind with
       | `binary -> PAMap.iter (Obj.magic eval) bins
