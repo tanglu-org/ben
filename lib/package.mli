@@ -30,6 +30,7 @@ end
 val get : string -> 'a t -> string
 val add : string -> string -> 'a t -> 'a t
 val print : out_channel -> 'a t -> unit
+val filter_print : string list -> out_channel -> 'a t -> unit
 
 module Set : sig
   type 'a t

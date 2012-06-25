@@ -38,10 +38,27 @@ let usage cmd =
   fprintf stderr "Usage: %s <query> [ file ... ]\n" cmd;
   exit 1
 
+let filters = ref []
+
+let rec parse_local_args = function
+  | "-s"::s::xs ->
+      filters := Benl_core.simple_split ',' s;
+      filters := List.map String.lowercase !filters;
+      parse_local_args xs
+  | x::xs -> x::(parse_local_args xs)
+  | [] -> []
+
 let help () =
-  printf "    <query> [ file1 ... ]\n%!"
+  printf "    <query> [options] [ file1 ... ]\n%!";
+  List.iter
+    (fun (option , desc) ->
+      Printf.printf "    %s: %s\n%!" option desc
+    )
+    [ "-s FIELD,FIELD,...", "Show only the body of these fields from the matching paragraphs";
+    ]
 
 let main args =
+  let args = parse_local_args (Benl_frontend.parse_common_args args) in
   let query, files = match args with
     | query::files -> query, files
     | _ -> usage (sprintf "%s query" Sys.argv.(0))
@@ -52,9 +69,9 @@ let main args =
   let sources = caches @ sources
   and packages = caches @ packages in
   let print kind filename =
-    let keep = fun _ -> true in
+    let keep = fun f -> !filters = [] || List.mem (String.lowercase f) !filters in
     let eval = fun _ p ->
-      if Query.eval kind p query then Package.print stdout p in
+      if Query.eval kind p query then Package.filter_print !filters stdout p in
     let accu = fun n p () -> eval n p in
     match filename with
     | "-" ->

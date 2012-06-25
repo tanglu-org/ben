@@ -28,11 +28,15 @@ module Name = struct
   let to_string x = x
 end
 
-let print outc p =
+let filter_print keep outc p =
   List.iter
-    (fun (f, v) -> fprintf outc "%s: %s\n" (String.capitalize f) v)
+    (fun (f, v) ->
+      if keep = [] || List.mem (String.lowercase f) keep then
+        fprintf outc "%s: %s\n" (String.capitalize f) v)
     p;
   fprintf outc "\n"
+
+let print = filter_print []
 
 let get = List.assoc
 
