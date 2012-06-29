@@ -1,10 +1,9 @@
 Packaged-By: Stéphane Glondu <steph@glondu.net>
 Packaged-Date: Tue, 20 Sep 2011 20:24:13 +0200
-Upstream-Author: Stéphane Glondu <steph@glondu.net>
 
 Files: *
-Copyright: © 2009-2011 Stéphane Glondu <steph@glondu.net>
-           © 2010-2011 Mehdi Dogguy <mehdi@dogguy.org>
+Copyright: © 2009-2012 Stéphane Glondu <steph@glondu.net>
+           © 2010-2012 Mehdi Dogguy <mehdi@dogguy.org>
 License: AGPL-3+
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as
@@ -36,3 +35,22 @@ License: GPL-2+
  .
  The complete text of the GNU General Public License can be found in
  `/usr/share/common-licenses/GPL-2'.
+
+Files: media/debian.png
+Copyright: © 1999 Software in the Public Interest
+License: Debian Open Use Logo License
+ This logo or a modified version may be used by anyone to refer to the
+ Debian project, but does not indicate endorsement by the project.
+ .
+ Note: we would appreciate that you make the image a link to
+ http://www.debian.org/ if you use it on a web page.
+
+Files: media/revamp.css
+Copyright © 2007-2011 Stefano Zacchiroli <zack@debian.org>
+          © 2007      Dan Callahan <dan.callahan@gmail.com>
+          © 2007      Enrico Tassi <gareuselesinge@debian.org>
+License: GPL-3+
+ The complete text of the GNU General Public License can be found in
+ `/usr/share/common-licenses/GPL-3'.
+ .
+ Original file can be found at <http://anonscm.debian.org/viewvc/qa/trunk/pts/www/web/common/revamp.css?view=co>.
