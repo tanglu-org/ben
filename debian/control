@@ -39,7 +39,6 @@ Architecture: any
 Depends:
  ${ocaml:Depends},
  ${shlibs:Depends},
- gzip,
  bzip2,
  ${misc:Depends}
 Provides: ${ocaml:Provides}
