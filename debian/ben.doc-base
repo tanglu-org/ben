@@ -1,0 +1,13 @@
+Document: ben
+Title: Reference Manual of Ben
+Author: Mehdi Dogguy and Stéphane Glondu
+Abstract: This manual describes what ben is and how it can be used to
+ generate transition monitors and trackers.
+Section: Programming/OCaml
+
+Format: HTML
+Index: /usr/share/doc/ben/refman.html
+Files: /usr/share/doc/ben/*.html
+
+Format: Text
+Files: /usr/share/doc/ben/refman.txt.gz
