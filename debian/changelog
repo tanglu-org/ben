@@ -1,5 +1,9 @@
-ben (0.6.0) UNRELEASED; urgency=low
+ben (0.6.1) UNRELEASED; urgency=low
 
+  [ Stéphane Glondu ]
   * Initial packaging
 
- -- Stéphane Glondu <glondu@debian.org>  Tue, 20 Sep 2011 20:30:33 +0200
+  [ Mehdi Dogguy ]
+  * Initial Release (Closes: #679547)
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Sat, 30 Jun 2012 11:15:23 +0200
