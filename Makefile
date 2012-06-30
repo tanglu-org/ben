@@ -45,11 +45,14 @@ export CAML_LD_LIBRARY_PATH=$(CURDIR)/_build/lib
 # Installation
 BINDIR := $(DESTDIR)$(PREFIX)/bin
 
-all: ocamlbuild $(GENERATED)
+all: ocamlbuild $(GENERATED) doc
 
-.PHONY: ocamlbuild clean env
+.PHONY: ocamlbuild doc clean env
 ocamlbuild:
 	$(OCAMLBUILD_ENV) $(OCAMLBUILD) $(TARGETS)
+
+doc:
+	$(MAKE) -C doc all
 
 typerex: OCAMLBUILD_ENV := OCAMLFIND_COMMANDS='ocamlc=ocp-ocamlc ocamlopt=ocp-ocamlopt'
 typerex: ocamlbuild

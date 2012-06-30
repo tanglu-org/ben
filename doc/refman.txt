@@ -1,0 +1,298 @@
+Ben's reference manual
+======================
+:Author: Mehdi Dogguy and Stéphane Glondu
+:Date: May 30, 2012
+:Revision: 0.6
+
+This manual is free software; you may redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2, or (at your option) any
+later version.
+
+This is distributed in the hope that it will be useful, but without
+any warranty; without even the implied warranty of merchantability or
+fitness for a particular purpose. See the GNU General Public License
+for more details.
+
+A copy of the GNU General Public License is available as
+/usr/share/common-licenses/GPL-2 in the Debian GNU/Linux distribution
+or on the World Wide Web at the GNU web site. You can also obtain it
+by writing to the Free Software Foundation, Inc., 51 Franklin Street,
+Fifth Floor, Boston, MA 02110-1301, USA.
+
+WARNING: This document is still work in progress!
+
+:numbered!:
+[abstract]
+Introduction
+------------
+_Ben_ is the name of a set of utilities written in
+http://caml.inria.fr[OCaml] and available through the `ben`
+command. The major feature of _Ben_ is to provide a full featured
+transition tracker to follow the evolution of a set of packages in the
+Debian archive.
+
+The aim of this document is to describe the features of _Ben_ and its
+configuration.
+
+:numbered:
+
+Getting the source code
+-----------------------
+_Ben_ is maintained in a Git repository available online at
+http://anonscm.debian.org/gitweb/?p=collab-maint/ben.git. Getting the
+sources is as simple as:
+
+[source,shell]
+----
+git clone git://anonscm.debian.org/collab-maint/ben.git
+----
+
+The source tree has a `debian/` directory. It is a native
+Debian package, so you can use the standard building tools in order to
+build it.
+
+Query language
+--------------
+
+The main feature of _Ben_ is a transition tracker. The
+transition tracker selects a set of affected packages and computes a
+state for each of them. There exist already various ways to do
+that. One solution would be to use the
+http://packages.debian.org/sid/dctrl-tools[dctrl-tools]. We chose to
+make our own language. This allows us to perform more fine-grained
+queries, optimize queries and extend the query language easily.
+
+A ben query is decribed by the following
+http://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form[BNF] formulae:
+
+ <query> ::= "true"
+           | "false"
+           | "!" <query>            /* Boolean negation     */
+           | <query> "|" <query>    /* Boolean OR operator  */
+           | <query> "&" <query>    /* Boolean AND operator */
+           | "(" <query> ")"
+ /*set 2*/ | <field> "~" "/" <regex> "/"
+           | <field> "~" '"' <string> '"'
+           | "source"
+           | <comparison> '"' <string> '"'
+
+ <field> ::= '.' <string>
+
+ <comparison> ::= '<<' | '<' | '>' | '>>' | '=' | '<=' | '>='
+
+The first rules are the usual boolean constants and operators. The
+sixth rule is useful to group queries and override boolean operators'
+priotity.
+
+The second set are the various type of queries implemented to match
+against different criteria. It matches against a package field (in
+lowercase).
+
+
+We believe the syntax of queries is easy to grasp. Nonetheless,
+here are some exemples:
+
+- `.build-depends ~ /lib.*ocaml-dev/` +
+  This query matches all packages that build-depend on a package
+  whose name matches the http://perldoc.perl.org/perlre.html[Perl
+  regular expression] `lib.*ocaml-dev`.
+
+- `.depends ~ "libapt-pkg4.12"` +
+  This one is simpler than the first one in the sense that
+  `libapt-pkg4.12` is considered as a plain string and not a regular
+  experssion.
+
+IMPORTANT: Note the symbols around the selectors: /.../ for
+regular expressions and "..." for plain strings.
+
+WARNING: Packages fields may contain a list of values
+comma-separated. _Ben_ splits the list before looking with
+"..." for a match.
+
+- `>= "3.0"` +
+  The query `>= "3.0"` matches all packages with a version number
+  equal to or higher than "3.0".
+
+- `source` +
+  This matches all source packages.
+
+Now that the concept of query is explained, we will focus on other
+parts of _Ben_. We will see how we can use the queries for each
+frontend.
+
+Frontends
+---------
+_Ben_ is a set of utilities available through the `ben` command. Each
+utility is called a _frontend_ and there are four:
+
+* `download`
+* `query`
+* `monitor`
+* `tracker`
+
+All frontends share a set of options and each one defines its own
+specific set. The shared set of command-line options is:
+
+[options="header"]
+|====================================================================
+| Option                | Action
+| --dry-run             | Dry run
+| --quiet\|-q           | Quiet mode
+| --verbose             | Verbose mode
+| --mirror uri          | Package mirror to use
+| --mirror-binaries uri | Package mirror to use for binaries
+| --mirror-sources  uri | Package mirror to use for sources
+| --areas a,...         | Areas to consider (comma separated)
+| --archs a,...         | Architectures to consider (comma separated)
+| --suite a             | Suite
+| --cache-dir d         | Path to cache dir
+| --config\|-c c        | Config file
+|=====================================================================
+
+The rest of this section describes each frontend.
+
+download
+~~~~~~~~
+
+This frontend is the simplest one as it has no command-line options,
+except the shared ones. It downloads all Sources.bz2 files and all
+Packages.bz2 files for selected architectures and areas. You may
+invoke it by running:
+
+ $ ben download [options]
+
+The requested files will be downloaded in $BEN_CACHE_DIR, if set, or
+in the current directory.
+
+NOTE: `ben download` doesn't read `ben.cache` files yet.
+
+query
+~~~~~
+
+This utility is pretty much like
+http://man.cx/grep-dctrl(1)[`grep-dctrl(1)`]. Given a list of Packages
+or Sources files, it performs a query and outputs the result.
+
+Using it is as simple as shown below:
+
+ $ ben query ".package ~ /gentoo/" Packages
+
+Unlike `grep-dctrl(1)`, `ben query` doesn't have the necessary
+machinery to filter its output yet.
+
+NOTE: `ben query` doesn't read .gz or .bz2 files or on its standard
+input yet.
+
+NOTE: `ben query` doesn't read `ben.cache` files yet.
+
+monitor
+~~~~~~~
+
+The `monitor` fontend builds a monitoring page for a transition. A
+transition is decribed by three queries:
+
+* `is_affected`: matches source packages that are part of this
+  transition; this query is evaluated against all source and binary
+  packages and, for binary packages, their source package is picked;
+* `is_good`: matches binary packages that are considered to be
+  ready (fixed) for this transition;
+* `is_bad`: matches binary packages that are considered to be broken
+  (not fixed) for this transition.
+
+Not that some packages can be neither good nor bad. For example, there
+are many packages that build-depend on some library but do not link
+against it. Thus, they do not need any dependency on the library at
+runtime.
+
+An example of a complete description of a transition is:
+
+  is_affected = .build-depends ~ /libicu-dev/;
+  is_good = .depends ~ /libicu44/;
+  is_bad = .depends ~ /libicu42/;
+
+There are other optional fields:
+
+* `title` +
+  This puts a nice title in the HTML page.
+
+* `notes` +
+  This can be used to put
+  remarks about the transition or notes about the status of some
+  packages or the whole transition. +
+  +
+  _Ben_ recognizes some special texts and turns them into links.
+  The following formats are recognized:
+
+[options="header"]
+|=========================================================================
+| Original text          | Result
+| pts:ocaml              | http://packages.qa.debian.org/ocaml[pts:ocaml]
+| buildd:ocaml           | http://buildd.debian.org/ocaml[buildd:ocaml]
+| #123456                | http://bugs.debian.org/123456[#123456]
+| <msg-id>               | http://lists.debian.org/msg-id
+| $$http://example.com$$ | http://example.com
+|=========================================================================
+
+`monitor` understands the following list of command-line options:
+
+[options="header"]
+|=========================================================================
+| Option                  | Action
+| --use-cache             | Use cache
+| --run-debcheck          | Run edos-debcheck and add virtual `.edos-debcheck` field
+| --use-projectb          | Get package lists from Projectb database
+| --color                 | Color if text output
+| --text                  | Select text output format
+| --html                  | Select HTML output format
+|=========================================================================
+
+tracker
+~~~~~~~
+
+This frontend uses `monitor` to generate a summary page about all
+known transitions. An example of such summary can be found at
+http://release.debian.org/transitions/.
+
+`tracker` has a notion of `profiles` that gives a hint on the
+actual state of the transition. The default profiles are:
+
+ * `planned` for known planned transitions or requested but not
+   processed or acknowledged yet;
+
+ * `permanent` is a special profile made to keep an eye on some set of
+   packages, not necessarily a transition;
+
+ * `ongoing` for the actual list of (known) on-going transitions;
+
+ * `finished` has a list of some transitions that are almost finished
+   (e.g. new binary packages migrated but old binary packages left in
+   testing to not decrease installability, or a finished transition
+   with a number of still broken packages in testing).
+
+Technically, each `profile` is a sub-directory of the global config
+directoryfootnote:[http://release.debian.org/transitions/config/]. The
+latter can be specified by a command-line option.
+
+By default, `tracker` looks for a directory named `config` which
+should contain a file named `global.conf`, unless otherwise told. It
+reads data (`.ben` files) from the `config` directory and outputs the
+result in the `base` directory.
+
+`tracker` has the following command-line options:
+
+[options="header"]
+|====================================================================
+| Option                  | Action
+| --base\|-b [dir]        | Specifies the "base" directory
+| --config-dir\|-cd [dir] | Location of ben trackers
+| --transition\|-t [profile/transition] | Generate only that tracker page
+| --update\|-u            | Updates cache files
+| --use-projectb          | Get package lists from Projectb database
+|====================================================================
+
+Reporting issues
+----------------
+
+_Ben_ doesn't have a bug tracker yet. If you experience a bug or if
+you're looking for some help, feel free to contact us directly.

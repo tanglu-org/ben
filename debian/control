@@ -15,7 +15,12 @@ Build-Depends:
  libfileutils-ocaml-dev,
  libtyxml-ocaml-dev (>= 2.1-1~),
  libpostgresql-ocaml-dev,
- ocaml-nox (>= 3.11.1-3~)
+ ocaml-nox (>= 3.11.1-3~),
+ asciidoc,
+ docbook-xml,
+ libxml2-utils,
+ xsltproc,
+ source-highlight
 Standards-Version: 3.9.2
 Section: ocaml
 Homepage: http://ben.debian.net

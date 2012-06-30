@@ -1,0 +1,96 @@
+BEN(1)
+======
+:doctype: manpage
+
+
+NAME
+----
+ben - transition tracker manager
+
+
+SYNOPSIS
+--------
+*ben* 'FRONTEND' ['OPTIONS']
+
+*ben* [-h|-help|--help]
+
+
+DESCRIPTION
+-----------
+The ben(1) command is a set of utilities written in OCaml. It provides
+a full featured transition tracker to follow the evolution of a set of
+packages in the Debian’s archive. All frontends share a common list of
+options described below.
+
+
+OPTIONS
+-------
+*--dry-run*::
+    Dry run
+
+*--quiet|-q*::
+    Quiet mode
+
+*--verbose*
+    Verbose mode
+
+*--mirror uri*::
+    Package mirror to use
+
+*--mirror-binaries uri*::
+    Package mirror to use for binaries
+
+*--mirror-sources uri*::
+    Package mirror to use for sources
+
+*--areas a,…*::
+    Areas to consider (comma separated)
+
+*--archs a,…*::
+    Architectures to consider (comma separated)
+
+*--suite a*::
+    Suite
+
+*--cache-dir d*::
+    Path to cache dir
+
+*--config|-c c*::
+    Config file
+
+
+FRONTENDS
+---------
+*download*::
+    has no command-line options, except the shared ones. It downloads
+    all Sources.bz2 files and all Packages.bz2 files for selected
+    architectures and areas.
+
+*query*::
+    This utility is pretty much like grep-dctrl(1). Given a list of
+    Packages or Sources files, it performs a query and outputs the
+    result.
+
+*monitor*::
+    The frontend monitor builds a monitor page for a transition that
+    is described by few criteria (the list of affected packages, a
+    description of good package and the description of a broken
+    package).
+
+*tracker*::
+    This frontend uses the monitor to generate a summary page about
+    all known transitions. An example of such summary can be found at
+    <http://release.debian.org/transitions/>.
+
+For more information about ben's frontends, please refer to the
+reference manual.
+
+
+AUTHOR
+------
+Ben was originally written by Mehdi Dogguy and Stéphane Glondu.
+
+
+RESOURCES
+---------
+Main web site: <http://ben.debian.net/>
