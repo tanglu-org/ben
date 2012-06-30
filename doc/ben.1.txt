@@ -88,7 +88,7 @@ reference manual.
 
 AUTHOR
 ------
-Ben was originally written by Mehdi Dogguy and Stéphane Glondu.
+Ben was originally written by Stéphane Glondu.
 
 
 RESOURCES
