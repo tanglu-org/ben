@@ -6,4 +6,4 @@ ben (0.6.1) experimental; urgency=low
   [ Mehdi Dogguy ]
   * Initial Release (Closes: #679547)
 
- -- Mehdi Dogguy <mehdi@debian.org>  Sun, 01 Jul 2012 20:38:28 +0200
+ -- Stéphane Glondu <glondu@debian.org>  Sun, 01 Jul 2012 22:10:36 +0200
