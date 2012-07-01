@@ -39,6 +39,9 @@ OCAMLBUILD_ENV :=
 TARGETS := lib/benl.cma $(if $(HAS_OPT),lib/benl.cmxa) bin/$(NAME).$(ARCH) modules.dot
 GENERATED := modules.png
 
+# modules w/o interfaces
+EXTRA_FILES := $(shell find lib -iname "*.ml" | xargs -I {} sh -c "test -f '{}'i || echo '{}'")
+
 # C stubs magic for bytecode
 export CAML_LD_LIBRARY_PATH=$(CURDIR)/_build/lib
 
@@ -71,4 +74,4 @@ env:
 install:
 	install -d $(BINDIR)
 	install $(NAME).$(ARCH) $(BINDIR)/ben
-	ocamlfind install $(NAME) $(wildcard $(addprefix _build/lib/,*.cmi *.mli *.cma *.cmx *.cmxa *.a *.so)) META
+	ocamlfind install $(NAME) $(wildcard $(addprefix _build/lib/,*.cmi *.mli *.cma *.cmx *.cmxa *.a *.o *.so)) $(EXTRA_FILES) META
