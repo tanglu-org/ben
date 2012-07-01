@@ -74,4 +74,4 @@ env:
 install:
 	install -d $(BINDIR)
 	install $(NAME).$(ARCH) $(BINDIR)/ben
-	ocamlfind install $(NAME) $(wildcard $(addprefix _build/lib/,*.cmi *.mli *.cma *.cmx *.cmxa *.a *.o *.so)) $(EXTRA_FILES) META
+	ocamlfind install $(NAME) $(wildcard $(addprefix _build/lib/,*.cmi *.mli *.cma *.cmx *.cmxa *.a *.so)) $(EXTRA_FILES) META

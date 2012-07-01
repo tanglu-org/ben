@@ -1,9 +1,13 @@
+Benl_modules
 Benl_core
 Benl_error
 Benl_base
+Benl_clflags
+Benl_frontend
 Benl_lexer
 Benl_parser
 Package
 Query
+Dependencies
 Benl_marshal
 Benl_utils
