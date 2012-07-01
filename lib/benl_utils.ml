@@ -26,8 +26,9 @@ let p = Benl_clflags.progress
 
 let parse_control_in_channel kind filename ic keep f accu =
   p "Parsing %s..." filename;
-  let result = Benl_lexer.stanza_fold keep begin fun name p accu ->
-    f (Package.Name.of_string name)
+  let result = Benl_lexer.stanza_fold begin fun p accu ->
+    let p = List.filter (fun (k, v) -> keep k) p in
+    f (Package.Name.of_string (List.assoc "package" p))
       (Package.of_assoc kind p)
       accu
     end (from_channel ic) accu

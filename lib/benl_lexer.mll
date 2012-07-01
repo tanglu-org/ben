@@ -35,14 +35,11 @@ let space = [' ' '\t']
 let field_name = ['a'-'z' 'A'-'Z' '-' '_' '0'-'9']+
 let field_value = ([^ '\n'] | '\n' space)*
 
-rule stanza keep empty accu = parse
+rule stanza empty accu = parse
   | (field_name as name) space* ":" space* (field_value as value) '\n'?
       {
         let name = String.lowercase name in
-        if keep name then
-          stanza keep false ((name, value)::accu) lexbuf
-        else
-          stanza keep false accu lexbuf
+        stanza false ((name, value)::accu) lexbuf
       }
   | '\n'+ | eof
         {
@@ -114,15 +111,15 @@ and comment = parse
   | _ { comment lexbuf }
 
 {
-  let stanza_fold keep f lexbuf accu =
+  let stanza_fold f lexbuf accu =
     let rec loop accu =
       let stanza =
-        try Some (stanza keep true [] lexbuf)
+        try Some (stanza true [] lexbuf)
         with End_of_file -> None
       in
       match stanza with
         | None -> accu
         | Some x -> loop
-            (f (List.assoc "package" x) x accu)
+            (f x accu)
     in loop accu
 }
