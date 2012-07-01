@@ -1,0 +1,3 @@
+@OCamlStdlibDir@/ben/META
+@OCamlStdlibDir@/ben/benl.cma
+@OCamlDllDir@/*.so

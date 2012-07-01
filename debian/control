@@ -35,9 +35,24 @@ Depends:
  ${misc:Depends}
 Provides: ${ocaml:Provides}
 Recommends: ocaml-findlib
-Description: OCaml libraries for Debian maintainers
+Description: OCaml libraries for Debian maintainers (development package).
  This package contains miscellaneous OCaml libraries to make the life
  of an OCaml-aware Debian package maintainer easier.
+ .
+ This package contains development files of the library.
+
+Package: libben-ocaml
+Architecture: any
+Depends:
+ ${ocaml:Depends},
+ ${shlibs:Depends},
+ ${misc:Depends}
+Provides: ${ocaml:Provides}
+Description: OCaml libraries for Debian maintainers (runtime package)
+ This package contains miscellaneous OCaml libraries to make the life
+ of an OCaml-aware Debian package maintainer easier.
+ .
+ This package contains the shared runtime stub libraries.
 
 Package: ben
 Architecture: any

@@ -1,2 +1,3 @@
-@OCamlStdlibDir@/ben
-@OCamlDllDir@/*.so
+@OCamlStdlibDir@/ben/*.cm{o,i,x}*
+@OCamlStdlibDir@/ben/*.{o,a}
+@OCamlStdlibDir@/ben/*.ml*
