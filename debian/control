@@ -35,7 +35,7 @@ Depends:
  ${misc:Depends}
 Provides: ${ocaml:Provides}
 Recommends: ocaml-findlib
-Description: OCaml libraries for Debian maintainers (development package).
+Description: OCaml libraries for Debian maintainers (development package)
  This package contains miscellaneous OCaml libraries to make the life
  of an OCaml-aware Debian package maintainer easier.
  .
