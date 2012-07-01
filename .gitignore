@@ -3,3 +3,5 @@ _build
 *.byte
 *~
 modules.png
+doc/ben.1
+doc/refman.html
