@@ -60,6 +60,7 @@ Depends:
  ${ocaml:Depends},
  ${shlibs:Depends},
  bzip2,
+ curl,
  ${misc:Depends}
 Provides: ${ocaml:Provides}
 Enhances: devscripts
