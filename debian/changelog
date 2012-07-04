@@ -4,6 +4,8 @@ ben (0.6.2) UNRELEASED; urgency=low
     it!
   * Make libjs-jquery a strong dependency and put a symlink in media
     (Closes: #680273)
+  * Add docbook-xsl to Build-Depends (needed on Ubuntu to build the
+    documentation). Thanks to Iain Lane!
 
  -- Mehdi Dogguy <mehdi@debian.org>  Wed, 04 Jul 2012 10:33:40 +0200
 
