@@ -31,7 +31,7 @@ OPTIONS
 *--quiet|-q*::
     Quiet mode
 
-*--verbose*
+*--verbose*::
     Verbose mode
 
 *--mirror uri*::
