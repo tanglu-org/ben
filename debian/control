@@ -61,11 +61,10 @@ Depends:
  ${shlibs:Depends},
  bzip2,
  curl,
+ libjs-jquery,
  ${misc:Depends}
 Provides: ${ocaml:Provides}
 Enhances: devscripts
-Recommends:
- libjs-jquery
 Description: toolbox for Debian maintainers
  This is a collection of useful tools that Debian maintainers can use
  to make their packaging work easier. They all work with regular

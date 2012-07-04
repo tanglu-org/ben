@@ -2,6 +2,8 @@ ben (0.6.2) UNRELEASED; urgency=low
 
   * Add missing dependency on curl. Thanks to Luca Falavigna for spotting
     it!
+  * Make libjs-jquery a strong dependency and put a symlink in media
+    (Closes: #680273)
 
  -- Mehdi Dogguy <mehdi@debian.org>  Wed, 04 Jul 2012 10:33:40 +0200
 
