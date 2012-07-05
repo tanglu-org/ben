@@ -30,14 +30,23 @@ else
 HAS_OPT :=
 endif
 
+OCAML_STDLIB_DIR ?= $(shell /usr/bin/ocamlc -where)
+HAS_NATDYN = no
+PLUGIN_EXT = cma
+ifneq (,$(wildcard $(OCAML_STDLIB_DIR)/dynlink.cmxa))
+  HAS_NATDYN := yes
+  PLUGIN_EXT := cmxs
+endif
+
 CLASSIC := $(if $(INSIDE_EMACS),-classic-display)
-ARCH := $(if $(HAS_OPT),native,byte)
+ARCH := $(if $(HAS_NATDYN),native,byte)
 OCAMLBUILD := ocamlbuild $(CLASSIC) $(if $(HAS_OPT),,-byte-plugin)
 OCAMLBUILD_ENV :=
 
 # Build
 TARGETS := lib/benl.cma $(if $(HAS_OPT),lib/benl.cmxa) bin/$(NAME).$(ARCH) modules.dot
 GENERATED := modules.png
+TEMPLATES := $(wildcard templates/*)
 
 # modules w/o interfaces
 EXTRA_FILES := $(shell find lib -iname "*.ml" | xargs -I {} sh -c "test -f '{}'i || echo '{}'")
@@ -47,8 +56,9 @@ export CAML_LD_LIBRARY_PATH=$(CURDIR)/_build/lib
 
 # Installation
 BINDIR := $(DESTDIR)$(PREFIX)/bin
+PLUGINSDIR := $(DESTDIR)$(PREFIX)/share/ben/templates
 
-all: ocamlbuild $(GENERATED) doc
+all: ocamlbuild templates $(GENERATED) doc
 
 .PHONY: ocamlbuild doc clean env
 ocamlbuild:
@@ -58,10 +68,23 @@ doc:
 	$(MAKE) -C doc all
 
 typerex: OCAMLBUILD_ENV := OCAMLFIND_COMMANDS='ocamlc=ocp-ocamlc ocamlopt=ocp-ocamlopt'
-typerex: ocamlbuild
+typerex: all
 
 %.png: ocamlbuild
 	dot -Tpng $(patsubst %.png,_build/%.dot,$@) > $@
+
+.PHONY: templates build-templates install-templates
+templates: build-templates
+build-templates: $(foreach TPL,$(TEMPLATES),build-$(TPL))
+
+build-templates/%:
+	$(OCAMLBUILD_ENV) $(OCAMLBUILD) templates/$*/$*.$(PLUGIN_EXT)
+
+install-templates: $(foreach TPL,$(TEMPLATES),install-$(TPL))
+
+install-templates/%:
+	install -d $(PLUGINSDIR)/$*
+	install templates/$*/$*.$(PLUGIN_EXT) $(PLUGINSDIR)/$*
 
 clean:
 	$(OCAMLBUILD) -clean
@@ -71,7 +94,7 @@ env:
 	@echo export CAML_LD_LIBRARY_PATH=$(CAML_LD_LIBRARY_PATH)
 
 .PHONY: install
-install:
+install: install-templates
 	install -d $(BINDIR)
 	install $(NAME).$(ARCH) $(BINDIR)/ben
 	ocamlfind install $(NAME) $(wildcard $(addprefix _build/lib/,*.cmi *.mli *.cma *.cmx *.cmxa *.a *.so)) $(EXTRA_FILES) META
