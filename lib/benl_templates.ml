@@ -17,6 +17,7 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
+open Benl_error
 open Template
 
 let template : Template.t option ref = ref None
@@ -33,8 +34,7 @@ let load_template name =
   try
     Dynlink.loadfile file
   with Dynlink.Error e ->
-    Printf.eprintf "%s\n%!" (Dynlink.error_message e);
-    exit 2
+    Benl_error.raise (Dynlink_error e)
 
 let get_registered_template () =
   match !template with

@@ -31,6 +31,7 @@ type error =
   | Missing_configuration_item of string
   | Parsing_error of string * int * int
   | Template_not_found of string
+  | Dynlink_error of Dynlink.error
 (** The type of Ben-specific errors *)
 
 exception Error of error

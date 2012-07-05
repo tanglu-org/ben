@@ -33,6 +33,7 @@ type error =
   | Missing_configuration_item of string
   | Parsing_error of string * int * int
   | Template_not_found of string
+  | Dynlink_error of Dynlink.error
 
 exception Error of error
 
@@ -65,6 +66,8 @@ let string_of_error = function
         file line column
   | Template_not_found name ->
       sprintf "template %s not found" name
+  | Dynlink_error e ->
+      sprintf "Dynlink error: %s" (Dynlink.error_message e)
 
 let () =
   Printexc.register_printer
