@@ -30,6 +30,7 @@ let use_cache = ref false
 let use_colors = ref false
 let run_debcheck = ref false
 let use_projectb = ref false
+let output_file = ref None
 
 type output_type = Text | Xhtml | Levels
 let output_type = ref Levels
@@ -432,6 +433,9 @@ let rec parse_local_args = function
   | "--use-projectb"::xs ->
       use_projectb := true;
       parse_local_args xs
+  | ("--output"|"-o")::filename::xs ->
+      output_file := Some filename;
+      parse_local_args xs
   | x::xs -> x::(parse_local_args xs)
   | [] -> []
 
@@ -445,7 +449,9 @@ let help () =
       "--use-projectb", "Get package lists from Projectb database";
       "--color", "Color if text output";
       "--text", "Select text output format";
-      "--html", "Select HTML output format" ]
+      "--html", "Select HTML output format";
+      "--output|-o", "Select output file";
+    ]
 
 let relevant_arch arch_ref arch_pkg =
   (arch_pkg = "all" && arch_ref = "i386") || arch_ref = arch_pkg
@@ -846,8 +852,12 @@ let main args =
       let (_, _, _, output) =
         print_html_monitor page sources binaries dep_graph rounds
       in
-      Xhtml.P.print print_string output;
-      print_newline ()
+      match !output_file with
+      | None ->
+          Xhtml.P.print print_string output;
+          print_newline ()
+      | Some file ->
+          Benl_utils.dump_xhtml_to_file file output
 
 let frontend = {
   Benl_frontend.name = "monitor";
