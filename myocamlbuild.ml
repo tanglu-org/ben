@@ -23,6 +23,7 @@ open Ocamlbuild_plugin
 
 let name = "ben"
 let packages = ["unix"; "pcre"; "ocamlgraph"; "tyxml"; "fileutils"; "threads"; "postgresql"]
+let templates = "templates/"
 
 exception Require_findlib
 exception Missing_findlib_package of string
@@ -65,6 +66,12 @@ let () =
              let flag x = flag (x::["ocaml"]) & S[A"-package"; A pkg] in
              List.iter flag ["ocamldep"; "compile"; "link"; "doc"])
           packages;
+
+        Array.iter
+          (fun file ->
+            Pathname.define_context (templates / file) ["lib"]
+          )
+          (Pathname.readdir templates);
 
         (* why isn't this done by default? *)
         flag ["library"; "link"; "thread"] (A"-thread");

@@ -32,6 +32,7 @@ type error =
   | Error_in_configuration_file of string
   | Missing_configuration_item of string
   | Parsing_error of string * int * int
+  | Template_not_found of string
 
 exception Error of error
 
@@ -62,6 +63,8 @@ let string_of_error = function
       sprintf
         "parse error in file %S, line %d, character %d"
         file line column
+  | Template_not_found name ->
+      sprintf "template %s not found" name
 
 let () =
   Printexc.register_printer

@@ -1,6 +1,5 @@
 (**************************************************************************)
-(*  Copyright © 2009-2010 Stéphane Glondu <steph@glondu.net>              *)
-(*            © 2010 Mehdi Dogguy <mehdi@dogguy.org>                      *)
+(*  Copyright © 2012 Mehdi Dogguy <mehdi@debian.org>                      *)
 (*                                                                        *)
 (*  This program is free software: you can redistribute it and/or modify  *)
 (*  it under the terms of the GNU Affero General Public License as        *)
@@ -18,26 +17,32 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-type error =
-  | Illegal_escape of char
-  | Unknown_error of exn
-  | Nothing_to_download
-  | Curl_error of int
-  | Unexpected_char of string * char * int * int
-  | Bad_marshalled_data of string
-  | Unknown_command of string
-  | Unexpected_expression of string
-  | Error_in_configuration_file of string
-  | Missing_configuration_item of string
-  | Parsing_error of string * int * int
-  | Template_not_found of string
-(** The type of Ben-specific errors *)
+open Template
 
-exception Error of error
-(** All Ben-specific errors are wrapped into this exception. *)
+let template : Template.t option ref = ref None
+let path = "/usr/share/ben/templates"
 
-val string_of_error : error -> string
-(** Return a human-readable explanation of an error. *)
+let (//) = Filename.concat
 
-val raise : error -> 'a
-(** Wrapper around [Pervasives.raise] to raise a Ben exception. *)
+let register_template name page =
+  template := Some { name; page }
+
+let load_template name =
+  let file = path // name // (Printf.sprintf "%s.cma" name) in
+  let file = Dynlink.adapt_filename file in
+  try
+    Dynlink.loadfile file
+  with Dynlink.Error e ->
+    Printf.eprintf "%s\n%!" (Dynlink.error_message e);
+    exit 2
+
+let get_registered_template () =
+  match !template with
+  | Some t -> t
+  | None ->
+      let name = "debian" in
+      let () = load_template name in begin
+      match !template with
+      | Some t -> t
+      | None -> Benl_error.raise (Benl_error.Template_not_found name)
+      end
