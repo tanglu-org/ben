@@ -22,7 +22,16 @@ open Printf
 open Ocamlbuild_plugin
 
 let name = "ben"
-let packages = ["unix"; "pcre"; "ocamlgraph"; "tyxml"; "fileutils"; "threads"; "postgresql"]
+let packages = [
+  "dynlink";
+  "unix";
+  "pcre";
+  "ocamlgraph";
+  "tyxml";
+  "fileutils";
+  "threads";
+  "postgresql";
+]
 let templates = "templates/"
 
 exception Require_findlib
