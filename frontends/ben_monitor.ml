@@ -436,6 +436,9 @@ let rec parse_local_args = function
   | ("--output"|"-o")::filename::xs ->
       output_file := Some filename;
       parse_local_args xs
+  | "--template"::template::xs ->
+      Benl_templates.load_template template;
+      parse_local_args xs
   | x::xs -> x::(parse_local_args xs)
   | [] -> []
 
@@ -451,6 +454,7 @@ let help () =
       "--text", "Select text output format";
       "--html", "Select HTML output format";
       "--output|-o", "Select output file";
+      "--template", "Select an HTML template";
     ]
 
 let relevant_arch arch_ref arch_pkg =

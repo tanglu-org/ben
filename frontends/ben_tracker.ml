@@ -102,6 +102,9 @@ let rec parse_local_args = function
   | ("--use-projectb")::xs ->
       Ben_monitor.use_projectb := true;
       parse_local_args xs
+  | "--template"::template::xs ->
+      Benl_templates.load_template template;
+      parse_local_args xs
   | x::xs -> x::(parse_local_args xs)
   | [] -> []
 
@@ -115,6 +118,7 @@ let help () =
       "--transition|-t [profile/transition]", "Generate only that tracker page";
       "--update|-u", "Updates cache files";
       "--use-projectb", "Get package lists from Projectb database";
+      "--template", "Select an HTML template";
     ]
 
 exception Unknown_profile of string
