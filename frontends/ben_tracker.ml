@@ -177,7 +177,7 @@ let profile_of_file file =
     profile_of_string $ Filename.basename (Filename.dirname file)
   with _ -> Unknown
 
-let run_monitor file =
+let run_monitor template file =
   let ($) = Filename.concat in
   let (!!) = Filename.basename in
   let profile = profile_of_file file in
@@ -187,9 +187,10 @@ let run_monitor file =
   let () = Benl_clflags.reset () in
   (* Read a .ben file *)
   let () = Benl_clflags.config := Benl_frontend.read_config_file file in
+  let page = template.Template.page in
   let rounds, sources, binaries, dep_graph = compute_graph () in
   let all, bad, packages, output =
-    Ben_monitor.print_html_monitor sources binaries dep_graph rounds in
+    Ben_monitor.print_html_monitor page sources binaries dep_graph rounds in
   let htmlf = FilePath.replace_extension !!file "html" in
   let htmlp = "html" $ htmlf in
   let html = !base $ htmlp in
@@ -265,43 +266,26 @@ let dump_yaml smap file =
     Printexc.print_backtrace stderr;
     eprintf "Something bad happened while generating %s!\n" file
 
-let tracker profiles =
-  let html mybody =
-    html ~a:[a_xmlns `W3_org_1999_xhtml]
-      (head (title (pcdata "Transition tracker")) [
-        link
-          ~a:[a_rel [`Stylesheet];
-              a_href (uri_of_string ("media/revamp.css"))
-             ]
-          ();
-        link
-          ~a:[a_rel [`Stylesheet];
-              a_href (uri_of_string ("media/styles.css"))
-             ]
-          ();
-        meta
-          ~content:"text/html;charset=utf-8"
-          ~a:[a_http_equiv "Content-Type"]
-          ();
-      ])
-      (body [
-        h1 ~a:[a_id "title"] [a_link "http://release.debian.org/" "Debian Release Management"];
-        h2 ~a:[a_id "subtitle"] [pcdata "Transition tracker"];
-        div ~a:[a_id "body"] (
-          b [ a_link
-                "http://wiki.debian.org/Teams/ReleaseTeam/Transitions"
-                "Transition documentation"
-            ] ::
-            br () ::
-            b [ a_link
-                "http://bugs.debian.org/cgi-bin/pkgreport.cgi?users=release.debian.org@packages.debian.org;tag=transition"
-                "Bugs tagged \"transition\""
-            ] ::
-            br () :: br () ::
-          mybody
-        );
-        div ~a:[a_id "footer"] [ small (generated_on_text ()) ]
-      ]) in
+let tracker template profiles =
+  let page_title = "Transition tracker" in
+  let hbody contents = [
+    h1 ~a:[a_id "title"] [a_link "http://release.debian.org/" "Debian Release Management"];
+    h2 ~a:[a_id "subtitle"] [pcdata "Transition tracker"];
+    div ~a:[a_id "body"] (
+      b [ a_link
+            "http://wiki.debian.org/Teams/ReleaseTeam/Transitions"
+            "Transition documentation"
+        ] ::
+        br () ::
+        b [ a_link
+              "http://bugs.debian.org/cgi-bin/pkgreport.cgi?users=release.debian.org@packages.debian.org;tag=transition"
+              "Bugs tagged \"transition\""
+          ] ::
+        br () :: br () ::
+        contents
+    );
+  ] in
+  let footer = [ small (generated_on_text ()) ] in
   let tget show_score (path, name, all, bad) =
     li (
       (Ben_monitor.a_link path name)::
@@ -314,7 +298,7 @@ let tracker profiles =
       else []
     )
   in
-  let mybody = SMap.fold
+  let contents = SMap.fold
     (fun profile tlist acc ->
       let title, show_score =
         try
@@ -337,7 +321,7 @@ let tracker profiles =
     []
   in
   let index = Filename.concat !base "index.html" in
-  let output = html mybody in
+  let output = template.Template.page page_title [] (hbody contents) footer in
   try
     p "Generating index...\n";
     dump_xhtml_to_file index output
@@ -367,18 +351,19 @@ let main args =
       let test_cond = And (Size_not_null,
                       And (Has_extension "ben",
                       And (Is_file, Is_readable))) in
+      let template = Benl_templates.get_registered_template () in
       let results =
         match !tconfig with
         (* Here we suppose that config is relative to base directory *)
           | Some transition ->
             let transition = Filename.concat !config_dir transition in
-            [ run_monitor transition ]
+            [ run_monitor template transition ]
           | None ->
             find test_cond confd
               (fun results transition ->
                 match profile_of_file transition with
                   | Old -> results
-                  | _ -> let result = run_monitor transition in
+                  | _ -> let result = run_monitor template transition in
                          result :: results
               )
               []
@@ -386,7 +371,7 @@ let main args =
       let packages, profiles = generate_stats results in
       let () = dump_yaml packages "packages.yaml" in
       (match !tconfig with
-        | None -> tracker profiles
+        | None -> tracker template profiles
         | Some _ -> ())
     with exc ->
       eprintf "E: %s\n" $ Printexc.to_string exc;

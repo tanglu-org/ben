@@ -649,7 +649,7 @@ let beautify_text =
       )
       t
 
-let print_html_monitor sources binaries dep_graph rounds =
+let print_html_monitor page sources binaries dep_graph rounds =
   let monitor_data = compute_monitor_data sources binaries rounds in
   let all, bad, packages = generate_stats monitor_data in
   let affected = List.map (fun x ->
@@ -674,77 +674,60 @@ let print_html_monitor sources binaries dep_graph rounds =
        with Not_found -> false)
     | _ -> false
   in
-  let html hbody =
-    html ~a:[a_xmlns `W3_org_1999_xhtml]
-      (head (title (pcdata (sprintf "Transition: %s" mytitle))) [
-        script
-          ~contenttype:"text/javascript"
-          (pcdata (sprintf
-                    "var nb_columns = %d; var nb_rounds = %d;"
-                    (2 + archs_count)
-                    (List.length monitor_data))
-          );
-        script
-          ~contenttype:"text/javascript"
-          ~a:[a_src (uri_of_string "media/jquery.min.js")]
-          (pcdata "");
-        script
-          ~contenttype:"text/javascript"
-          ~a:[a_src (uri_of_string ("media/script.js"))]
-          (pcdata "");
-        link
-          ~a:[a_rel [`Stylesheet];
-              a_href (uri_of_string ("media/revamp.css"))
-             ]
-          ();
-        link
-          ~a:[a_rel [`Stylesheet];
-              a_href (uri_of_string ("media/styles.css"))
-             ]
-          ();
-        meta
-          ~content:"text/html;charset=utf-8"
-          ~a:[a_http_equiv "Content-Type"]
-          ();
-      ])
-      (body [
-        h1 ~a:[a_id "title"] [a_link "http://release.debian.org/"  "Debian Release Management"];
-        h2 ~a:[a_id "subtitle"] [a_link "http://release.debian.org/transitions/" "Transitions"; pcdata (sprintf " → %s" mytitle)];
-        div ~a:[a_id "body"] [
-          b [ pcdata "Parameters:" ];
-          ul~a:[ a_class ["parameters"] ]
-            (li [ small [ b [ pcdata "Affected: " ]; pcdata is_affected ] ])
-            [li [ small [ b [ pcdata "Good: " ]; pcdata is_good ] ];
-             li [ small [ b [ pcdata "Bad: " ]; pcdata is_bad ] ];
-            ];
-          if String.length notes = 0 then
-            div [ ]
-          else
-            div ~a:[ a_class ["parameters"] ]
-              [ small [ b [ pcdata "Notes: " ] ];
-                pre ( beautify_text notes ) ]
-          ;
-          div
-            [
-              pcdata "Filter by status: ";
-              input ~a:[a_input_type `Checkbox; a_id "good"] ();
-              pcdata "good ";
-              input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "bad"] ();
-              pcdata "bad ";
-              input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "unknown"] (); pcdata "unknown";
-              span ~a:[a_id "count"] [];
-            ];
-          div (if has_testing_data
-            then [
-              input ~a:[a_input_type `Checkbox; a_id "notintesting"] ();
-              pcdata "ignore packages that are not in testing";
-            ]
-            else []
-          );
-          hbody;
-        ];
-        div ~a:[a_id "footer"] [ small (generated_on_text ()) ]
-      ]) in
+  let page_title = sprintf "Transition: %s" mytitle in
+  let extra_headers = [
+    script
+      ~contenttype:"text/javascript"
+      (pcdata (sprintf
+                 "var nb_columns = %d; var nb_rounds = %d;"
+                 (2 + archs_count)
+                 (List.length monitor_data))
+      );
+
+    script
+      ~contenttype:"text/javascript"
+      ~a:[a_src (uri_of_string "media/jquery.min.js")]
+      (pcdata "");
+
+    script
+      ~contenttype:"text/javascript"
+      ~a:[a_src (uri_of_string ("media/script.js"))]
+      (pcdata "");
+  ] in
+  let hbody table = [
+    b [ pcdata "Parameters:" ];
+    ul~a:[ a_class ["parameters"] ]
+      (li [ small [ b [ pcdata "Affected: " ]; pcdata is_affected ] ])
+      [li [ small [ b [ pcdata "Good: " ]; pcdata is_good ] ];
+       li [ small [ b [ pcdata "Bad: " ]; pcdata is_bad ] ];
+      ];
+    if String.length notes = 0 then
+      div [ ]
+    else
+      div ~a:[ a_class ["parameters"] ]
+        [ small [ b [ pcdata "Notes: " ] ];
+          pre ( beautify_text notes ) ]
+    ;
+    div
+      [
+        pcdata "Filter by status: ";
+        input ~a:[a_input_type `Checkbox; a_id "good"] ();
+        pcdata "good ";
+        input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "bad"] ();
+        pcdata "bad ";
+        input ~a:[a_input_type `Checkbox; a_checked `Checked; a_id "unknown"] (); pcdata "unknown";
+        span ~a:[a_id "count"] [];
+      ];
+    div (if has_testing_data
+      then [
+        input ~a:[a_input_type `Checkbox; a_id "notintesting"] ();
+        pcdata "ignore packages that are not in testing";
+      ]
+      else []
+    );
+    table;
+  ] in
+  let footer = [ small (generated_on_text ()) ] in
   let abrege = function
     | "hurd-i386" -> "hurd"
     | "kfreebsd-amd64" -> "kbsd64"
@@ -823,7 +806,8 @@ let print_html_monitor sources binaries dep_graph rounds =
       :: rows, (i - 1)
     end ([], (List.length monitor_data - 1)) (List.rev monitor_data) in
   let table = table (tr (td [ pcdata "" ]) []) rows in
-  (all, bad, packages, html table)
+  let html = page page_title extra_headers (hbody table) footer in
+  (all, bad, packages, html)
 
 let print_dependency_levels dep_graph rounds =
   list_iteri begin fun i xs ->
@@ -857,8 +841,10 @@ let main args =
     | Levels -> print_dependency_levels dep_graph rounds
     | Text -> print_text_monitor sources binaries rounds
     | Xhtml ->
+      let template = Benl_templates.get_registered_template () in
+      let page = template.Template.page in
       let (_, _, _, output) =
-        print_html_monitor sources binaries dep_graph rounds
+        print_html_monitor page sources binaries dep_graph rounds
       in
       Xhtml.P.print print_string output;
       print_newline ()
