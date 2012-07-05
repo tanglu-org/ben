@@ -28,9 +28,21 @@ let (//) = Filename.concat
 let register_template name page =
   template := Some { name; page }
 
+let template_not_found name =
+  Benl_error.raise (Benl_error.Template_not_found name)
+
 let load_template name =
-  let file = path // name // (Printf.sprintf "%s.cma" name) in
-  let file = Dynlink.adapt_filename file in
+  let file =
+    let cma = Dynlink.adapt_filename (Printf.sprintf "%s.cma" name) in
+    let filepath = path // name // cma in
+    if Sys.file_exists filepath
+    then filepath
+    else if Sys.file_exists name
+    then name
+    else if Sys.file_exists cma
+    then cma
+    else template_not_found name
+  in
   try
     Dynlink.loadfile file
   with Dynlink.Error e ->
@@ -44,5 +56,5 @@ let get_registered_template () =
       let () = load_template name in begin
       match !template with
       | Some t -> t
-      | None -> Benl_error.raise (Benl_error.Template_not_found name)
+      | None -> template_not_found name
       end
