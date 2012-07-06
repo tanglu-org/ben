@@ -34,7 +34,7 @@ let template_not_found name =
 let load_template name =
   let file =
     let cma = Dynlink.adapt_filename (Printf.sprintf "%s.cma" name) in
-    let filepath = path // name // cma in
+    let filepath = path // cma in
     if Sys.file_exists filepath
     then filepath
     else if Sys.file_exists name

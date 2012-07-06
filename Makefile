@@ -46,7 +46,7 @@ OCAMLBUILD_ENV :=
 # Build
 TARGETS := lib/benl.cma $(if $(HAS_OPT),lib/benl.cmxa) bin/$(NAME).$(ARCH) modules.dot
 GENERATED := modules.png
-TEMPLATES := $(wildcard templates/*)
+TEMPLATES := $(foreach TPL,$(wildcard templates/*),$(subst .ml,.$(PLUGIN_EXT),$(TPL)))
 
 # modules w/o interfaces
 EXTRA_FILES := $(shell find lib -iname "*.ml" | xargs -I {} sh -c "test -f '{}'i || echo '{}'")
@@ -56,7 +56,7 @@ export CAML_LD_LIBRARY_PATH=$(CURDIR)/_build/lib
 
 # Installation
 BINDIR := $(DESTDIR)$(PREFIX)/bin
-PLUGINSDIR := $(DESTDIR)$(PREFIX)/share/ben/templates
+PLUGINSDIR := $(DESTDIR)$(PREFIX)/lib/ben/templates
 
 all: ocamlbuild templates $(GENERATED) doc
 
@@ -75,16 +75,17 @@ typerex: all
 
 .PHONY: templates build-templates install-templates
 templates: build-templates
-build-templates: $(foreach TPL,$(TEMPLATES),build-$(TPL))
+build-templates: $(patsubst %,build-%,$(TEMPLATES))
 
 build-templates/%:
-	$(OCAMLBUILD_ENV) $(OCAMLBUILD) templates/$*/$*.$(PLUGIN_EXT)
+	$(OCAMLBUILD_ENV) $(OCAMLBUILD) templates/$*
 
-install-templates: $(foreach TPL,$(TEMPLATES),install-$(TPL))
+install-templates:
+	install -d $(PLUGINSDIR)
+	$(MAKE) $(patsubst %,install-%,$(TEMPLATES))
 
 install-templates/%:
-	install -d $(PLUGINSDIR)/$*
-	install templates/$*/$*.$(PLUGIN_EXT) $(PLUGINSDIR)/$*
+	install _build/templates/$* $(PLUGINSDIR)/$*
 
 clean:
 	$(OCAMLBUILD) -clean

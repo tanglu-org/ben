@@ -32,7 +32,6 @@ let packages = [
   "threads";
   "postgresql";
 ]
-let templates = "templates/"
 
 exception Require_findlib
 exception Missing_findlib_package of string
@@ -68,6 +67,7 @@ let () =
     | After_rules ->
         Pathname.define_context "lib/benlib" ["lib"];
         Pathname.define_context "frontends" ["lib"];
+        Pathname.define_context "templates" ["lib"];
         Pathname.define_context "bin" ["lib"; "frontends"];
         flag ["ocaml"; "link"; "program"] & A"-linkpkg";
         List.iter
@@ -75,12 +75,6 @@ let () =
              let flag x = flag (x::["ocaml"]) & S[A"-package"; A pkg] in
              List.iter flag ["ocamldep"; "compile"; "link"; "doc"])
           packages;
-
-        Array.iter
-          (fun file ->
-            Pathname.define_context (templates / file) ["lib"]
-          )
-          (Pathname.readdir templates);
 
         (* why isn't this done by default? *)
         flag ["library"; "link"; "thread"] (A"-thread");
