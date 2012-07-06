@@ -457,6 +457,20 @@ let help () =
       "--template", "Select an HTML template";
     ]
 
+let check_media_dir base =
+  let mediad = base // "media" in
+  if not (Sys.file_exists mediad) then
+    Unix.symlink !Benl_clflags.media_dir mediad
+  else
+    match (Unix.stat mediad).Unix.st_kind with
+    | Unix.S_LNK ->
+        let target = Unix.readlink mediad in
+        if target != !Benl_clflags.media_dir then begin
+          Unix.unlink mediad;
+          Unix.symlink !Benl_clflags.media_dir mediad
+        end
+    | _ -> ()
+
 let relevant_arch arch_ref arch_pkg =
   (arch_pkg = "all" && arch_ref = "i386") || arch_ref = arch_pkg
 
@@ -861,6 +875,7 @@ let main args =
           Xhtml.P.print print_string output;
           print_newline ()
       | Some file ->
+          check_media_dir (Filename.basename file);
           Benl_utils.dump_xhtml_to_file file output
 
 let frontend = {

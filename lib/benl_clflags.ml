@@ -27,6 +27,7 @@ let dry_run = ref false
 let verbose = ref false
 let architectures = ref !Benl_base.debian_architectures
 let cache_dir = ref (get_env_default "BEN_CACHE_DIR" (Sys.getcwd ()))
+let media_dir = ref (get_env_default "BEN_MEDIA_DIR" "/usr/share/ben/media")
 let mirror_binaries = ref "http://ftp.fr.debian.org/debian"
 let mirror_sources = ref "http://ftp.fr.debian.org/debian"
 let mirror = mirror_binaries

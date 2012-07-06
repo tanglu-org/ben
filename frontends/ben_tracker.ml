@@ -351,6 +351,7 @@ let main args =
       let htmld = Filename.concat !base "html" in
       if test (Not Exists) htmld then
         mkdir ~parent:true htmld;
+      Ben_monitor.check_media_dir htmld;
       let confd = !config_dir in
       let test_cond = And (Size_not_null,
                       And (Has_extension "ben",
