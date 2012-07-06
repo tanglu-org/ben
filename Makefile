@@ -97,5 +97,5 @@ env:
 .PHONY: install
 install: install-templates
 	install -d $(BINDIR)
-	install $(NAME).$(ARCH) $(BINDIR)/ben
+	install _build/bin/$(NAME).$(ARCH) $(BINDIR)/ben
 	ocamlfind install $(NAME) $(wildcard $(addprefix _build/lib/,*.cmi *.mli *.cma *.cmx *.cmxa *.a *.so)) $(EXTRA_FILES) META
