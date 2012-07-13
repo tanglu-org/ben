@@ -25,8 +25,8 @@ let path = "/usr/share/ben/templates"
 
 let (//) = Filename.concat
 
-let register_template name page =
-  template := Some { name; page }
+let register_template t =
+  template := Some t
 
 let template_not_found name =
   Benl_error.raise (Benl_error.Template_not_found name)

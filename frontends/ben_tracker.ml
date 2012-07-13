@@ -191,10 +191,9 @@ let run_monitor template file =
   let () = Benl_clflags.reset () in
   (* Read a .ben file *)
   let () = Benl_clflags.config := Benl_frontend.read_config_file file in
-  let page = template.Template.page in
   let rounds, sources, binaries, dep_graph = compute_graph () in
   let all, bad, packages, output =
-    Ben_monitor.print_html_monitor page sources binaries dep_graph rounds in
+    Ben_monitor.print_html_monitor template sources binaries dep_graph rounds in
   let htmlf = FilePath.replace_extension !!file "html" in
   let htmlp = "html" $ htmlf in
   let html = !base $ htmlp in
@@ -276,18 +275,8 @@ let tracker template profiles =
     h1 ~a:[a_id "title"] [a_link "http://release.debian.org/" "Debian Release Management"];
     h2 ~a:[a_id "subtitle"] [pcdata "Transition tracker"];
     div ~a:[a_id "body"] (
-      b [ a_link
-            "http://wiki.debian.org/Teams/ReleaseTeam/Transitions"
-            "Transition documentation"
-        ] ::
-        br () ::
-        b [ a_link
-              "http://bugs.debian.org/cgi-bin/pkgreport.cgi?users=release.debian.org@packages.debian.org;tag=transition"
-              "Bugs tagged \"transition\""
-          ] ::
-        br () :: br () ::
-        contents
-    );
+      div ~a:[a_id "intro"] template.Template.intro
+      :: contents);
   ] in
   let footer = [ small (generated_on_text ()) ] in
   let tget show_score (path, name, all, bad) =
