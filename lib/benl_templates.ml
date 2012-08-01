@@ -52,7 +52,7 @@ let get_registered_template () =
   match !template with
   | Some t -> t
   | None ->
-      let name = "debian" in
+      let name = "simple" in
       let () = load_template name in begin
       match !template with
       | Some t -> t

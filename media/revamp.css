@@ -11,9 +11,16 @@ body {
     margin: 0;
     padding: 0;
     font-family: "DejaVu Sans", "Bitstream Vera Sans", sans-serif; /*Prefer Free Fonts*/
-    background: #fff url('debian.png') no-repeat 10px 7px;
     color: #000;
     font-size: 100%;
+}
+
+body.debian {
+    background: #fff url('debian.png') no-repeat 10px 7px;
+}
+
+body.simple {
+    background: #fff url('debian.png') no-repeat 10px 7px;
 }
 
 a:link    { color: #0755d7; text-decoration: underline; }
