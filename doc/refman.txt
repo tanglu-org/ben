@@ -245,6 +245,9 @@ There are other optional fields:
 | --color                 | Color if text output
 | --text                  | Select text output format
 | --html                  | Select HTML output format
+| --output file           | Select output file
+| -o file                 | (Same as above)
+| --template template     | Select an HTML template
 |=========================================================================
 
 tracker
@@ -289,6 +292,7 @@ result in the `base` directory.
 | --transition\|-t [profile/transition] | Generate only that tracker page
 | --update\|-u            | Updates cache files
 | --use-projectb          | Get package lists from Projectb database
+| --template template     | Select an HTML template
 |====================================================================
 
 Reporting issues

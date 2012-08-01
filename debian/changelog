@@ -6,6 +6,11 @@ ben (0.6.2) UNRELEASED; urgency=low
     (Closes: #680273)
   * Add docbook-xsl to Build-Depends (needed on Ubuntu to build the
     documentation). Thanks to Iain Lane!
+  * Add a basic template mechanism
+    - HTML templates are put under /usr/lib/ben/templates
+    - Add --template command line option to "ben monitor" and "ben tracker"
+  * The "media" directory is taken care by Ben directly now when "monitor"
+    and "tracker" are used (See commit a5c222db6990da84ec30e4878d53bbda6).
 
  -- Mehdi Dogguy <mehdi@debian.org>  Wed, 04 Jul 2012 10:33:40 +0200
 
