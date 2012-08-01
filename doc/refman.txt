@@ -178,13 +178,21 @@ Using it is as simple as shown below:
 
  $ ben query ".package ~ /gentoo/" Packages
 
-Unlike `grep-dctrl(1)`, `ben query` doesn't have the necessary
-machinery to filter its output yet.
+Other valid uses:
 
-NOTE: `ben query` doesn't read .gz or .bz2 files or on its standard
-input yet.
+ $ zcat Packages.gz | ben query ".package ~ /gentoo/" -
+ [...]
+ $ ben query ".package ~ /gentoo/" Packages_foo.gz Packages_bar.bz2
+ [...]
+ $ ben query ".package ~ /gentoo/" monitor.cache
+ [...]
 
-NOTE: `ben query` doesn't read `ben.cache` files yet.
+Just like `grep-dctrl(1)`, `ben query` has a simple mechanism to
+filter its output. Using the command-line option `-s`, one can specify
+a comma-separated list of fields that will be shown for matching
+paragraphs.
+
+ $ ben query ".package ~ /gentoo/" -s Package,Version ...
 
 monitor
 ~~~~~~~
@@ -200,7 +208,7 @@ transition is decribed by three queries:
 * `is_bad`: matches binary packages that are considered to be broken
   (not fixed) for this transition.
 
-Not that some packages can be neither good nor bad. For example, there
+Note that some packages can be neither good nor bad. For example, there
 are many packages that build-depend on some library but do not link
 against it. Thus, they do not need any dependency on the library at
 runtime.
