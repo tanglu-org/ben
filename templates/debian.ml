@@ -7,7 +7,7 @@ let href uri =
 let a_link url text =
   a ~a:[a_href (uri_of_string url)] [pcdata text]
 
-let page _title _headers _body _footer =
+let page _title _subtitle _headers _body _footer =
   let _headers =
     (meta
       ~content:"text/html;charset=utf-8"
@@ -24,13 +24,10 @@ let page _title _headers _body _footer =
        (title (pcdata _title))
        _headers
     )
-    (body [
+    (body ~a:[a_class ["debian"]] [
       h1 ~a:[a_id "title"]
         [a_link "http://release.debian.org/" "Debian Release Management"];
-      h2 ~a:[a_id "subtitle"]
-        [a_link "http://release.debian.org/transitions/" "Transitions";
-         pcdata (Printf.sprintf " → %s" _title)
-        ];
+      h2 ~a:[a_id "subtitle"] _subtitle;
       div ~a:[a_id "body"] _body;
       div ~a:[a_id "footer"] _footer
     ])

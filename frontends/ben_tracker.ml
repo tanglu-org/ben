@@ -314,7 +314,8 @@ let tracker template profiles =
     []
   in
   let index = Filename.concat !base "index.html" in
-  let output = template.Template.page page_title [] (hbody contents) footer in
+  let subtitle = [ pcdata "Transition tracker" ] in
+  let output = template.Template.page page_title subtitle [] (hbody contents) footer in
   try
     p "Generating index...\n";
     dump_xhtml_to_file index output

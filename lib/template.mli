@@ -19,6 +19,7 @@
 
 type page_t =
   string -> (* Title *)
+  Xhtml_types.h2_content Xhtml.M.elt list -> (* Subtitle *)
   [ `Link | `Meta | `Object | `Script | `Style ] Xhtml.M.elt list -> (* Extra Headers *)
   Xhtml_types.div_content Xhtml.M.elt list -> (* Body *)
   Xhtml_types.div_content Xhtml.M.elt list -> (* Footer *)

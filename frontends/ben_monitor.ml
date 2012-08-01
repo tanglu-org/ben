@@ -569,12 +569,12 @@ let buildd t show src ver =
 
 let buildds t show srcs =
   match t.Template.buildds with
-  | None -> pcdata ""
+  | None -> raise Exit
   | Some t -> a_link (sprintf t srcs) "build logs"
 
 let rc_bugs t src =
   match t.Template.critical_bugs with
-  | None -> pcdata ""
+  | None -> raise Exit
   | Some t -> a_link (sprintf t src) "RC bugs"
 
 let changelog t ver dir src =
@@ -818,18 +818,25 @@ let print_html_monitor template sources binaries dep_graph rounds =
         then small [ pcdata "arch:all" ]
         else buildds template true (String.concat "," (List.map escape names)) in
       let rc_bugs_link = rc_bugs template (String.concat ";src=" (List.map escape names)) in
+      let column_arg = try [
+        pcdata " (";
+        buildd_link; pcdata " "; rc_bugs_link;
+        pcdata ")"
+      ]
+        with Exit -> []
+      in
       archs_columns i
         (th ~a:[ a_colspan 2; a_class [ "level" ] ]
-           [ pcdata (sprintf "Dependency level %d" (i+1));
-             pcdata " (";
-             buildd_link; pcdata " "; rc_bugs_link;
-             pcdata ")"
-           ]
+           (pcdata (sprintf "Dependency level %d" (i+1)) :: column_arg)
         )
       :: rows, (i - 1)
     end ([], (List.length monitor_data - 1)) (List.rev monitor_data) in
   let table = table (tr (td [ pcdata "" ]) []) rows in
-  let html = template.Template.page page_title extra_headers (hbody table) footer in
+  let subtitle =
+    [a_link "http://release.debian.org/transitions/" "Transitions";
+     pcdata (Printf.sprintf " → %s" mytitle)
+    ] in
+  let html = template.Template.page page_title subtitle extra_headers (hbody table) footer in
   (all, bad, packages, html)
 
 let print_dependency_levels dep_graph rounds =
