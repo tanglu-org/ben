@@ -21,7 +21,7 @@ open Benl_error
 open Template
 
 let template : Template.t option ref = ref None
-let path = "/usr/share/ben/templates"
+let path = "/usr/lib/ben/templates"
 
 let (//) = Filename.concat
 
