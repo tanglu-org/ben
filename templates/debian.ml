@@ -1,4 +1,4 @@
-
+open Printf
 open Xhtml.M
 
 let href uri =
@@ -7,7 +7,7 @@ let href uri =
 let a_link url text =
   a ~a:[a_href (uri_of_string url)] [pcdata text]
 
-let page _title _subtitle _headers _body _footer =
+let page ~title ~subtitle ~headers ~body ~footer =
   let _headers =
     (meta
       ~content:"text/html;charset=utf-8"
@@ -18,18 +18,18 @@ let page _title _subtitle _headers _body _footer =
     ::
     (link ~a:[a_rel [`Stylesheet]; a_href "media/styles.css"] ())
     ::
-    _headers in
+    headers in
   html ~a:[a_xmlns `W3_org_1999_xhtml]
     (head
-       (title (pcdata _title))
-       _headers
+       (Xhtml.M.title (pcdata title))
+       headers
     )
-    (body ~a:[a_class ["debian"]] [
+    (Xhtml.M.body ~a:[a_class ["debian"]] [
       h1 ~a:[a_id "title"]
         [a_link "http://release.debian.org/" "Debian Release Management"];
-      h2 ~a:[a_id "subtitle"] _subtitle;
-      div ~a:[a_id "body"] _body;
-      div ~a:[a_id "footer"] _footer
+      h2 ~a:[a_id "subtitle"] subtitle;
+      div ~a:[a_id "body"] body;
+      div ~a:[a_id "footer"] footer
     ])
 
 open Template
@@ -51,11 +51,15 @@ let () =
       br ();
       br ();
     ];
-    pts = "http://packages.qa.debian.org/%s";
-    changelog = "http://packages.debian.org/changelogs/%s/%s_%s/changelog";
-    buildd = "https://buildd.debian.org/status/package.php?p=%s&amp;ver=%s";
-    buildds = Some "https://buildd.debian.org/status/package.php?p=%s&amp;compact=compact";
-    bugs = "http://bugs.debian.org/%s";
-    critical_bugs = Some "http://bugs.debian.org/cgi-bin/pkgreport.cgi?sev-inc=serious;sev-inc=grave;sev-inc=critical;src=%s";
-    msg_id = "http://lists.debian.org/%s";
+    pts = (fun ~src -> sprintf "http://packages.qa.debian.org/%s" src);
+    changelog = (fun ~letter ~src ~ver -> sprintf "http://packages.debian.org/changelogs/%s/%s_%s/changelog" letter src ver);
+    buildd = (fun ~src ~ver -> sprintf "https://buildd.debian.org/status/package.php?p=%s" src);
+    buildds = (fun ~srcs ->
+      let srcs = String.concat "," srcs in
+      Some (sprintf "https://buildd.debian.org/status/package.php?p=%s&amp;compact=compact" srcs));
+    bugs = (fun ~src -> sprintf "http://bugs.debian.org/%s" src);
+    critical_bugs = (fun ~srcs ->
+      let srcs = String.concat ";src=" srcs in
+      Some (sprintf "http://bugs.debian.org/cgi-bin/pkgreport.cgi?sev-inc=serious;sev-inc=grave;sev-inc=critical;src=%s" srcs));
+    msg_id = (fun ~mid -> sprintf "http://lists.debian.org/%s" mid);
   }

@@ -18,30 +18,22 @@
 (**************************************************************************)
 
 type page_t =
-  string -> (* Title *)
-  Xhtml_types.h2_content Xhtml.M.elt list -> (* Subtitle *)
-  [ `Link | `Meta | `Object | `Script | `Style ] Xhtml.M.elt list -> (* Extra Headers *)
-  Xhtml_types.div_content Xhtml.M.elt list -> (* Body *)
-  Xhtml_types.div_content Xhtml.M.elt list -> (* Footer *)
+  title:    string ->
+  subtitle: Xhtml_types.h2_content Xhtml.M.elt list ->
+  headers:  [ `Link | `Meta | `Object | `Script | `Style ] Xhtml.M.elt list ->
+  body:     Xhtml_types.div_content Xhtml.M.elt list ->
+  footer:   Xhtml_types.div_content Xhtml.M.elt list ->
   Xhtml.M.html
 
-type changelog_url_t  = (string -> string -> string -> string, unit, string) format
-type buildd_url_t     = (string -> string -> string, unit, string) format
-type buildds_url_t    = (string -> string, unit, string) format option
-type pts_url_t        = (string -> string, unit, string) format
-type msg_id_service_t = (string -> string, unit, string) format
-type bugs_t           = (string -> string, unit, string) format
-type critical_bugs_t  = (string -> string, unit, string) format option
-
 type t = {
-  name : string ;
-  page : page_t;
-  intro : Xhtml_types.div_content Xhtml.M.elt list;
-  changelog : changelog_url_t;
-  buildd : buildd_url_t;
-  buildds : buildds_url_t;
-  pts : pts_url_t;
-  msg_id : msg_id_service_t;
-  bugs : bugs_t;
-  critical_bugs : critical_bugs_t;
+  name      : string ;
+  page      : page_t;
+  intro     : Xhtml_types.div_content Xhtml.M.elt list;
+  changelog : letter:string -> src:string -> ver:string -> string;
+  buildd    : src:string -> ver:string -> string;
+  buildds   : srcs:string list -> string option;
+  pts       : src:string -> string;
+  msg_id    : mid:string -> string;
+  bugs      : src:string -> string;
+  critical_bugs : srcs:string list -> string option;
 }
