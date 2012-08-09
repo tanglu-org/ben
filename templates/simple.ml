@@ -35,7 +35,7 @@ open Template
 
 let () =
   Benl_templates.register_template {
-    name = "Debian";
+    name = "Simple";
     page;
     intro = [];
     pts = "http://packages.qa.debian.org/%s";
