@@ -19,10 +19,6 @@ body.debian {
     background: #fff url('debian.png') no-repeat 10px 7px;
 }
 
-body.simple {
-    background: #fff url('debian.png') no-repeat 10px 7px;
-}
-
 a:link    { color: #0755d7; text-decoration: underline; }
 a:visited { color: #0755d7; text-decoration: underline; }
 a:hover   { color: #032a6b; text-decoration: underline; }

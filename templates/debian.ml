@@ -25,8 +25,7 @@ let page ~title ~subtitle ~headers ~body ~footer =
        headers
     )
     (Xhtml.M.body ~a:[a_class ["debian"]] [
-      h1 ~a:[a_id "title"]
-        [a_link "http://release.debian.org/" "Debian Release Management"];
+      h1 ~a:[a_id "title"] [pcdata "Transition tracker"];
       h2 ~a:[a_id "subtitle"] subtitle;
       div ~a:[a_id "body"] body;
       div ~a:[a_id "footer"] footer
@@ -36,21 +35,9 @@ open Template
 
 let () =
   Benl_templates.register_template {
-    name = "Debian";
+    name = "Simple";
     page;
-    intro = [
-      b [ a_link
-            "http://wiki.debian.org/Teams/ReleaseTeam/Transitions"
-            "Transition documentation"
-        ];
-      br ();
-      b [ a_link
-            "http://bugs.debian.org/cgi-bin/pkgreport.cgi?users=release.debian.org@packages.debian.org;tag=transition"
-            "Bugs tagged \"transition\""
-        ];
-      br ();
-      br ();
-    ];
+    intro = [];
     pts = (fun ~src -> sprintf "http://packages.qa.debian.org/%s" src);
     changelog = (fun ~letter ~src ~ver -> sprintf "http://packages.debian.org/changelogs/%s/%s_%s/changelog" letter src ver);
     buildd = (fun ~src ~ver -> sprintf "https://buildd.debian.org/status/package.php?p=%s" src);
