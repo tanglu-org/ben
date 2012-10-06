@@ -1,4 +1,4 @@
-ben (0.6.2) UNRELEASED; urgency=low
+ben (0.6.2) experimental; urgency=low
 
   * Add missing dependency on curl. Thanks to Luca Falavigna for spotting
     it!
@@ -14,7 +14,7 @@ ben (0.6.2) UNRELEASED; urgency=low
     and "tracker" are used (See commit a5c222db6990da84ec30e4878d53bbda6).
   * Fix dependencies of the library in the META file.
 
- -- Mehdi Dogguy <mehdi@debian.org>  Wed, 04 Jul 2012 10:33:40 +0200
+ -- Mehdi Dogguy <mehdi@debian.org>  Sat, 06 Oct 2012 22:46:05 +0200
 
 ben (0.6.1) experimental; urgency=low
 
