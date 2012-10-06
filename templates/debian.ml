@@ -8,7 +8,7 @@ let a_link url text =
   a ~a:[a_href (uri_of_string url)] [pcdata text]
 
 let page ~title ~subtitle ~headers ~body ~footer =
-  let _headers =
+  let headers =
     (meta
       ~content:"text/html;charset=utf-8"
       ~a:[a_http_equiv "Content-Type"]

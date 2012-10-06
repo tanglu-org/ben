@@ -67,6 +67,10 @@ let read_global_config () =
           Ben_monitor.run_debcheck := true
         | "use-projectb", Etrue ->
           Ben_monitor.use_projectb := true
+        | "base-url", (EString url) ->
+          Ben_monitor.baseurl := url
+        | "template", (EString template) ->
+          Benl_templates.load_template template;
         | "output-type", (EString format) ->
           (match String.lowercase format with
             (* FIXME: do something intelligent when format is not xhtml *)
@@ -271,13 +275,6 @@ let dump_yaml smap file =
 
 let tracker template profiles =
   let page_title = "Transition tracker" in
-  let hbody contents = [
-    h1 ~a:[a_id "title"] [a_link "http://release.debian.org/" "Debian Release Management"];
-    h2 ~a:[a_id "subtitle"] [pcdata "Transition tracker"];
-    div ~a:[a_id "body"] (
-      div ~a:[a_id "intro"] template.Template.intro
-      :: contents);
-  ] in
   let footer = [ small (generated_on_text ()) ] in
   let tget show_score (path, name, all, bad) =
     li (
@@ -313,9 +310,10 @@ let tracker template profiles =
     profiles
     []
   in
+  let contents = template.Template.intro @ contents in
   let index = Filename.concat !base "index.html" in
   let subtitle = [ pcdata "Transition tracker" ] in
-  let output = template.Template.page page_title subtitle [] (hbody contents) footer in
+  let output = template.Template.page page_title subtitle [] contents footer in
   try
     p "Generating index...\n";
     dump_xhtml_to_file index output
@@ -341,7 +339,7 @@ let main args =
       let htmld = Filename.concat !base "html" in
       if test (Not Exists) htmld then
         mkdir ~parent:true htmld;
-      Ben_monitor.check_media_dir htmld;
+      Ben_monitor.check_media_dir !base;
       let confd = !config_dir in
       let test_cond = And (Size_not_null,
                       And (Has_extension "ben",

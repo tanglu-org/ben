@@ -31,6 +31,7 @@ let use_colors = ref false
 let run_debcheck = ref false
 let use_projectb = ref false
 let output_file = ref None
+let baseurl = ref "file:///.."
 
 type output_type = Text | Xhtml | Levels
 let output_type = ref Levels
@@ -833,7 +834,7 @@ let print_html_monitor template sources binaries dep_graph rounds =
     end ([], (List.length monitor_data - 1)) (List.rev monitor_data) in
   let table = table (tr (td [ pcdata "" ]) []) rows in
   let subtitle =
-    [a_link "http://release.debian.org/transitions/" "Transitions";
+    [a_link (Filename.concat !baseurl "index.html") "Transitions";
      pcdata (Printf.sprintf " → %s" mytitle)
     ] in
   let html = template.Template.page page_title subtitle extra_headers (hbody table) footer in
