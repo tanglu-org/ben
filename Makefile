@@ -31,7 +31,7 @@ HAS_OPT :=
 endif
 
 OCAML_STDLIB_DIR ?= $(shell /usr/bin/ocamlc -where)
-HAS_NATDYN = no
+HAS_NATDYN =
 PLUGIN_EXT = cma
 ifneq (,$(wildcard $(OCAML_STDLIB_DIR)/dynlink.cmxa))
   HAS_NATDYN := yes
