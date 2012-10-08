@@ -1,9 +1,9 @@
-ben (0.6.3) UNRELEASED; urgency=low
+ben (0.6.3) experimental; urgency=low
 
   * Fix a typo in Makefile which made the build system try a native
     build on architecture where dynlink.cmxa is not available.
 
- -- Mehdi Dogguy <mehdi@debian.org>  Mon, 08 Oct 2012 21:13:11 +0200
+ -- Mehdi Dogguy <mehdi@debian.org>  Mon, 08 Oct 2012 21:47:47 +0200
 
 ben (0.6.2) experimental; urgency=low
 
