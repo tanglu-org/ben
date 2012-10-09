@@ -6,5 +6,7 @@ ben.1:
 refman.html:
 	asciidoc -b html -a icons -a toc2 $(@:.html=.txt)
 
+.PHONY: ben.1 refman.html
+
 clean:
 	-rm -f refman.html ben.1

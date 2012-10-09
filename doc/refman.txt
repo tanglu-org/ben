@@ -303,6 +303,29 @@ result in the `base` directory.
 | --template template     | Select an HTML template
 |====================================================================
 
+HTML Templates
+--------------
+
+Ben has a simple templating mechanism to generate customized HTML
+pages. Templates are loaded dynamically when `monitor` or `tracker`
+frontends are used. When none specified, Ben chooses to load the
+Debian template.
+
+You can write your own HTML template for Ben. All you have to do is to
+install the package `libben-ocaml-dev` which provides the Ben
+library. We recommend users to start from an existing template to ease
+the task. You can compile a template (e.g. named `foo`) by running the
+following command:
+
+ $ ocamlbuild -pkg ben foo.cmxs
+
+NOTE: .cmxs files are native dynamically loadable shared modules. If
+you're building on a bytecode-only architecture, you should build a
+`foo.cma` instead.
+
+If your template needs a CSS (Cascading Style Sheets) or some images,
+you should install them under `/usr/share/ben/media`.
+
 Reporting issues
 ----------------
 
