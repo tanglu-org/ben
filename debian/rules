@@ -23,3 +23,7 @@ override_dh_auto_install:
 .PHONY: override_dh_install
 override_dh_install:
 	dh_install --fail-missing -X.so.owner
+
+.PHONY: override_dh_ocaml
+override_dh_ocaml:
+	dh_ocaml --nodefined-map ben:Benl_error,Benl_templates

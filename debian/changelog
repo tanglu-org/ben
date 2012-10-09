@@ -1,6 +1,8 @@
 ben (0.6.4) UNRELEASED; urgency=low
 
   * Pass -thread to ocamldoc when generating API documentation.
+  * Pass needed flags to dh_ocaml so that Ben doesn't define modules
+    Benl_error and Benl_templates.
 
  -- Mehdi Dogguy <mehdi@debian.org>  Tue, 09 Oct 2012 12:32:33 +0200
 
