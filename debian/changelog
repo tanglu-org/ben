@@ -1,4 +1,4 @@
-ben (0.6.4) UNRELEASED; urgency=low
+ben (0.6.4) experimental; urgency=low
 
   * Pass -thread to ocamldoc when generating API documentation.
   * Pass needed flags to dh_ocaml so that Ben doesn't define modules
@@ -6,7 +6,7 @@ ben (0.6.4) UNRELEASED; urgency=low
   * Provide minimal documentation about HTML templates for Ben, and how
     to build them.
 
- -- Mehdi Dogguy <mehdi@debian.org>  Tue, 09 Oct 2012 13:06:16 +0200
+ -- Mehdi Dogguy <mehdi@debian.org>  Sun, 06 Jan 2013 16:28:59 +0100
 
 ben (0.6.3) experimental; urgency=low
 
