@@ -112,7 +112,7 @@ type dependency = {
 }
 
 let split_name_and_version =
-  let rex = Pcre.regexp "^\\s*(\\S+)\\s*(\\((\\S+)\\s*([^)]+)\\))?\\s*(\\[\\s*([^\\]]+)\\s*\\])?\\s*$" in
+  let rex = Pcre.regexp "^\\s*(\\S+)\\s*(\\(([<>=]+)\\s*([^)]+)\\))?\\s*(\\[\\s*([^\\]]+)\\s*\\])?\\s*$" in
   fun x ->
     try
       let r = Pcre.exec ~rex x in
