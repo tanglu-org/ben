@@ -359,11 +359,17 @@ let main args =
               (fun results transition ->
                 match profile_of_file transition with
                   | Old -> results
-                  | _ -> let result = run_monitor template transition in
-                         result :: results
+                  | _ ->
+                    try
+                      let result = run_monitor template transition in
+                      result :: results
+                    with Benl_error.Error e -> (* Ben file has errors *)
+                      warn e;
+                      results
               )
               []
       in
+      (* Should we yell if all .ben files were broken? i.e. results == [] *)
       let packages, profiles = generate_stats results in
       let () = dump_yaml packages "packages.yaml" in
       (match !tconfig with
