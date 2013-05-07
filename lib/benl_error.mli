@@ -26,9 +26,11 @@ type error =
   | Unexpected_char of string * char * int * int
   | Bad_marshalled_data of string
   | Unknown_command of string
+  | Unknown_output_format of string
   | Unexpected_expression of string
   | Error_in_configuration_file of string
   | Missing_configuration_item of string
+  | Unknown_configuration_item of string
   | Parsing_error of string * int * int
   | Template_not_found of string
   | Dynlink_error of Dynlink.error
@@ -42,3 +44,6 @@ val string_of_error : error -> string
 
 val raise : error -> 'a
 (** Wrapper around [Pervasives.raise] to raise a Ben exception. *)
+
+val warn : error -> unit
+(** Emit a warning. *)

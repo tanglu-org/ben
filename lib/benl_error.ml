@@ -28,9 +28,11 @@ type error =
   | Unexpected_char of string * char * int * int
   | Bad_marshalled_data of string
   | Unknown_command of string
+  | Unknown_output_format of string
   | Unexpected_expression of string
   | Error_in_configuration_file of string
   | Missing_configuration_item of string
+  | Unknown_configuration_item of string
   | Parsing_error of string * int * int
   | Template_not_found of string
   | Dynlink_error of Dynlink.error
@@ -54,12 +56,16 @@ let string_of_error = function
       sprintf "bad marshalled data in %s" s
   | Unknown_command s ->
       sprintf "unknown command: %s" s
+  | Unknown_output_format s ->
+      sprintf "unknown output format: %s" s
   | Unexpected_expression s ->
       sprintf "unexpected expression: %s" s
   | Error_in_configuration_file s ->
       sprintf "error in configuration file: %s" s
   | Missing_configuration_item s ->
       sprintf "missing configuration item: %s" s
+  | Unknown_configuration_item s ->
+      sprintf "unknown configuration item: %s" s
   | Parsing_error (file, line, column) ->
       sprintf
         "parse error in file %S, line %d, character %d"
@@ -77,3 +83,4 @@ let () =
     )
 
 let raise e = Pervasives.raise (Error e)
+let warn e = Printf.eprintf "W: %s\n%!" (string_of_error e)

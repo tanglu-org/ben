@@ -22,6 +22,7 @@ open Printf
 open Benl_clflags
 open Benl_utils
 open Ben_monitor
+open Benl_error
 
 let ($) f x = f x
 
@@ -73,13 +74,15 @@ let read_global_config () =
           Benl_templates.load_template template;
         | "output-type", (EString format) ->
           (match String.lowercase format with
-            (* FIXME: do something intelligent when format is not xhtml *)
             | "text" -> Ben_monitor.output_type := Text
             | "levels" -> Ben_monitor.output_type := Levels
-            | _ -> Ben_monitor.output_type := Xhtml
+            | "xhtml" -> Ben_monitor.output_type := Xhtml
+            | format ->
+                warn (Unknown_output_format format);
+                Ben_monitor.output_type := Xhtml
           )
-        | _ -> ()
-          (* FIXME: Do something smarter for remaining cases *)
+        | item, _ ->
+            warn (Unknown_configuration_item item)
     )
     config
   end
