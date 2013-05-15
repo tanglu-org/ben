@@ -52,7 +52,7 @@ let () =
       br ();
     ];
     pts = (fun ~src -> sprintf "http://packages.qa.debian.org/%s" src);
-    changelog = (fun ~letter ~src ~ver -> sprintf "http://packages.debian.org/changelogs/%s/%s_%s/changelog" letter src ver);
+    changelog = (fun ~letter ~src ~ver -> sprintf "http://packages.debian.org/changelog:%s" src);
     buildd = (fun ~src ~ver -> sprintf "https://buildd.debian.org/status/package.php?p=%s" src);
     buildds = (fun ~srcs ->
       let srcs = String.concat "," srcs in
