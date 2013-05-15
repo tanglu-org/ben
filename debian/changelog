@@ -1,3 +1,13 @@
+ben (0.6.5) UNRELEASED; urgency=low
+
+  * Fix changelog urls
+  * Only warn instead of exiting when a .ben file is incorrect
+  * Better error reporting wrt. configuration files
+  * Separator between comparison operators and versions can be empty
+  * Handle architecture restrictions in packages' relationships
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Wed, 15 May 2013 22:52:20 +0200
+
 ben (0.6.4) experimental; urgency=low
 
   * Pass -thread to ocamldoc when generating API documentation.
