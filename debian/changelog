@@ -5,6 +5,8 @@ ben (0.6.5) UNRELEASED; urgency=low
   * Better error reporting wrt. configuration files
   * Separator between comparison operators and versions can be empty
   * Handle architecture restrictions in packages' relationships
+  * Command-line flags --use-cache and --cache-file are now available
+    for all frontends.
 
  -- Mehdi Dogguy <mehdi@debian.org>  Wed, 15 May 2013 22:52:20 +0200
 
