@@ -29,7 +29,6 @@ let ($) f x = f x
 let base = ref "."
 let config_dir = ref "config"
 let global_config = ref (FilePath.concat !config_dir "global.conf")
-let cache_file = ref "monitor.cache"
 let lock = ref "ben.lock"
 let update = ref false
 let tconfig = ref None
@@ -63,7 +62,7 @@ let read_global_config () =
           Benl_clflags.mirror_sources := mirror;
           Benl_clflags.mirror_binaries := mirror
         | "use-cache", Etrue ->
-          Ben_monitor.use_cache := true
+          Benl_clflags.use_cache := true
         | "run-debcheck", Etrue ->
           Ben_monitor.run_debcheck := true
         | "use-projectb", Etrue ->
@@ -175,7 +174,7 @@ let clear_cache () =
   rm ~force:Force pkgs
 
 let update_test () =
-  let cachef = Filename.concat !cache_dir !cache_file in
+  let cachef = Benl_clflags.get_cache_file () in
      !update
   || test (Not Exists) cachef
 

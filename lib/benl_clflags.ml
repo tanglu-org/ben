@@ -27,6 +27,8 @@ let dry_run = ref false
 let verbose = ref false
 let architectures = ref !Benl_base.debian_architectures
 let cache_dir = ref (get_env_default "BEN_CACHE_DIR" (Sys.getcwd ()))
+let cache_file = ref "ben.cache"
+let use_cache = ref false
 let media_dir = ref (get_env_default "BEN_MEDIA_DIR" "/usr/share/ben/media")
 let mirror_binaries = ref "http://ftp.fr.debian.org/debian"
 let mirror_sources = ref "http://ftp.fr.debian.org/debian"
@@ -45,6 +47,14 @@ let config : Benl_types.config ref = ref []
 let get_config key =
   try List.assoc key !config
   with Not_found -> raise (Missing_configuration_item key)
+
+let get_cache_file ?(name = !cache_file) () =
+  if Sys.file_exists name
+  then name
+  else let filecache = Filename.concat !cache_dir name in
+       if Sys.file_exists filecache
+       then filecache
+       else name (* Let the system generate an error *)
 
 let progress fmt =
   if !quiet then

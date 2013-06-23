@@ -55,6 +55,12 @@ OPTIONS
 *--cache-dir d*::
     Path to cache dir
 
+*--cache-file|-C f*::
+    Specify the name of the cache file
+
+*--use-cache::
+    Use cache whenever possible
+
 *--config|-c c*::
     Config file
 

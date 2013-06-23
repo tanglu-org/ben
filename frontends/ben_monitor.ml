@@ -26,7 +26,6 @@ open Xhtml.M
 module M = Package.Map
 module S = Package.Set
 
-let use_cache = ref false
 let use_colors = ref false
 let run_debcheck = ref false
 let use_projectb = ref false
@@ -388,8 +387,8 @@ let inject_debcheck_data =
     ) bins
 
 let get_data () =
-  let file = !Benl_clflags.cache_dir // "monitor.cache" in
-  if !use_cache && Sys.file_exists file then
+  let file = Benl_clflags.get_cache_file () in
+  if !Benl_clflags.use_cache && Sys.file_exists file then
     filter_affected (Marshal.load file)
   else
     let origin =
@@ -415,9 +414,6 @@ let print_dep_line src deps =
 let print_dep_graph x = M.iter print_dep_line x
 
 let rec parse_local_args = function
-  | "--use-cache"::xs ->
-      use_cache := true;
-      parse_local_args xs
   | "--run-debcheck"::xs ->
       run_debcheck := true;
       parse_local_args xs
@@ -448,8 +444,7 @@ let help () =
     (fun (option , desc) ->
       Printf.printf "    %s: %s\n%!" option desc
     )
-    [ "--use-cache", "Use cache";
-      "--run-debcheck", "Run edos-debcheck and add virtual .edos-debcheck field";
+    [ "--run-debcheck", "Run edos-debcheck and add virtual .edos-debcheck field";
       "--use-projectb", "Get package lists from Projectb database";
       "--color", "Color if text output";
       "--text", "Select text output format";

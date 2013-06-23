@@ -122,6 +122,12 @@ let rec parse_common_args = function
   | ("--config"|"-c")::x::xs ->
       Benl_clflags.config := read_config_file x;
       parse_common_args xs
+  | ("--cache"|"-C")::x::xs ->
+      Benl_clflags.cache_file := x;
+      parse_common_args xs
+  | "--use-cache"::xs ->
+      Benl_clflags.use_cache := true;
+      parse_common_args xs
   | x::xs -> x::(parse_common_args xs)
   | [] -> []
 
