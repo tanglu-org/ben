@@ -64,9 +64,9 @@ let read_global_config () =
         | "use-cache", Etrue ->
           Benl_clflags.use_cache := true
         | "run-debcheck", Etrue ->
-          Ben_monitor.run_debcheck := true
+          Benl_data.run_debcheck := true
         | "use-projectb", Etrue ->
-          Ben_monitor.use_projectb := true
+          Benl_data.use_projectb := true
         | "base-url", (EString url) ->
           Ben_monitor.baseurl := url
         | "template", (EString template) ->
@@ -106,7 +106,7 @@ let rec parse_local_args = function
       base := x;
       parse_local_args xs
   | ("--use-projectb")::xs ->
-      Ben_monitor.use_projectb := true;
+      Benl_data.use_projectb := true;
       parse_local_args xs
   | "--template"::template::xs ->
       Benl_templates.load_template template;
@@ -180,7 +180,7 @@ let update_test () =
 
 let update_cache () =
   let () = clear_cache () in
-  if not !Ben_monitor.use_projectb then Ben_download.download_all ()
+  if not !Benl_data.use_projectb then Ben_download.download_all ()
 
 let profile_of_file file =
   try
