@@ -21,6 +21,10 @@ open Printf
 open Benl_core
 open Benl_base
 open Benl_error
+open Benl_data
+open Benl_modules
+module Marshal = Benl_marshal.Make(Marshallable)
+open Marshallable
 
 let p = Benl_clflags.progress
 let ( / ) = Filename.concat
@@ -90,9 +94,21 @@ let download_all () =
   download_sources ();
   List.iter download_binaries !Benl_clflags.architectures;;
 
+let save_cache () =
+  if !Benl_clflags.use_cache then begin
+    let src_raw = Benl_data.file_origin.get_sources M.empty in
+    let bin_raw = List.fold_left
+      Benl_data.file_origin.get_binaries PAMap.empty !Benl_clflags.architectures
+    in
+    let data = { src_map = src_raw; bin_map = bin_raw; } in
+    let file = Benl_clflags.get_cache_file () in
+    Marshal.dump file data;
+  end
+
 let main args =
   ignore (Benl_frontend.parse_common_args args);
-  download_all ()
+  download_all ();
+  save_cache ()
 
 let frontend = {
   Benl_frontend.name = "download";
