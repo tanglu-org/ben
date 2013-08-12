@@ -61,6 +61,7 @@ module Map : sig
 end
 
 val build_depends : [`source] t -> [`binary] Name.t list
+val binaries : [`source] t -> [`binary] Name.t list
 
 type dependency = {
   dep_name : string;

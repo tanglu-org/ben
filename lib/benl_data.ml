@@ -42,6 +42,7 @@ type origin = {
 let relevant_binary_keys =
   [ "package"; "source"; "version"; "maintainer"; "architecture";
     "provides"; "depends"; "pre-depends"; "replaces";
+    "multi-arch";
     "conflicts"; "breaks"; "suggests"; "recommends"; "enhances" ]
 
 let relevant_source_keys =

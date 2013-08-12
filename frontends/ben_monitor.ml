@@ -428,6 +428,23 @@ let print_html_monitor template sources binaries dep_graph rounds =
       let names, rows =
       (List.fold_left begin fun (arch_any_s, acc) (source, states) ->
         let src = Package.get "package" source in
+        let has_ma_same =
+          List.exists (fun bin ->
+            List.exists (fun arch ->
+              try
+                let pkg = PAMap.find (bin, arch) binaries in
+                Package.get "multi-arch" pkg = "same"
+              with Not_found -> false
+            ) !Benl_clflags.architectures
+          ) (Package.binaries source)
+        in
+        let has_ma_same_html =
+          if has_ma_same then [
+            pcdata " [";
+            small [pcdata "ma:same"];
+            pcdata "]";
+          ] else []
+        in
         let in_testing =
           try not (Package.get "is-in-testing" source = "no")
           with Not_found -> true
@@ -460,11 +477,11 @@ let print_html_monitor template sources binaries dep_graph rounds =
           (
           td
             ~a:[ a_class [ "src"] ]
-            [ pcdata "[";
+            ([ pcdata "[";
               buildd template arch_any (escape src) version;
               pcdata "] (";
               changelog template (sprintf "%s" version) directory (escape src);
-              pcdata ")" ]
+              pcdata ")" ] @ has_ma_same_html)
           ::
           (List.map begin fun (_, state) ->
             (td ~a:[ a_class [ Benl_base.class_of_status state ] ]
