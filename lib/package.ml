@@ -45,6 +45,7 @@ let add k v pkg = (k, v) :: pkg
 module Set = struct
   module S = Set.Make(String)
   type 'a t = S.t
+  let is_empty = S.is_empty
   let empty = S.empty
   let add = S.add
   let mem = S.mem

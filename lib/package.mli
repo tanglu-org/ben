@@ -35,6 +35,7 @@ val filter_print : string list -> out_channel -> 'a t -> unit
 module Set : sig
   type 'a t
   val empty : 'a t
+  val is_empty : 'a t -> bool
   val add : 'a Name.t -> 'a t -> 'a t
   val mem : 'a Name.t -> 'a t -> bool
   val exists : ('a Name.t -> bool) -> 'a t -> bool

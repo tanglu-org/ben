@@ -302,12 +302,12 @@ let filter_affected { src_map = srcs; bin_map = bins } is_affected =
   { src_map = src_map; bin_map = bin_map }
 
 let inject_debcheck_data =
-  let rex = Pcre.regexp "^([^ ]+) \\(= ([^)]+)\\): FAILED$" in
+  let rex = Pcre.regexp "^  package: (.*)$" in
   fun (bins : [`binary] Package.t PAMap.t)  architectures ->
     let a, b = if !Benl_clflags.quiet then ("\n", "") else ("", "\n") in
     let all_uninstallable_packages = List.map (fun arch_ref ->
-      Benl_clflags.progress "Running edos-debcheck on %s..." arch_ref;
-      let (ic, oc) as p = Unix.open_process "edos-debcheck -quiet -failures" in
+      Benl_clflags.progress "Running dose-debcheck on %s..." arch_ref;
+      let (ic, oc) as p = Unix.open_process "dose-debcheck --quiet --failures" in
       (* inefficiency: for each architecture, we iterate on all binary
          packages, not only on binary packages of said architectures *)
       PAMap.iter (fun (name, arch) pkg ->
@@ -316,14 +316,16 @@ let inject_debcheck_data =
       close_out oc;
       let rec loop accu =
         begin match (try Some (input_line ic) with End_of_file -> None) with
-          | None -> accu
+          | None ->
+            if Package.Set.is_empty accu then
+              Printf.eprintf "W: no uninstallable packages!\n%!";
+            accu
           | Some line ->
             try
               let r = Pcre.exec ~rex line in
-              loop (Package.Set.add (Package.Name.of_string (Pcre.get_substring r 1)) accu)
-            with Not_found ->
-              Printf.eprintf "%sW: ignored line: %s%s%!" a line b;
-              loop accu
+              let package = Pcre.get_substring r 1 in
+              loop (Package.Set.add (Package.Name.of_string package) accu)
+            with Not_found -> loop accu
         end
       in
       let result = loop Package.Set.empty in
@@ -331,13 +333,13 @@ let inject_debcheck_data =
         | Unix.WEXITED (0|1) -> ()
         | Unix.WEXITED i ->
           Printf.eprintf
-            "%sW: subprocess edos-debcheck exited with code %d%s%!" a i b
+            "%sW: subprocess dose-debcheck exited with code %d%s%!" a i b
         | Unix.WSIGNALED i ->
           Printf.eprintf
-            "%sW: subprocess edos-debcheck died with signal %d%s%!" a i b
+            "%sW: subprocess dose-debcheck died with signal %d%s%!" a i b
         | Unix.WSTOPPED i ->
           Printf.eprintf
-            "%sW: subprocess edos-debcheck stopped with signal %d%s%!" a i b
+            "%sW: subprocess dose-debcheck stopped with signal %d%s%!" a i b
       end;
       Benl_clflags.progress "\n";
       (arch_ref, result)
@@ -345,7 +347,7 @@ let inject_debcheck_data =
     PAMap.mapi (fun (name, arch) pkg ->
       let uninstallable_packages = List.assoc arch all_uninstallable_packages in
       if Package.Set.mem name uninstallable_packages
-      then Package.add "edos-debcheck" "uninstallable" pkg
+      then Package.add "debcheck" "uninstallable" pkg
       else pkg
     ) bins
 

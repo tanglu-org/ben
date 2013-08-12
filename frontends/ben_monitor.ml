@@ -109,7 +109,7 @@ let help () =
     (fun (option , desc) ->
       Printf.printf "    %s: %s\n%!" option desc
     )
-    [ "--run-debcheck", "Run edos-debcheck and add virtual .edos-debcheck field";
+    [ "--run-debcheck", "Run dose-debcheck and add virtual .debcheck field";
       "--use-projectb", "Get package lists from Projectb database";
       "--color", "Color if text output";
       "--text", "Select text output format";
