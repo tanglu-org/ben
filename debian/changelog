@@ -1,5 +1,6 @@
 ben (0.6.5) UNRELEASED; urgency=low
 
+  [ Mehdi Dogguy ]
   * Fix changelog urls
   * Only warn instead of exiting when a .ben file is incorrect
   * Better error reporting wrt. configuration files
@@ -8,7 +9,18 @@ ben (0.6.5) UNRELEASED; urgency=low
   * Command-line flags --use-cache and --cache-file are now available
     for all frontends.
 
- -- Mehdi Dogguy <mehdi@debian.org>  Wed, 15 May 2013 22:52:20 +0200
+  [ Stéphane Glondu ]
+  * Migrate to dose-debcheck (Closes: #707599)
+    - the pseudo-header "edos-debcheck" has been renamed into "debcheck";
+      existing .ben files using it might need update
+  * Add visual indication for sources that build "MA: same" binaries
+    (Closes: #711908)
+  * Update Vcs-*
+
+  [ Johannes Schauer ]
+  * Allow creation of a cache in download (Closes: #714703)
+
+ -- Stéphane Glondu <glondu@debian.org>  Mon, 12 Aug 2013 19:08:46 +0200
 
 ben (0.6.4) experimental; urgency=low
 
