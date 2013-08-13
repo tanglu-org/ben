@@ -70,9 +70,9 @@ let main args =
   and packages = caches @ packages in
   let print kind filename =
     let keep = fun f -> !filters = [] || List.mem (String.lowercase f) !filters in
-    let eval = fun _ p ->
-      if Query.eval kind p query then Package.filter_print !filters stdout p in
-    let accu = fun n p () -> eval n p in
+    let eval e = fun _ p ->
+      if e p query then Package.filter_print !filters stdout p in
+    let accu = fun n p () -> eval (Query.eval kind) n p in
     match filename with
     | "-" ->
       Benl_utils.parse_control_in_channel kind "standard input" stdin keep accu ()
@@ -90,8 +90,8 @@ let main args =
       let filename = Benl_clflags.get_cache_file ~name:filename () in
       let { src_map = srcs; bin_map = bins } = Marshal.load filename in
       begin match kind with
-      | `binary -> PAMap.iter (Obj.magic eval) bins
-      | `source -> Package.Map.iter (Obj.magic eval) srcs
+      | `binary -> PAMap.iter (eval Query.eval_binary) bins
+      | `source -> Package.Map.iter (eval Query.eval_source) srcs
       end
     | filename ->
       Benl_utils.parse_control_file kind filename keep accu ()
