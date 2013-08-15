@@ -90,6 +90,7 @@ module Map = struct
   let find = M.find
   let mapi = M.mapi
   let fold = M.fold
+  let bindings = M.bindings
 
   let update_default default f key t =
     let previous = try find key t with Not_found -> default in

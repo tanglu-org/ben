@@ -24,24 +24,29 @@ open Benl_types
 
 module M = Package.Map
 module S = Package.Set
-module Name = Package.Name
+module N = Package.Name
+
+module I = struct
+  type t = int
+  let compare = ( - )
+end
 
 module G = struct
   module V = struct
-    type t = [`source] Name.t
+    type t = [`source] N.t
     let equal = (=)
     let hash = Hashtbl.hash
     let compare = Pervasives.compare
   end
 
-  type t = ([`source], [`source] S.t) M.t * ([`source], [`source] S.t) M.t
+  type t = ([`source], [`source] S.t) M.t
 
-  let iter_vertex f (_, rdeps) = M.iter (fun k _ -> f k) rdeps
-  let iter_succ f (deps, _) pkg = S.iter f (M.find pkg deps)
-  let in_degree (_, rdeps) pkg = S.cardinal (M.find pkg rdeps)
+  let iter_vertex f graph = M.iter (fun k _ -> f k) graph
+  let iter_succ f graph pkg = S.iter f (M.find pkg graph)
 end
 
-module Topological = Graph.Topological.Make(G)
+module C = Graph.Components.Make(G)
+module T = Set.Make(I)
 
 let get_dep_graph src bin =
   M.mapi
@@ -55,30 +60,63 @@ let get_dep_graph src bin =
          deps)
     src
 
-let invert_dep_graph src =
-  M.mapi
-    (fun pkg _ ->
-       M.fold
-         (fun name deps accu ->
-            if S.mem pkg deps then
-              S.add name accu
-            else
-              accu)
-         src S.empty)
-    src
+let compute_levels graph =
+  let n, f = C.scc graph in
+  let visited = Array.make n (-1) in
+  let to_visit = Array.make n None in
+  M.iter (fun node children ->
+    let inode = f node in
+    let c =
+      match to_visit.(inode) with
+      | None -> T.empty
+      | Some c -> c
+    in
+    to_visit.(inode) <- Some (S.fold (fun child accu ->
+      T.add (f child) accu
+    ) children c)
+  ) graph;
+  Array.iteri (fun i x ->
+    match x with
+    | None -> failwith "error in SCC computation"
+    | Some c -> to_visit.(i) <- Some (T.remove i c)
+  ) to_visit;
+  let rec visit node =
+    let i = visited.(node) in
+    if i >= 0 then i
+    else (
+      match to_visit.(node) with
+      | None -> failwith "cycle detected in SCC graph"
+      | Some children ->
+        to_visit.(node) <- None;
+        let i = T.fold (fun child i ->
+          max i (visit child)
+        ) children (-1) in
+        let i = i + 1 in
+        visited.(node) <- i;
+        i
+    )
+  in
+  for i = 0 to n - 1 do
+    let (_ : int) = visit i in ()
+  done;
+  M.mapi (fun pkg _ -> visited.(f pkg)) graph
+
+let rev_cons_if_not_empty xs ys =
+  match xs with
+  | [] -> ys
+  | _ :: _ -> List.rev xs :: ys
+
+let rec lvlist_to_listlist last accu result = function
+  | [] ->
+    List.rev (rev_cons_if_not_empty accu result)
+  | (i, pkg) :: xs ->
+    if i = last then
+      lvlist_to_listlist i (pkg :: accu) result xs
+    else
+      lvlist_to_listlist i [pkg] (rev_cons_if_not_empty accu result) xs
 
 let topo_split dgraph =
-  let inverted = invert_dep_graph dgraph in
-  let (a, b) =
-    Topological.fold
-      (fun name (local, accu) ->
-         if S.exists (fun x -> S.mem x local) (M.find name dgraph) then
-           (* already a dependency in this level -> switch to next level *)
-           (S.add name S.empty, local::accu)
-         else
-           (* stay on the same level *)
-           (S.add name local, accu))
-      (inverted, dgraph)
-      (S.empty, [])
-  in
-  List.rev_map S.elements (a::b)
+  let levels = compute_levels dgraph in
+  let packages = List.map (fun (s, n) -> n, s) (M.bindings levels) in
+  let packages = List.sort compare packages in
+  lvlist_to_listlist 0 [] [] packages

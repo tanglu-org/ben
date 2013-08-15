@@ -57,6 +57,7 @@ module Map : sig
   val iter : ('a Name.t -> 'b -> unit) -> ('a, 'b) t -> unit
   val mapi : ('a Name.t -> 'b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
   val fold : ('a Name.t -> 'b -> 'c -> 'c) -> ('a, 'b) t -> 'c -> 'c
+  val bindings : ('a, 'b) t -> ('a Name.t * 'b) list
   val update_default : 'b -> ('b -> 'b) -> 'a Name.t -> ('a, 'b) t -> ('a, 'b) t
 end
 
