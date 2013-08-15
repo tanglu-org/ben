@@ -1,6 +1,6 @@
 name = "ben"
 version = "0.6"
-requires="unix,pcre,ocamlgraph,tyxml"
+requires="unix,pcre,tyxml"
 description = "Libraries for Debian maintainers"
 archive(byte) = "benl.cma"
 archive(native) = "benl.cmxa"
