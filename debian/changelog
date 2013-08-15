@@ -15,7 +15,11 @@ ben (0.6.5) UNRELEASED; urgency=low
       existing .ben files using it might need update
   * Add visual indication for sources that build "MA: same" binaries
     (Closes: #711908)
+  * New computation of dependency levels, which should give better results
+    when there are cycles or several connected components
+  * Drop dependency to ocamlgraph (no longer used)
   * Update Vcs-*
+  * Bump Standards-Version to 3.9.4 (no changes)
 
   [ Johannes Schauer ]
   * Allow creation of a cache in download (Closes: #714703)
