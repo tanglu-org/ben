@@ -22,10 +22,6 @@ val get_dep_graph :
   ([`binary], [`source] Package.Name.t) Package.Map.t ->
   ([`source], [`source] Package.Set.t) Package.Map.t
 
-val invert_dep_graph :
-  ([`source], [`source] Package.Set.t) Package.Map.t ->
-  ([`source], [`source] Package.Set.t) Package.Map.t
-
 val topo_split :
   ([`source], [`source] Package.Set.t) Package.Map.t ->
   [`source] Package.Name.t list list

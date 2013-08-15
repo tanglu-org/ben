@@ -37,12 +37,14 @@ module Set : sig
   val empty : 'a t
   val is_empty : 'a t -> bool
   val add : 'a Name.t -> 'a t -> 'a t
+  val remove : 'a Name.t -> 'a t -> 'a t
   val mem : 'a Name.t -> 'a t -> bool
   val exists : ('a Name.t -> bool) -> 'a t -> bool
   val iter : ('a Name.t -> unit) -> 'a t -> unit
   val cardinal : 'a t -> int
   val elements : 'a t -> 'a Name.t list
   val fold : ('a Name.t -> 'b -> 'b) -> 'a t -> 'b -> 'b
+  val union : 'a t -> 'a t -> 'a t
 end
 
 val of_assoc :
@@ -52,11 +54,14 @@ val of_assoc :
 module Map : sig
   type ('a, 'b) t
   val empty : ('a, 'b) t
+  val choose : ('a, 'b) t -> 'a Name.t * 'b
   val add : 'a Name.t -> 'b -> ('a, 'b) t -> ('a, 'b) t
+  val remove : 'a Name.t -> ('a, 'b) t -> ('a, 'b) t
   val find : 'a Name.t -> ('a, 'b) t -> 'b
   val iter : ('a Name.t -> 'b -> unit) -> ('a, 'b) t -> unit
   val mapi : ('a Name.t -> 'b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
   val fold : ('a Name.t -> 'b -> 'c -> 'c) -> ('a, 'b) t -> 'c -> 'c
+  val bindings : ('a, 'b) t -> ('a Name.t * 'b) list
   val update_default : 'b -> ('b -> 'b) -> 'a Name.t -> ('a, 'b) t -> ('a, 'b) t
 end
 

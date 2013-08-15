@@ -48,12 +48,14 @@ module Set = struct
   let is_empty = S.is_empty
   let empty = S.empty
   let add = S.add
+  let remove = S.remove
   let mem = S.mem
   let exists = S.exists
   let iter = S.iter
   let cardinal = S.cardinal
   let elements = S.elements
   let fold = S.fold
+  let union = S.union
 end
 
 let rex = Pcre.regexp "^(\\S+)(?: \\((\\S+)\\))?$"
@@ -90,6 +92,9 @@ module Map = struct
   let find = M.find
   let mapi = M.mapi
   let fold = M.fold
+  let bindings = M.bindings
+  let remove = M.remove
+  let choose = M.choose
 
   let update_default default f key t =
     let previous = try find key t with Not_found -> default in
