@@ -102,9 +102,10 @@ module Projectb = struct
 
   let mk_origin () =
 
-  (* psql service=projectb must work, e.g. on ries.debian.org. To make
-     it work elsewhere, copy ries:/etc/postgresql-common/pg_service.conf
-     to your ~/.pg_service.conf and set up tunnels accordingly. *)
+    (* psql service=projectb must work, e.g. on coccia.debian.org. To make
+       it work elsewhere, copy
+       coccia.debian.org:/etc/postgresql-common/pg_service.conf to your
+       ~/.pg_service.conf and set up tunnels accordingly. *)
     let projectb = new Postgresql.connection ~conninfo:"service=projectb" () in
 
     let mk_wrapper_maps transform sql =
