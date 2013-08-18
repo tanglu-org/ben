@@ -1,3 +1,14 @@
+ben (0.6.6) UNRELEASED; urgency=low
+
+  * Simplify computation of dependency levels by using ocamlgraph's SCC
+    module
+  * Use uninstallable:yes instead of debcheck:uninstallable
+  * Add back edos-debcheck pseudo-field for compatibility with the setup
+    at release.debian.org
+  * Update copyright information
+
+ -- Stéphane Glondu <glondu@debian.org>  Sun, 18 Aug 2013 14:47:44 +0200
+
 ben (0.6.5) unstable; urgency=low
 
   [ Stéphane Glondu ]
