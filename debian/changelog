@@ -1,4 +1,4 @@
-ben (0.6.6) UNRELEASED; urgency=low
+ben (0.6.6) unstable; urgency=low
 
   * Simplify computation of dependency levels by using ocamlgraph's SCC
     module
@@ -7,7 +7,7 @@ ben (0.6.6) UNRELEASED; urgency=low
     at release.debian.org
   * Update copyright information
 
- -- Stéphane Glondu <glondu@debian.org>  Sun, 18 Aug 2013 14:47:44 +0200
+ -- Stéphane Glondu <glondu@debian.org>  Sun, 18 Aug 2013 14:55:29 +0200
 
 ben (0.6.5) unstable; urgency=low
 
