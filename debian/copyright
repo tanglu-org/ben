@@ -2,8 +2,9 @@ Packaged-By: Stéphane Glondu <steph@glondu.net>
 Packaged-Date: Tue, 20 Sep 2011 20:24:13 +0200
 
 Files: *
-Copyright: © 2009-2012 Stéphane Glondu <steph@glondu.net>
-           © 2010-2012 Mehdi Dogguy <mehdi@dogguy.org>
+Copyright: © 2009-2013 Stéphane Glondu <steph@glondu.net>
+           © 2010-2013 Mehdi Dogguy <mehdi@dogguy.org>
+           © 2013 Johannes Schauer <j.schauer@email.de>
 License: AGPL-3+
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as

@@ -1,6 +1,6 @@
 (**************************************************************************)
-(*  Copyright © 2009-2012 Stéphane Glondu <steph@glondu.net>              *)
-(*            © 2010-2012 Mehdi Dogguy <mehdi@dogguy.org>                 *)
+(*  Copyright © 2009-2013 Stéphane Glondu <steph@glondu.net>              *)
+(*            © 2010-2013 Mehdi Dogguy <mehdi@dogguy.org>                 *)
 (*                                                                        *)
 (*  This program is free software: you can redistribute it and/or modify  *)
 (*  it under the terms of the GNU Affero General Public License as        *)
