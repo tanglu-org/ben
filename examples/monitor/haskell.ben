@@ -6,5 +6,5 @@ is_affected = .source ~ /ghc/
             | .build-depends ~ /ghc/
             | .build-depends ~ /haskell-devscripts/
             | .depends ~ /libghc-/;
-is_good = !.debcheck ~ /uninstallable/;
-is_bad = .debcheck ~ /uninstallable/;
+is_good = !.uninstallable ~ /yes/;
+is_bad = .uninstallable ~ /yes/;

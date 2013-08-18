@@ -349,7 +349,7 @@ let inject_debcheck_data =
     PAMap.mapi (fun (name, arch) pkg ->
       let uninstallable_packages = List.assoc arch all_uninstallable_packages in
       if Package.Set.mem name uninstallable_packages
-      then Package.add "debcheck" "uninstallable" pkg
+      then Package.add "uninstallable" "yes" pkg
       else pkg
     ) bins
 

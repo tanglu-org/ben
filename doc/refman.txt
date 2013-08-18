@@ -249,7 +249,7 @@ There are other optional fields:
 [options="header"]
 |=========================================================================
 | Option                  | Action
-| --run-debcheck          | Run dose-debcheck and add virtual `.debcheck` field
+| --run-debcheck          | Run dose-debcheck and add virtual `.uninstallable` field
 | --use-projectb          | Get package lists from Projectb database
 | --color                 | Color if text output
 | --text                  | Select text output format
