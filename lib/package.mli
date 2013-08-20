@@ -59,6 +59,7 @@ module Map : sig
   val fold : ('a Name.t -> 'b -> 'c -> 'c) -> ('a, 'b) t -> 'c -> 'c
   val bindings : ('a, 'b) t -> ('a Name.t * 'b) list
   val update_default : 'b -> ('b -> 'b) -> 'a Name.t -> ('a, 'b) t -> ('a, 'b) t
+  val mem : 'a Name.t -> ('a, 'b) t -> bool
 end
 
 val build_depends : [`source] t -> [`binary] Name.t list

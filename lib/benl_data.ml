@@ -302,6 +302,12 @@ let filter_affected { src_map = srcs; bin_map = bins } is_affected =
       eprintf "warning: Binary (%s,%s) without Source!\n%!" !!!name arch;
       (saccu, baccu)
   end bins (src_map, PAMap.empty) in
+  let bin_map = PAMap.fold (fun (name, arch) pkg accu ->
+    let src_name = Package.get "source" pkg in
+    let src_name = Package.Name.of_string src_name in
+    if M.mem src_name src_map then PAMap.add (name, arch) pkg accu
+    else accu
+  ) bins bin_map in
   { src_map = src_map; bin_map = bin_map }
 
 let inject_debcheck_data =
