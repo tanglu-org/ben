@@ -61,8 +61,9 @@ let debian_architectures = ref
 let ignored_architectures : string list ref = ref []
 
 let debian_ports_architectures =
-  [ "m68k"; "powerpcspe";
-    "sh4"; "sparc64" ]
+  [ "alpha"; "arm64";
+    "m68k"; "powerpcspe"; "ppc64";
+    "sh4"; "sparc64"; "x32" ]
 
 type status = Unknown | Up_to_date | Outdated
 
