@@ -56,7 +56,7 @@ let debian_architectures = ref
   [ "amd64"; "armel";
     "i386"; "ia64";
     "kfreebsd-amd64"; "kfreebsd-i386";
-    "mips"; "mipsel"; "powerpc"; "s390"; "sparc" ]
+    "mips"; "mipsel"; "powerpc"; "s390x"; "sparc" ]
 
 let ignored_architectures : string list ref = ref []
 
