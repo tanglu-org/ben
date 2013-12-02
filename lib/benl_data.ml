@@ -150,11 +150,15 @@ module Projectb = struct
     let relevant_binary_key_ids = List.map id_of_key relevant_binary_keys in
 
     let get_binaries accu arch =
-      Benl_clflags.progress "Querying projectb for %s binaries in staging..." arch;
+      Benl_clflags.progress "Querying projectb for %s binaries in staging (+aequorea)..." arch;
       let sql = sprintf
-	"select b.bin_id, b.key_id, b.value from bin_associations as a join (select * from binaries_metadata where key_id in (%s)) as b on b.bin_id = a.bin join (select * from binaries) as c on c.id = a.bin where a.suite = %d and c.architecture in (%d,%d)"
+	"select b.bin_id, b.key_id, b.value from bin_associations as a join (select * from binaries_metadata where key_id in (%s)) as b on b.bin_id = a.bin join (select * from binaries) as c on c.id = a.bin where a.suite = %d and c.architecture in (%d,%d)
+	UNION ALL
+	select b.bin_id, b.key_id, b.value from bin_associations as a join (select * from binaries_metadata where key_id in (%s)) as b on b.bin_id = a.bin join (select * from binaries) as c on c.id = a.bin where a.suite = %d and c.architecture in (%d,%d)"
 	(String.concat "," (List.map string_of_int relevant_binary_key_ids))
 	(id_of_suite "staging") (id_of_arch "all") (id_of_arch arch)
+	(String.concat "," (List.map string_of_int relevant_binary_key_ids))
+	(id_of_suite "aequorea") (id_of_arch "all") (id_of_arch arch)
       in
       let r = projectb#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
@@ -209,12 +213,16 @@ module Projectb = struct
     in
 
     let get_sources accu =
-      Benl_clflags.progress "Querying projectb for sources in staging...";
+      Benl_clflags.progress "Querying projectb for sources in staging (+aequorea)...";
       (* get general metadata *)
       let sql = sprintf
-	"select b.src_id, b.key_id, b.value from src_associations as a join (select * from source_metadata where key_id in (%s)) as b on b.src_id = a.source where a.suite = %d"
+	"select b.src_id, b.key_id, b.value from src_associations as a join (select * from source_metadata where key_id in (%s)) as b on b.src_id = a.source where a.suite = %d
+	UNION ALL
+	select b.src_id, b.key_id, b.value from src_associations as a join (select * from source_metadata where key_id in (%s)) as b on b.src_id = a.source where a.suite = %d"
 	(String.concat "," (List.map string_of_int relevant_source_key_ids))
 	(id_of_suite "staging")
+	(String.concat "," (List.map string_of_int relevant_source_key_ids))
+	(id_of_suite "aequorea")
       in
       let r = projectb#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
@@ -233,8 +241,9 @@ module Projectb = struct
       ) IntMap.empty r#get_all in
     (* get .dsc paths to compute directories *)
       let sql = sprintf
-	"select a.source, c.filename from src_associations as a join (select * from dsc_files) as b on b.source = a.source, files as c where a.suite = %d and b.file = c.id and c.filename like '%%dsc'"
+	"select a.source, c.filename from src_associations as a join (select * from dsc_files) as b on b.source = a.source, files as c where (a.suite = %d or a.suite = %d) and b.file = c.id and c.filename like '%%dsc'"
 	(id_of_suite "staging")
+	(id_of_suite "aequorea")
       in
       let r = projectb#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
