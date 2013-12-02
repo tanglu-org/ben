@@ -26,7 +26,7 @@ let page ~title ~subtitle ~headers ~body ~footer =
     )
     (Xhtml.M.body ~a:[a_class ["tanglu"]] [
       h1 ~a:[a_id "title"]
-        [a_link "http://qa.debian.org/transitions/" "Tanglu QA"];
+        [a_link "http://qa.tanglu.org/transitions/" "Tanglu QA"];
       h2 ~a:[a_id "subtitle"] subtitle;
       div ~a:[a_id "body"] body;
       div ~a:[a_id "footer"] footer
