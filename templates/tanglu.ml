@@ -24,7 +24,7 @@ let page ~title ~subtitle ~headers ~body ~footer =
        (Xhtml.M.title (pcdata title))
        headers
     )
-    (Xhtml.M.body ~a:[a_class ["debian"]] [
+    (Xhtml.M.body ~a:[a_class ["tanglu"]] [
       h1 ~a:[a_id "title"]
         [a_link "http://qa.debian.org/transitions/" "Tanglu QA"];
       h2 ~a:[a_id "subtitle"] subtitle;
@@ -44,22 +44,15 @@ let () =
             "Transition documentation"
         ];
       br ();
-      b [ a_link
-            "http://bugs.debian.org/cgi-bin/pkgreport.cgi?users=release.debian.org@packages.debian.org;tag=transition"
-            "Bugs tagged \"transition\""
-        ];
-      br ();
       br ();
     ];
-    pts = (fun ~src -> sprintf "http://packages.qa.debian.org/%s" src);
-    changelog = (fun ~letter ~src ~ver -> sprintf "http://packages.debian.org/changelog:%s" src);
-    buildd = (fun ~src ~ver -> sprintf "https://buildd.debian.org/status/package.php?p=%s" src);
+    pts = (fun ~src -> sprintf "http://packages.tanglu.org/src:%s" src);
+    changelog = (fun ~letter ~src ~ver -> sprintf "http://changelogs.tanglu.org/changelogs/main/%s" src);
+    (* buildd = (fun ~src ~ver -> sprintf "https://buildd.debian.org/status/package.php?p=%s" src);
     buildds = (fun ~srcs ->
       let srcs = String.concat "," srcs in
       Some (sprintf "https://buildd.debian.org/status/package.php?p=%s&amp;compact=compact" srcs));
-    bugs = (fun ~src -> sprintf "http://bugs.debian.org/%s" src);
-    critical_bugs = (fun ~srcs ->
-      let srcs = String.concat ";src=" srcs in
-      Some (sprintf "http://bugs.debian.org/cgi-bin/pkgreport.cgi?sev-inc=serious;sev-inc=grave;sev-inc=critical;src=%s" srcs));
-    msg_id = (fun ~mid -> sprintf "http://lists.debian.org/%s" mid);
+    *)
+    bugs = (fun ~src -> sprintf "http://bugs.tanglu.org/buglist.cgi?product=Tanglu&component=%s&resolution=---" src);
+    msg_id = (fun ~mid -> sprintf "http://lists.tanglu.org/%s" mid);
   }
