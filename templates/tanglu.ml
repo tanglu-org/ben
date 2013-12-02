@@ -47,12 +47,14 @@ let () =
       br ();
     ];
     pts = (fun ~src -> sprintf "http://packages.tanglu.org/src:%s" src);
-    changelog = (fun ~letter ~src ~ver -> sprintf "http://changelogs.tanglu.org/changelogs/main/%s" src);
-    (* buildd = (fun ~src ~ver -> sprintf "https://buildd.debian.org/status/package.php?p=%s" src);
+    changelog = (fun ~letter ~src ~ver -> sprintf "http://packages.debian.org/changelog:%s" src);
+    buildd = (fun ~src ~ver -> sprintf "http://buildd.tanglu.org/search/?q=pkg%%2B%s" src);
     buildds = (fun ~srcs ->
       let srcs = String.concat "," srcs in
-      Some (sprintf "https://buildd.debian.org/status/package.php?p=%s&amp;compact=compact" srcs));
-    *)
+      Some (sprintf "https://qa.tanglu.org"));
     bugs = (fun ~src -> sprintf "http://bugs.tanglu.org/buglist.cgi?product=Tanglu&component=%s&resolution=---" src);
+    critical_bugs = (fun ~srcs ->
+      let srcs = String.concat "&component=" srcs in
+      Some (sprintf "http://bugs.tanglu.org/buglist.cgi?product=Tanglu%s&resolution=---" srcs));
     msg_id = (fun ~mid -> sprintf "http://lists.tanglu.org/%s" mid);
   }
