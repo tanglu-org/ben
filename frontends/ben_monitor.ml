@@ -466,7 +466,7 @@ let print_html_monitor template sources binaries dep_graph rounds =
         let arch_any_s = if arch_any then src::arch_any_s else arch_any_s in
         let overrall_state = [ class_of_status (overrall_state states) ] in
         let src_text =
-          (pts template src)::(if in_testing then [] else [pcdata " (sid only)"])
+          (pts template src)::(if in_testing then [] else [pcdata " (staging only)"])
         in
         arch_any_s,
         tr (td ~a:[ a_class ("srcname" :: (overrall_state @ classes));
