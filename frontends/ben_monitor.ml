@@ -490,16 +490,17 @@ let print_html_monitor template sources binaries dep_graph rounds =
           )
         :: acc
       end ([], rows) (List.rev xs)) in
-      let buildd_link =
-        if names = []
-        then small [ pcdata "arch:all" ]
-        else buildds template true (List.map escape names) in
-      let rc_bugs_link = rc_bugs template (List.map escape names) in
-      let column_arg = try [
-        pcdata " (";
-        buildd_link; pcdata " "; rc_bugs_link;
-        pcdata ")"
-      ]
+      let column_arg = try
+        let buildd_link =
+          if names = []
+          then small [ pcdata "arch:all" ]
+          else buildds template true (List.map escape names) in
+        let rc_bugs_link = rc_bugs template (List.map escape names) in
+        [
+          pcdata " (";
+          buildd_link; pcdata " "; rc_bugs_link;
+          pcdata ")"
+        ]
         with Exit -> []
       in
       archs_columns i
