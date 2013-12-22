@@ -299,6 +299,7 @@ let tracker template profiles =
         with _ ->
           List.assoc Unknown profiles_desc
       in
+      let tlist = List.sort Pervasives.compare tlist in
       let tlist = List.map (tget show_score) tlist in
       match tlist with
         | [] -> acc
