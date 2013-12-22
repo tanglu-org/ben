@@ -330,5 +330,4 @@ you should install them under `/usr/share/ben/media`.
 Reporting issues
 ----------------
 
-_Ben_ doesn't have a bug tracker yet. If you experience a bug or if
-you're looking for some help, feel free to contact us directly.
+Please report bugs against _Ben_ through the Debian BTS.
