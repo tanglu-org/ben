@@ -22,7 +22,7 @@ Build-Depends:
  libxml2-utils,
  xsltproc,
  source-highlight
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Section: ocaml
 Homepage: http://ben.debian.net
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=collab-maint/ben.git
