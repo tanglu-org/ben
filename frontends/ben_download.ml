@@ -38,11 +38,11 @@ let download_sources () =
   let commands =
     List.map
       (fun area ->
-         let url = sprintf "%s/dists/%s/%s/source/Sources.bz2"
+         let url = sprintf "%s/dists/%s/%s/source/Sources.gz"
            !Benl_clflags.mirror_sources !Benl_clflags.suite area
          in
          if !Benl_clflags.dry_run then p "Would download %s\n" url;
-         let cmd = sprintf "{ curl %s %s | bzcat >> %s; }"
+         let cmd = sprintf "{ curl %s %s | zcat >> %s; }"
            wquiet (escape_for_shell url) tmp
          in cmd)
       !Benl_clflags.areas
@@ -68,11 +68,11 @@ let download_binaries arch =
   let commands =
     List.map
       (fun area ->
-         let url = sprintf "%s/dists/%s/%s/binary-%s/Packages.bz2"
+         let url = sprintf "%s/dists/%s/%s/binary-%s/Packages.gz"
            !Benl_clflags.mirror_binaries !Benl_clflags.suite area arch
          in
          if !Benl_clflags.dry_run then p "Would download %s\n" url;
-         let cmd = sprintf "{ curl %s %s | bzcat >> %s; }"
+         let cmd = sprintf "{ curl %s %s | zcat >> %s; }"
            wquiet (escape_for_shell url) tmp
          in
          cmd)

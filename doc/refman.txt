@@ -158,8 +158,8 @@ download
 ~~~~~~~~
 
 This frontend is the simplest one as it has no command-line options,
-except the shared ones. It downloads all Sources.bz2 files and all
-Packages.bz2 files for selected architectures and areas. You may
+except the shared ones. It downloads all Sources.gz files and all
+Packages.gz files for selected architectures and areas. You may
 invoke it by running:
 
  $ ben download [options]
