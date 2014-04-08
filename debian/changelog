@@ -1,6 +1,6 @@
 ben (0.6.8) UNRELEASED; urgency=low
 
-  * Add --other-binary-keys and --other-binary-keys CLI options to be
+  * Add --more-binary-keys and --more-binary-keys CLI options to be
     able to specify further relevant binary or source keys to consider
     when running `ben monitor`.
     This is a way to extend the default list of keys considered by Ben

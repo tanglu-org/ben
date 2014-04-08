@@ -37,8 +37,8 @@ let suite = ref "unstable"
 let areas = ref ["main"; "contrib"; "non-free"]
 let quiet = ref false
 
-let other_relevant_binary_keys = ref ([] : string list)
-let other_relevant_source_keys = ref ([] : string list)
+let more_relevant_binary_keys = ref ([] : string list)
+let more_relevant_source_keys = ref ([] : string list)
 
 let reset () =
   let () = architectures := !Benl_base.debian_architectures in

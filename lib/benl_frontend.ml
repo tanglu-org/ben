@@ -82,11 +82,11 @@ let read_config_file filename =
     | ("suite", x)::xs ->
         Benl_clflags.suite := check_string "suite" x;
         process xs
-    | ("other-binary-keys", x)::xs ->
-        Benl_clflags.other_relevant_binary_keys := check_string_list "other-binary-keys" x;
+    | ("more-binary-keys", x)::xs ->
+        Benl_clflags.more_relevant_binary_keys := check_string_list "more-binary-keys" x;
         process xs
-    | ("other-source-keys", x)::xs ->
-        Benl_clflags.other_relevant_source_keys := check_string_list "other-source-keys" x;
+    | ("more-source-keys", x)::xs ->
+        Benl_clflags.more_relevant_source_keys := check_string_list "more-source-keys" x;
         process xs
     | x::xs ->
         x::(process xs)
@@ -134,11 +134,11 @@ let rec parse_common_args = function
   | "--use-cache"::xs ->
       Benl_clflags.use_cache := true;
       parse_common_args xs
-  | "--other-binary-keys"::x::xs ->
-      Benl_clflags.other_relevant_binary_keys := Benl_core.simple_split ',' x;
+  | "--more-binary-keys"::x::xs ->
+      Benl_clflags.more_relevant_binary_keys := Benl_core.simple_split ',' x;
       parse_common_args xs
-  | "--other-source-keys"::x::xs ->
-      Benl_clflags.other_relevant_source_keys := Benl_core.simple_split ',' x;
+  | "--more-source-keys"::x::xs ->
+      Benl_clflags.more_relevant_source_keys := Benl_core.simple_split ',' x;
       parse_common_args xs
   | x::xs -> x::(parse_common_args xs)
   | [] -> []
@@ -168,8 +168,8 @@ let print_help () =
       "--suite", "Suite";
       "--cache-dir", "Path to cache dir";
       "--config|-c", "Config file";
-      "--other-binary-keys", "Further relevant binary keys";
-      "--other-source-keys", "Further relevant source keys"
+      "--more-binary-keys", "Further relevant binary keys";
+      "--more-source-keys", "Further relevant source keys"
     ];
   exit 0
 

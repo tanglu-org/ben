@@ -59,7 +59,7 @@ let file_origin =
   let get_binaries accu arch =
     Benl_utils.parse_control_file `binary
       (!Benl_clflags.cache_dir // ("Packages_"^arch))
-      (fun x -> List.mem x relevant_binary_keys || List.mem x !Benl_clflags.other_relevant_binary_keys)
+      (fun x -> List.mem x relevant_binary_keys || List.mem x !Benl_clflags.more_relevant_binary_keys)
       (fun name pkg accu ->
         try
           let old_pkg = PAMap.find (name, arch) accu in
@@ -76,7 +76,7 @@ let file_origin =
   let get_sources accu =
     Benl_utils.parse_control_file `source
       (!Benl_clflags.cache_dir // "Sources")
-      (fun x -> List.mem x relevant_source_keys || List.mem x !Benl_clflags.other_relevant_source_keys)
+      (fun x -> List.mem x relevant_source_keys || List.mem x !Benl_clflags.more_relevant_source_keys)
       (fun name pkg accu ->
         try
           let old_pkg = M.find name accu in
@@ -147,7 +147,7 @@ module Projectb = struct
       (mk_wrapper_maps string_identity "select id, arch_string from architecture")
     in
 
-    let relevant_binary_key_ids = List.map id_of_key (relevant_binary_keys @ !Benl_clflags.other_relevant_binary_keys) in
+    let relevant_binary_key_ids = List.map id_of_key (relevant_binary_keys @ !Benl_clflags.more_relevant_binary_keys) in
 
     let get_binaries accu arch =
       Benl_clflags.progress "Querying projectb for %s binaries in unstable..." arch;
@@ -205,7 +205,7 @@ module Projectb = struct
     (* beware! key "directory" does not exist in projectb and is
        handled specifically below *)
       List.map id_of_key
-	(List.filter (fun x -> x <> "directory") (relevant_source_keys @ !Benl_clflags.other_relevant_source_keys))
+	(List.filter (fun x -> x <> "directory") (relevant_source_keys @ !Benl_clflags.more_relevant_source_keys))
     in
 
     let get_sources accu =

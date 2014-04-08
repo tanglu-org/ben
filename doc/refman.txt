@@ -150,8 +150,8 @@ specific set. The shared set of command-line options is:
 | --cache-file\|-C f    | Specify the name of the cache file
 | --use-cache           | Use cache whenever possible
 | --config\|-c c        | Config file
-| --other-binary-keys l | Comma separated list of further relevant binary keys
-| --other-source-keys l | Comma separated list of further relevant source keys
+| --more-binary-keys l  | Comma separated list of further relevant binary keys
+| --more-source-keys l  | Comma separated list of further relevant source keys
 |=====================================================================
 
 The rest of this section describes each frontend.
