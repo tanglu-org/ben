@@ -58,7 +58,7 @@ OPTIONS
 *--cache-file|-C f*::
     Specify the name of the cache file
 
-*--use-cache::
+*--use-cache*::
     Use cache whenever possible
 
 *--config|-c c*::
