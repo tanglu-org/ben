@@ -64,6 +64,11 @@ OPTIONS
 *--config|-c c*::
     Config file
 
+*--other-binary-keys l*::
+    Comma separated list of further relevant binary keys
+
+*--other-source-keys l*::
+    Comma separated list of further relevant source keys
 
 FRONTENDS
 ---------
