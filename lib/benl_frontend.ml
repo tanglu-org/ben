@@ -83,10 +83,14 @@ let read_config_file filename =
         Benl_clflags.suite := check_string "suite" x;
         process xs
     | ("more-binary-keys", x)::xs ->
-        Benl_clflags.more_relevant_binary_keys := check_string_list "more-binary-keys" x;
+        Benl_clflags.more_relevant_binary_keys := List.map
+          String.lowercase
+          (check_string_list "more-binary-keys" x);
         process xs
     | ("more-source-keys", x)::xs ->
-        Benl_clflags.more_relevant_source_keys := check_string_list "more-source-keys" x;
+        Benl_clflags.more_relevant_source_keys := List.map
+          String.lowercase
+          (check_string_list "more-source-keys" x);
         process xs
     | x::xs ->
         x::(process xs)
@@ -135,10 +139,14 @@ let rec parse_common_args = function
       Benl_clflags.use_cache := true;
       parse_common_args xs
   | "--more-binary-keys"::x::xs ->
-      Benl_clflags.more_relevant_binary_keys := Benl_core.simple_split ',' x;
+      Benl_clflags.more_relevant_binary_keys := List.map
+        String.lowercase
+        (Benl_core.simple_split ',' x);
       parse_common_args xs
   | "--more-source-keys"::x::xs ->
-      Benl_clflags.more_relevant_source_keys := Benl_core.simple_split ',' x;
+      Benl_clflags.more_relevant_source_keys := List.map
+        String.lowercase
+        (Benl_core.simple_split ',' x);
       parse_common_args xs
   | x::xs -> x::(parse_common_args xs)
   | [] -> []

@@ -77,6 +77,11 @@ let simple_split delim str =
     else List.rev accu
   in aux 0 []
 
+let capitalize ?(sep = '-') s =
+  let l = simple_split sep s in
+  let l = List.map String.capitalize l in
+  String.concat (String.make 1 sep) l
+
 let starts_with str x =
   let n = String.length str and p = String.length x in
   n > p && String.sub str 0 p = x

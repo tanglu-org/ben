@@ -50,6 +50,9 @@ val list_rev_mapi : (int -> 'a -> 'b) -> 'a list -> 'b list
 val simple_split : char -> string -> string list
 (** [simple_split sep s] splits [s] using [sep] as delimiter. *)
 
+val capitalize : ?sep:char -> string -> string
+(** [capitalize ?sep s] capitalizes a field name. *)
+
 val starts_with : string -> string -> bool
 (** [starts_with s prefix] returns [true] iff [s] starts with
     [prefix]. *)

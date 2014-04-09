@@ -32,7 +32,7 @@ let filter_print keep outc p =
   List.iter
     (fun (f, v) ->
       if keep = [] || List.mem (String.lowercase f) keep then
-        fprintf outc "%s: %s\n" (String.capitalize f) v)
+        fprintf outc "%s: %s\n" (Benl_core.capitalize f) v)
     p;
   fprintf outc "\n"
 

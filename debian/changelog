@@ -6,6 +6,9 @@ ben (0.6.8) UNRELEASED; urgency=low
     This is a way to extend the default list of keys considered by Ben
     and which was introduced in 6f532423296083bed50b85a6ffb29b53e1349e23.
   * Remove ia64 from default list of architectures (Closes: #743724).
+  * Translate to lowercase user-specified field names
+  * Capitalize field names (and take into account a word separator) when
+    printing them.
 
  -- Mehdi Dogguy <mehdi@debian.org>  Tue, 08 Apr 2014 22:00:00 +0200
 
