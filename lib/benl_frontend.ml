@@ -82,6 +82,15 @@ let read_config_file filename =
     | ("suite", x)::xs ->
         Benl_clflags.suite := check_string "suite" x;
         process xs
+    | ("cache-dir", x)::xs ->
+        Benl_clflags.cache_dir := check_string "cache-dir" x;
+        process xs
+    | ("cache-file", x)::xs ->
+        Benl_clflags.cache_file := check_string "cache-file" x;
+        process xs
+    | ("use-cache", Etrue)::xs ->
+        Benl_clflags.use_cache := true;
+        process xs
     | ("more-binary-keys", x)::xs ->
         Benl_clflags.more_relevant_binary_keys := List.map
           String.lowercase
