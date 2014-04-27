@@ -152,7 +152,10 @@ specific set. The shared set of command-line options is:
 | --config\|-c c        | Config file
 | --more-binary-keys l  | Comma separated list of further relevant binary keys
 | --more-source-keys l  | Comma separated list of further relevant source keys
+| --preferred-compression-format\|-z format | Preferred compression format (Default: Gzip)
 |=====================================================================
+
+Ben knows about the following compression formats: Gzip, Bz2 and Xz.
 
 The rest of this section describes each frontend.
 

@@ -29,6 +29,7 @@ type error =
   | Bad_marshalled_data of string
   | Unknown_command of string
   | Unknown_output_format of string
+  | Unknown_input_format of string
   | Unexpected_expression of string
   | Error_in_configuration_file of string
   | Missing_configuration_item of string
@@ -58,6 +59,8 @@ let string_of_error = function
       sprintf "unknown command: %s" s
   | Unknown_output_format s ->
       sprintf "unknown output format: %s" s
+  | Unknown_input_format s ->
+      sprintf "unknown input format: %s" s
   | Unexpected_expression s ->
       sprintf "unexpected expression: %s" s
   | Error_in_configuration_file s ->

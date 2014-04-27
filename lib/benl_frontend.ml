@@ -92,6 +92,14 @@ let read_config_file filename =
           String.lowercase
           (check_string_list "more-source-keys" x);
         process xs
+    | ("preferred-compression-format", x)::xs ->
+        let format = check_string "preferred-compression-format" x in
+        if Benl_compression.is_known format then
+          Benl_clflags.preferred_compression_format :=
+            Benl_compression.of_string format
+        else
+          warn (Unknown_input_format format);
+        process xs
     | x::xs ->
         x::(process xs)
     | [] -> []
@@ -147,6 +155,12 @@ let rec parse_common_args = function
       Benl_clflags.more_relevant_source_keys := List.map
         String.lowercase
         (Benl_core.simple_split ',' x);
+      parse_common_args xs
+  | ("--preferred-compression-format"|"-z")::x::xs ->
+      if Benl_compression.is_known x then
+        Benl_clflags.preferred_compression_format := Benl_compression.of_string x
+      else
+        warn (Unknown_input_format x);
       parse_common_args xs
   | x::xs -> x::(parse_common_args xs)
   | [] -> []

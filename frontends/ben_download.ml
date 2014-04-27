@@ -38,12 +38,18 @@ let download_sources () =
   let commands =
     List.map
       (fun area ->
-         let url = sprintf "%s/dists/%s/%s/source/Sources.gz"
-           !Benl_clflags.mirror_sources !Benl_clflags.suite area
+         let url = sprintf "%s/dists/%s/%s/source/Sources.%s"
+           !Benl_clflags.mirror_sources
+           !Benl_clflags.suite
+           area
+           (Benl_compression.extension !Benl_clflags.preferred_compression_format)
          in
          if !Benl_clflags.dry_run then p "Would download %s\n" url;
-         let cmd = sprintf "{ curl %s %s | zcat >> %s; }"
-           wquiet (escape_for_shell url) tmp
+         let cmd = sprintf "{ curl %s %s | %s >> %s; }"
+           wquiet
+           (escape_for_shell url)
+           (Benl_compression.display_tool !Benl_clflags.preferred_compression_format)
+           tmp
          in cmd)
       !Benl_clflags.areas
   in
@@ -68,12 +74,19 @@ let download_binaries arch =
   let commands =
     List.map
       (fun area ->
-         let url = sprintf "%s/dists/%s/%s/binary-%s/Packages.gz"
-           !Benl_clflags.mirror_binaries !Benl_clflags.suite area arch
+         let url = sprintf "%s/dists/%s/%s/binary-%s/Packages.%s"
+           !Benl_clflags.mirror_binaries
+           !Benl_clflags.suite
+           area
+           arch
+           (Benl_compression.extension !Benl_clflags.preferred_compression_format)
          in
          if !Benl_clflags.dry_run then p "Would download %s\n" url;
-         let cmd = sprintf "{ curl %s %s | zcat >> %s; }"
-           wquiet (escape_for_shell url) tmp
+         let cmd = sprintf "{ curl %s %s | %s >> %s; }"
+           wquiet
+           (escape_for_shell url)
+           (Benl_compression.display_tool !Benl_clflags.preferred_compression_format)
+           tmp
          in
          cmd)
       !Benl_clflags.areas

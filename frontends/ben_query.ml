@@ -76,18 +76,11 @@ let main args =
     match filename with
     | "-" ->
       Benl_utils.parse_control_in_channel kind "standard input" stdin keep accu ()
-    | filename when Benl_core.ends_with filename ".gz" ->
-      let ic = Unix.open_process_in ("zcat " ^ filename) in
-      Benl_core.with_in_channel ic begin fun ic ->
-        Benl_utils.parse_control_in_channel kind filename ic keep accu ()
-      end
-    | filename when Benl_core.ends_with filename ".bz2" ->
-      let ic = Unix.open_process_in ("bzcat " ^ filename) in
-      Benl_core.with_in_channel ic begin fun ic ->
-        Benl_utils.parse_control_in_channel kind filename ic keep accu ()
-      end
-    | filename when  Benl_core.ends_with filename ".xz" ->
-      let ic = Unix.open_process_in ("xzcat " ^ filename) in
+    | filename when Benl_compression.file_is_readable filename ->
+      let tool = Benl_compression.display_tool
+        (Benl_compression.of_string (FilePath.get_extension filename))
+      in
+      let ic = Unix.open_process_in (Printf.sprintf "%s %s" tool filename) in
       Benl_core.with_in_channel ic begin fun ic ->
         Benl_utils.parse_control_in_channel kind filename ic keep accu ()
       end

@@ -1,6 +1,6 @@
 (**************************************************************************)
-(*  Copyright © 2009-2013 Stéphane Glondu <steph@glondu.net>              *)
-(*            © 2010-2013 Mehdi Dogguy <mehdi@dogguy.org>                 *)
+(*  Copyright © 2009-2014 Stéphane Glondu <steph@glondu.net>              *)
+(*            © 2010-2014 Mehdi Dogguy <mehdi@dogguy.org>                 *)
 (*                                                                        *)
 (*  This program is free software: you can redistribute it and/or modify  *)
 (*  it under the terms of the GNU Affero General Public License as        *)
@@ -18,33 +18,15 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-type error =
-  | Illegal_escape of char
-  | Unknown_error of exn
-  | Nothing_to_download
-  | Curl_error of int
-  | Unexpected_char of string * char * int * int
-  | Bad_marshalled_data of string
-  | Unknown_command of string
-  | Unknown_output_format of string
-  | Unknown_input_format of string
-  | Unexpected_expression of string
-  | Error_in_configuration_file of string
-  | Missing_configuration_item of string
-  | Unknown_configuration_item of string
-  | Parsing_error of string * int * int
-  | Template_not_found of string
-  | Dynlink_error of Dynlink.error
-(** The type of Ben-specific errors *)
+type t
 
-exception Error of error
-(** All Ben-specific errors are wrapped into this exception. *)
+val to_string : t -> string
+val of_string : string -> t
 
-val string_of_error : error -> string
-(** Return a human-readable explanation of an error. *)
+val default : t
 
-val raise : error -> 'a
-(** Wrapper around [Pervasives.raise] to raise a Ben exception. *)
+val is_known : string -> bool
+val file_is_readable : string -> bool
 
-val warn : error -> unit
-(** Emit a warning. *)
+val extension : t -> string
+val display_tool : t -> string
