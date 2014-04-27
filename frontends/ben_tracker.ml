@@ -120,6 +120,7 @@ let help () =
       printf "    %s: %s\n%!" option desc
     )
     [ "--base|-b [dir]", "Specifies the \"base\" directory.";
+      "--global-conf|-g [file]", "Specifies the global configuration file";
       "--config-dir|-cd [dir]", "Location of ben trackers";
       "--transition|-t [profile/transition]", "Generate only that tracker page";
       "--update|-u", "Updates cache files";
