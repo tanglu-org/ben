@@ -18,6 +18,8 @@ ben (0.6.8) UNRELEASED; urgency=low
     - Add HPPA in Debian Ports list.
   * Now cache-dir, cache-file and use-cache can be set in configuration
     files.
+  * Read $HOME/.benrc file at startup and provide --no-benrc to skip it
+    (Closes: #746046).
 
  -- Mehdi Dogguy <mehdi@debian.org>  Tue, 08 Apr 2014 22:00:00 +0200
 

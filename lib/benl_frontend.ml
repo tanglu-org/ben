@@ -28,6 +28,8 @@ type frontend = {
 }
 let frontends = ref []
 
+let use_benrc = ref true
+
 let register_frontend sc =
   frontends := (sc.name, sc) :: !frontends
 
@@ -115,6 +117,9 @@ let read_config_file filename =
   in process config
 
 let rec parse_common_args = function
+  | "--no-benrc"::xs ->
+      use_benrc := false;
+      parse_common_args xs
   | ("--dry-run" | "-n")::xs ->
       Benl_clflags.dry_run := true;
       parse_common_args xs
@@ -220,6 +225,9 @@ let main () = match Array.to_list Sys.argv with
           get_frontend cmd, xs
         with Error (Unknown_command _) -> match xs with
           | cmd::xs ->
+              let benrc = Filename.concat (Sys.getenv "HOME") ".benrc" in
+              if !use_benrc && Sys.file_exists benrc then
+                ignore (read_config_file benrc);
               get_frontend cmd, xs
           | _ ->
               print_help ()
