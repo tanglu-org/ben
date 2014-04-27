@@ -198,9 +198,12 @@ let print_help () =
       "--archs", "Architectures to consider";
       "--suite", "Suite";
       "--cache-dir", "Path to cache dir";
+      "--cache|-C", "Path to cache file";
+      "--use-cache", "Use cache file if available";
       "--config|-c", "Config file";
       "--more-binary-keys", "Further relevant binary keys";
-      "--more-source-keys", "Further relevant source keys"
+      "--more-source-keys", "Further relevant source keys";
+      "--preferred-compression-format|-z", "Preferred compression format";
     ];
   exit 0
 
