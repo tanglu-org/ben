@@ -86,6 +86,11 @@ let main args =
       Benl_core.with_in_channel ic begin fun ic ->
         Benl_utils.parse_control_in_channel kind filename ic keep accu ()
       end
+    | filename when  Benl_core.ends_with filename ".xz" ->
+      let ic = Unix.open_process_in ("xzcat " ^ filename) in
+      Benl_core.with_in_channel ic begin fun ic ->
+        Benl_utils.parse_control_in_channel kind filename ic keep accu ()
+      end
     | filename when is_cache filename ->
       let filename = Benl_clflags.get_cache_file ~name:filename () in
       let { src_map = srcs; bin_map = bins } = Marshal.load filename in

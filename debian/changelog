@@ -9,6 +9,7 @@ ben (0.6.8) UNRELEASED; urgency=low
   * Translate to lowercase user-specified field names
   * Capitalize field names (and take into account a word separator) when
     printing them.
+  * Add support for .xz compressed files in "ben query".
 
  -- Mehdi Dogguy <mehdi@debian.org>  Tue, 08 Apr 2014 22:00:00 +0200
 

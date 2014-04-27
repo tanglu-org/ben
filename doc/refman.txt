@@ -186,7 +186,7 @@ Other valid uses:
 
  $ zcat Packages.gz | ben query ".package ~ /gentoo/" -
  [...]
- $ ben query ".package ~ /gentoo/" Packages_foo.gz Packages_bar.bz2
+ $ ben query ".package ~ /gentoo/" Packages_foo.gz Packages_bar.bz2 Packages_baz.xz
  [...]
  $ ben query ".package ~ /gentoo/" monitor.cache
  [...]
