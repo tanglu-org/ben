@@ -13,6 +13,9 @@ ben (0.6.8) UNRELEASED; urgency=low
     specify which compression algorithm to use. Known formats are Gzip,
     Bz2 and Xz. This automatically makes them known to "ben download"
     and "ben query".
+  * Update architectures lists:
+    - Remove sparc from Debian architectures.
+    - Add HPPA in Debian Ports list.
 
  -- Mehdi Dogguy <mehdi@debian.org>  Tue, 08 Apr 2014 22:00:00 +0200
 
