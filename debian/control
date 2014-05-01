@@ -67,7 +67,7 @@ Depends:
 Provides: ${ocaml:Provides}
 Enhances: devscripts
 Recommends:
- dose-debcheck
+ dose-distcheck
 Description: toolbox for Debian maintainers
  This is a collection of useful tools that Debian maintainers can use
  to make their packaging work easier. They all work with regular
