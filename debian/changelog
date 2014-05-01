@@ -1,9 +1,9 @@
-ben (0.6.9) UNRELEASED; urgency=low
+ben (0.6.9) unstable; urgency=medium
 
   * dose-debcheck package does not exist. Recommend dose-distcheck
     instead (Closes: #746507).
 
- -- Mehdi Dogguy <mehdi@debian.org>  Thu, 01 May 2014 13:18:52 +0200
+ -- Mehdi Dogguy <mehdi@debian.org>  Thu, 01 May 2014 13:20:10 +0200
 
 ben (0.6.8) unstable; urgency=medium
 
