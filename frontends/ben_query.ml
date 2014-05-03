@@ -69,7 +69,15 @@ let main args =
   let sources = caches @ sources
   and packages = caches @ packages in
   let print kind filename =
-    let keep = fun f -> !filters = [] || List.mem (String.lowercase f) !filters in
+    let keep = fun f ->
+      let f = String.lowercase f in
+      !filters = []
+      || List.mem f !filters
+      || List.mem f Benl_data.relevant_binary_keys
+      || List.mem f Benl_data.relevant_source_keys
+      || List.mem f !Benl_clflags.more_relevant_binary_keys
+      || List.mem f !Benl_clflags.more_relevant_binary_keys
+    in
     let eval e = fun _ p ->
       if e p query then Package.filter_print !filters stdout p in
     let accu = fun n p () -> eval (Query.eval kind) n p in

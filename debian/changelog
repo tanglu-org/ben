@@ -1,3 +1,10 @@
+ben (0.6.10) UNRELEASED; urgency=low
+
+  * Fix a bug in "ben query": Expand the list of kept field names
+    using Benl_data.relevant_*_keys and Benl_clflags.more_relevant_*_keys
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Sun, 04 May 2014 01:28:57 +0200
+
 ben (0.6.9) unstable; urgency=medium
 
   * dose-debcheck package does not exist. Recommend dose-distcheck
