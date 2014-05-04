@@ -1,3 +1,9 @@
+ben (0.6.10.1) UNRELEASED; urgency=low
+
+  * Fix built regexp to use for string matching.
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Sun, 04 May 2014 09:30:36 +0200
+
 ben (0.6.10) unstable; urgency=medium
 
   * Fix a bug in "ben query": Expand the list of kept field names

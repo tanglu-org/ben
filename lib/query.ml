@@ -110,7 +110,7 @@ let rec eval kind pkg = function
         let packages = Benl_core.simple_split '|' package in
         let packages = List.map Pcre.quote packages in
         let packages = String.concat "|" packages in
-        let rex = Pcre.regexp (Printf.sprintf "\b%s\b" packages) in
+        let rex = Pcre.regexp (Printf.sprintf "\b(%s)\b" packages) in
         ignore (Pcre.exec ~rex value);
         true
       with Not_found ->
