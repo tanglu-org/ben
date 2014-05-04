@@ -1,8 +1,8 @@
 Ben's reference manual
 ======================
 :Author: Mehdi Dogguy and Stéphane Glondu
-:Date: May 30, 2012
-:Revision: 0.6
+:Date: May 4, 2014
+:Revision: 0.6.10.1
 
 This manual is free software; you may redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -66,18 +66,21 @@ queries, optimize queries and extend the query language easily.
 A ben query is decribed by the following
 http://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form[BNF] formulae:
 
- <query> ::= "true"
-           | "false"
-           | "!" <query>            /* Boolean negation     */
-           | <query> "|" <query>    /* Boolean OR operator  */
-           | <query> "&" <query>    /* Boolean AND operator */
-           | "(" <query> ")"
- /*set 2*/ | <field> "~" "/" <regex> "/"
-           | <field> "~" '"' <string> '"'
-           | "source"
-           | <comparison> '"' <string> '"'
+ <query> ::= true
+           | false
+           | ! <query>            /* Boolean negation     */
+           | <query> '|' <query>  /* Boolean OR operator  */
+           | <query> & <query>    /* Boolean AND operator */
+           | ( <query> )
+ /*set 2*/ | <field> ~ /<regex>/
+           | <field> ~ "<list>"
+           | source
+           | <comparison> "<string>"
 
- <field> ::= '.' <string>
+ <field> ::= .<string>
+
+ <list>  ::= <string>
+           | <string> '|' <list>
 
  <comparison> ::= '<<' | '<' | '>' | '>>' | '=' | '<=' | '>='
 
@@ -88,7 +91,6 @@ priotity.
 The second set are the various type of queries implemented to match
 against different criteria. It matches against a package field (in
 lowercase).
-
 
 We believe the syntax of queries is easy to grasp. Nonetheless,
 here are some exemples:
@@ -156,6 +158,14 @@ specific set. The shared set of command-line options is:
 |=====================================================================
 
 Ben knows about the following compression formats: Gzip, Bz2 and Xz.
+
+By default, Ben keeps the following defined subset of field names. In fact, there
+are two subsets. The first one is for binary packages (Package, Source, Version,
+Maintainer, Architecture, Provides, Depends, Pre-Depends, Conflicts, Breaks) and
+the second one for source packages (Package, Source, Version, Maintainer, Binary,
+Build-depends, Build-depends-indep). If your analysis requires more fields, you may
+use --more-binary-keys and --more-source-keys command-line flags to specify your
+needs.
 
 The rest of this section describes each frontend.
 
