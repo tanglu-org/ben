@@ -70,6 +70,9 @@ OPTIONS
 *--more-source-keys l*::
     Comma separated list of further relevant source keys
 
+*--preferred-compression-format f*::
+    Preferred compression format (Default: Gzip)
+
 FRONTENDS
 ---------
 *download*::
