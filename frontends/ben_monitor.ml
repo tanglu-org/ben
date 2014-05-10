@@ -332,13 +332,37 @@ let beautify_text =
       )
       t
 
-let print_html_monitor template sources binaries dep_graph rounds =
+let compute_graph () =
+  let {src_map = sources; bin_map = binaries} = get_data is_affected in
+  let src_of_bin : ([`binary], [`source] Package.Name.t) M.t =
+    PAMap.fold
+      (fun (name, _) pkg accu ->
+         let source = Package.get "source" pkg in
+         M.add name (Package.Name.of_string source) accu)
+      binaries
+      M.empty
+  in
+  let dep_graph = Dependencies.get_dep_graph sources src_of_bin in
+  let rounds = Dependencies.topo_split dep_graph in
+  rounds, sources, binaries, dep_graph
+
+let compute_transition_data () =
+  let rounds, sources, binaries, dep_graph = compute_graph () in
   let monitor_data = compute_monitor_data sources binaries rounds in
   let all, bad, packages = generate_stats monitor_data in
-  let affected = List.map (fun x ->
-    Package.Name.of_string (Package.get "package" (fst x))
-  ) (List.flatten monitor_data) in
-  let affected = S.from_list affected in
+  monitor_data, sources, binaries, dep_graph, all, bad, packages
+
+let has_testing_data monitor_data =
+  match monitor_data with
+  | ((src, _) :: _) :: _ ->
+      (* if is-in-testing has been injected, it has been injected into
+         all packages, so just pick any *)
+    (try let _ = Package.get "is-in-testing" src in true
+     with Not_found -> false)
+  | _ -> false
+
+let print_html_monitor template monitor_data sources binaries dep_graph packages has_testing_data extra =
+  let affected = packages in
   let mytitle =
     try
       Query.to_string ~escape:false (Query.of_expr (Benl_clflags.get_config "title"))
@@ -350,14 +374,6 @@ let print_html_monitor template sources binaries dep_graph rounds =
   let is_good = Query.to_string (Lazy.force (is_good ())) in
   let is_bad = Query.to_string (Lazy.force (is_bad ())) in
   let archs_count = List.length !Benl_clflags.architectures in
-  let has_testing_data = match monitor_data with
-    | ((src, _) :: _) :: _ ->
-      (* if is-in-testing has been injected, it has been injected into
-         all packages, so just pick any *)
-      (try let _ = Package.get "is-in-testing" src in true
-       with Not_found -> false)
-    | _ -> false
-  in
   let page_title = sprintf "Transition: %s" mytitle in
   let extra_headers = [
     script
@@ -513,12 +529,19 @@ let print_html_monitor template sources binaries dep_graph rounds =
       :: rows, (i - 1)
     end ([], (List.length monitor_data - 1)) (List.rev monitor_data) in
   let table = table (tr (td [ pcdata "" ]) []) rows in
+  let content = match extra with
+    | None -> table
+    | Some extra ->
+      div
+        ~a:[a_class ["content"]]
+        [table; extra]
+  in
   let subtitle =
     [a_link (Filename.concat !baseurl "index.html") "Transitions";
      pcdata (Printf.sprintf " → %s" mytitle)
     ] in
-  let html = template.Template.page page_title subtitle extra_headers (hbody table) footer in
-  (all, bad, packages, html)
+  let html = template.Template.page page_title subtitle extra_headers (hbody content) footer in
+  html
 
 let print_dependency_levels dep_graph rounds =
   list_iteri begin fun i xs ->
@@ -530,20 +553,6 @@ let print_dependency_levels dep_graph rounds =
     end packages
   end rounds
 
-let compute_graph () =
-  let {src_map = sources; bin_map = binaries} = get_data is_affected in
-  let src_of_bin : ([`binary], [`source] Package.Name.t) M.t =
-    PAMap.fold
-      (fun (name, _) pkg accu ->
-         let source = Package.get "source" pkg in
-         M.add name (Package.Name.of_string source) accu)
-      binaries
-      M.empty
-  in
-  let dep_graph = Dependencies.get_dep_graph sources src_of_bin in
-  let rounds = Dependencies.topo_split dep_graph in
-  rounds, sources, binaries, dep_graph
-
 let main args =
   let _ = parse_local_args (Benl_frontend.parse_common_args args) in
   let rounds, sources, binaries, dep_graph =
@@ -553,8 +562,19 @@ let main args =
     | Text -> print_text_monitor sources binaries rounds
     | Xhtml ->
       let template = Benl_templates.get_registered_template () in
-      let (_, _, _, output) =
-        print_html_monitor template sources binaries dep_graph rounds
+      let monitor_data = compute_monitor_data sources binaries rounds in
+      let _, _, packages = generate_stats monitor_data in
+      let has_testing_data = has_testing_data monitor_data in
+      let output =
+        print_html_monitor
+          template
+          monitor_data
+          sources
+          binaries
+          dep_graph
+          packages
+          has_testing_data
+          None
       in
       match !output_file with
       | None ->

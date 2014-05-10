@@ -22,7 +22,6 @@ open Printf
 open Benl_core
 open Benl_clflags
 open Benl_utils
-open Ben_monitor
 open Benl_error
 
 let ($) f x = f x
@@ -185,33 +184,56 @@ let profile_of_file file =
     profile_of_string $ Filename.basename (Filename.dirname file)
   with _ -> Unknown
 
-let run_monitor template file =
-  let ($) = Filename.concat in
+let get_transition_data file =
   let (!!) = Filename.basename in
   let profile = profile_of_file file in
   let transition = FilePath.chop_extension !!file in
-  let () = p "Generating (%s) %s\n" (string_of_profile profile) transition in
+  let () =
+    p "Computing data for (%s) %s\n"
+      (string_of_profile profile)
+      transition
+  in
   (* Reset config variables before reading .ben files *)
   let () = Benl_clflags.reset () in
   (* Read a .ben file *)
-  let () = Benl_clflags.config := Benl_frontend.read_config_file file in
-  let rounds, sources, binaries, dep_graph = compute_graph () in
-  let all, bad, packages, output =
-    Ben_monitor.print_html_monitor template sources binaries dep_graph rounds in
-  let htmlf = FilePath.replace_extension !!file "html" in
-  let htmlp = "html" $ htmlf in
-  let html = !base $ htmlp in
+  let () = Benl_clflags.config :=
+    Benl_frontend.read_config_file file in
+  let transition_data = Ben_monitor.compute_transition_data () in
+  let monitor_data, sources, binaries, dep_graph, all, bad, packages =
+    transition_data in
+  let has_testing_data = Ben_monitor.has_testing_data monitor_data in
   let export =
     try
       Benl_clflags.get_config "export" = Benl_types.Etrue
     with _ -> true in
-  let result = all, bad, htmlp, profile, transition, packages, export in
+  !Benl_clflags.config, (profile, transition, export, transition_data, has_testing_data)
+
+let print_html_monitor config template file transition_data has_testing_data =
+  Benl_clflags.config := config;
+  let monitor_data, sources, binaries, dep_graph, _, _, packages =
+    transition_data
+  in
+  let output =
+    Ben_monitor.print_html_monitor
+      template
+      monitor_data
+      sources
+      binaries
+      dep_graph
+      packages
+      has_testing_data
+      None
+  in
+  let ($) = Filename.concat in
+  let (!!) = Filename.basename in
+  let htmlf = FilePath.replace_extension !!file "html" in
+  let htmlp = "html" $ htmlf in
+  let html = !base $ htmlp in
+  p "Generating %s\n" htmlp;
   try
-    Benl_utils.dump_xhtml_to_file html output;
-    result
+    Benl_utils.dump_xhtml_to_file html output
   with _ ->
-    eprintf "Something bad happened while generating %s!\n" html;
-    result
+    eprintf "Something bad happened while generating %s!\n" html
 
 module SMap = Map.Make(String)
 
@@ -224,13 +246,16 @@ let sadd mp p t =
 let generate_stats results =
   List.fold_left
     (fun (packages, profiles)
-      (all, bad, htmlp, p, t, pkgs, export) ->
+      (p, t, export, transition_data, _) ->
+        let _, _, _, _, all, bad, pkgs = transition_data in
+        let htmlf = FilePath.replace_extension t "html" in
+        let htmlp = Filename.concat "html" htmlf in
         let profiles = sadd
           profiles
           (string_of_profile p)
           (htmlp, t, all, bad)
         in
-        let packages = S.fold
+        let packages = Benl_data.S.fold
           (fun package packages ->
             if export then
               sadd packages (Package.Name.to_string package) (t, p, export)
@@ -252,6 +277,7 @@ let dump_yaml smap file =
       (string_of_profile profile)
   in
   let file = Filename.concat !base (Filename.concat "export" file) in
+  p "Generating %s\n" file;
   let string = SMap.fold
     (fun key list string ->
       let list = List.filter (fun (_,_,export) -> export) list in
@@ -309,7 +335,7 @@ let clean_up smap =
 
 let tracker template profiles =
   let page_title = "Transition tracker" in
-  let footer = [ small (generated_on_text ()) ] in
+  let footer = [ small (Ben_monitor.generated_on_text ()) ] in
   let tget show_score (path, name, all, bad) =
     li (
       (Ben_monitor.a_link path name)::
@@ -380,12 +406,14 @@ let main args =
                       And (Has_extension "ben",
                       And (Is_file, Is_readable))) in
       let template = Benl_templates.get_registered_template () in
+      (* Should we yell if all .ben files were broken? *)
+      (* i.e. results == [] *)
       let results =
         match !tconfig with
         (* Here we suppose that config is relative to base directory *)
           | Some transition ->
             let transition = Filename.concat !config_dir transition in
-            [ run_monitor template transition ]
+            [ get_transition_data transition ]
           | None ->
             find test_cond confd
               (fun results transition ->
@@ -393,7 +421,7 @@ let main args =
                   | Old -> results
                   | _ ->
                     try
-                      let result = run_monitor template transition in
+                      let result = get_transition_data transition in
                       result :: results
                     with Benl_error.Error e -> (* Ben file has errors *)
                       warn e;
@@ -401,8 +429,18 @@ let main args =
               )
               []
       in
-      (* Should we yell if all .ben files were broken? i.e. results == [] *)
-      let packages, profiles = generate_stats results in
+      let () = List.iter
+        (fun (config, (_, transition, _, transition_data, has_testing_data)) ->
+          print_html_monitor
+            config
+            template
+            transition
+            transition_data
+            has_testing_data
+        )
+        results
+      in
+      let packages, profiles = generate_stats (List.map snd results) in
       let () = dump_yaml packages "packages.yaml" in
       let () = clean_up profiles in
       (match !tconfig with
