@@ -31,6 +31,7 @@ let config_dir = ref "config"
 let global_config = ref (FilePath.concat !config_dir "global.conf")
 let lock = ref "ben.lock"
 let update = ref false
+let clean = ref true
 let tconfig = ref None
 
 open Benl_types
@@ -111,6 +112,9 @@ let rec parse_local_args = function
   | "--template"::template::xs ->
       Benl_templates.load_template template;
       parse_local_args xs
+  | "--no-clean"::xs ->
+      clean := false;
+      parse_local_args xs
   | x::xs -> x::(parse_local_args xs)
   | [] -> []
 
@@ -126,6 +130,7 @@ let help () =
       "--update|-u", "Updates cache files";
       "--use-projectb", "Get package lists from Projectb database";
       "--template", "Select an HTML template";
+      "--no-clean", "Leave unknown generated HTML files";
     ]
 
 exception Unknown_profile of string
@@ -276,6 +281,39 @@ let dump_yaml smap file =
     Printexc.print_backtrace stderr;
     eprintf "Something bad happened while generating %s!\n" file
 
+let clean_up smap =
+  if !clean then begin
+    p "Cleaning up...\n";
+    let ($) = Filename.concat in
+    let html_dir = !base $ "html" in
+    let known_transitions =
+      SMap.fold
+        (fun _ tlist accu ->
+          let tlist = List.map
+            (fun (name, _, _, _) -> Filename.basename name)
+            tlist
+          in
+          tlist @ accu
+        )
+        smap
+        []
+    in
+    try
+      let dir_content = Sys.readdir html_dir in
+      Array.iter
+        (fun file ->
+          if Filename.check_suffix file ".html" &&
+            not (List.mem file known_transitions)
+          then begin
+            let file = html_dir $ file in
+            p "Removing %s\n" file;
+            Sys.remove file
+          end
+        )
+        dir_content
+    with _ -> ()
+  end
+
 let tracker template profiles =
   let page_title = "Transition tracker" in
   let footer = [ small (generated_on_text ()) ] in
@@ -373,6 +411,7 @@ let main args =
       (* Should we yell if all .ben files were broken? i.e. results == [] *)
       let packages, profiles = generate_stats results in
       let () = dump_yaml packages "packages.yaml" in
+      let () = clean_up profiles in
       (match !tconfig with
         | None -> tracker template profiles
         | Some _ -> ())

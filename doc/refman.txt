@@ -317,6 +317,7 @@ result in the `base` directory.
 | --update\|-u            | Updates cache files
 | --use-projectb          | Get package lists from Projectb database
 | --template template     | Select an HTML template
+| --no-clean              | Leave unknown generated HTML files
 |====================================================================
 
 HTML Templates

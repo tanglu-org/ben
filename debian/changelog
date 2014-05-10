@@ -1,3 +1,12 @@
+ben (0.6.11) UNRELEASED; urgency=low
+
+  * Add --no-clean to "ben tracker" to leave unknown generated
+    HTML files.
+  * "ben tracker" will clean up the HTML directory by default from
+    now on.
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Sat, 10 May 2014 14:19:03 +0200
+
 ben (0.6.10.1) unstable; urgency=medium
 
   * Fix built regexp to use for string matching.
