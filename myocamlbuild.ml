@@ -76,6 +76,9 @@ let () =
              List.iter flag ["ocamldep"; "compile"; "link"; "doc"])
           packages;
 
+        flag ["ocaml"; "compile"; "native"] (S[A"-inline"; A"1000"]);
+        flag ["ocaml"; "link"; "native"] (S[A"-inline"; A"1000"]);
+
         (* why isn't this done by default? *)
         flag ["library"; "link"; "thread"] (A"-thread");
 
