@@ -20,17 +20,19 @@
 
 open Benl_error
 
-type t = Gzip | Bz2 | Xz
+type t = Gzip | Bz2 | Xz | Plain
 
 let to_string = function
   | Gzip -> "Gzip"
   | Bz2 -> "Bz2"
   | Xz -> "Xz"
+  | Plain -> "Plain"
 
 let of_string s = match (String.lowercase s) with
   | "gzip" | "gz" -> Gzip
   | "bz2" -> Bz2
   | "xz" -> Xz
+  | "plain" | "no" | "none" -> Plain
   | _ -> raise (Unknown_input_format s)
 
 let default = Gzip
@@ -42,24 +44,32 @@ let is_known s =
   with _ ->
     false
 
+let is_compressed s =
+  try
+    (of_string s) <> Plain
+  with _ ->
+    false
+
 let file_extension filename =
   try
     Some (FilePath.get_extension filename)
   with _ ->
     None
 
-let file_is_readable filename =
+let file_is_compressed filename =
   try
-    is_known (FilePath.get_extension filename)
+    is_compressed (FilePath.get_extension filename)
   with _ ->
     false
 
 let extension = function
-  | Gzip -> "gz"
-  | Bz2 -> "bz2"
-  | Xz -> "xz"
+  | Gzip -> ".gz"
+  | Bz2 -> ".bz2"
+  | Xz -> ".xz"
+  | Plain -> ""
 
 let display_tool = function
   | Gzip -> "zcat"
   | Bz2 -> "bzcat"
   | Xz -> "xzcat"
+  | Plain -> "cat"

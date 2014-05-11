@@ -157,7 +157,8 @@ specific set. The shared set of command-line options is:
 | --preferred-compression-format\|-z format | Preferred compression format (Default: Gzip)
 |=====================================================================
 
-Ben knows about the following compression formats: Gzip, Bz2 and Xz.
+Ben knows about the following compression formats: Gzip, Bz2, Xz and Plain (for
+no compression).
 
 By default, Ben keeps the following defined subset of field names. In fact, there
 are two subsets. The first one is for binary packages (Package, Source, Version,

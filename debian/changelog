@@ -4,6 +4,8 @@ ben (0.6.11) UNRELEASED; urgency=low
     HTML files.
   * "ben tracker" will clean up the HTML directory by default from
     now on.
+  * Add ability to read uncompressed files by specifying "plain",
+    "no" or "none" as a compression format.
 
  -- Mehdi Dogguy <mehdi@debian.org>  Sat, 10 May 2014 14:19:03 +0200
 

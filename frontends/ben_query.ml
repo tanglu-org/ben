@@ -82,7 +82,7 @@ let main args =
     match filename with
     | "-" ->
       Benl_utils.parse_control_in_channel kind "standard input" stdin keep accu ()
-    | filename when Benl_compression.file_is_readable filename ->
+    | filename when Benl_compression.file_is_compressed filename ->
       let tool = Benl_compression.display_tool
         (Benl_compression.of_string (FilePath.get_extension filename))
       in

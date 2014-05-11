@@ -26,7 +26,7 @@ val of_string : string -> t
 val default : t
 
 val is_known : string -> bool
-val file_is_readable : string -> bool
+val file_is_compressed : string -> bool
 
 val extension : t -> string
 val display_tool : t -> string

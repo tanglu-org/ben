@@ -38,7 +38,7 @@ let download_sources () =
   let commands =
     List.map
       (fun area ->
-         let url = sprintf "%s/dists/%s/%s/source/Sources.%s"
+         let url = sprintf "%s/dists/%s/%s/source/Sources%s"
            !Benl_clflags.mirror_sources
            !Benl_clflags.suite
            area
@@ -74,7 +74,7 @@ let download_binaries arch =
   let commands =
     List.map
       (fun area ->
-         let url = sprintf "%s/dists/%s/%s/binary-%s/Packages.%s"
+         let url = sprintf "%s/dists/%s/%s/binary-%s/Packages%s"
            !Benl_clflags.mirror_binaries
            !Benl_clflags.suite
            area
