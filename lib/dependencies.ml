@@ -109,7 +109,7 @@ let rev_cons_if_not_empty xs ys =
 let rec lvlist_to_listlist last accu result = function
   | [] ->
     List.rev (rev_cons_if_not_empty accu result)
-  | (i, pkg) :: xs ->
+  | (pkg, i) :: xs ->
     if i = last then
       lvlist_to_listlist i (pkg :: accu) result xs
     else
@@ -117,6 +117,6 @@ let rec lvlist_to_listlist last accu result = function
 
 let topo_split dgraph =
   let levels = compute_levels dgraph in
-  let packages = List.map (fun (s, n) -> n, s) (M.bindings levels) in
-  let packages = List.sort compare packages in
+  let my_compare (a,b) (c,d) = Pervasives.compare (b,a) (d,c) in
+  let packages = List.sort my_compare (M.bindings levels) in
   lvlist_to_listlist 0 [] [] packages
