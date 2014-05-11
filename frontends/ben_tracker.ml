@@ -72,15 +72,6 @@ let read_global_config () =
           Ben_monitor.baseurl := url
         | "template", (EString template) ->
           Benl_templates.load_template template;
-        | "output-type", (EString format) ->
-          (match String.lowercase format with
-            | "text" -> Ben_monitor.output_type := Text
-            | "levels" -> Ben_monitor.output_type := Levels
-            | "xhtml" -> Ben_monitor.output_type := Xhtml
-            | format ->
-                warn (Unknown_output_format format);
-                Ben_monitor.output_type := Xhtml
-          )
         | item, _ ->
             warn (Unknown_configuration_item item)
     )
