@@ -38,9 +38,6 @@ let areas = ref ["main"; "contrib"; "non-free"]
 let preferred_compression_format = ref Benl_compression.default
 let quiet = ref false
 
-let more_relevant_binary_keys = ref ([] : string list)
-let more_relevant_source_keys = ref ([] : string list)
-
 let reset () =
   let () = architectures := !Benl_base.debian_architectures in
   let () = suite := "unstable" in

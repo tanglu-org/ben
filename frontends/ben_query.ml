@@ -73,10 +73,8 @@ let main args =
       let f = String.lowercase f in
       !filters = []
       || List.mem f !filters
-      || List.mem f Benl_data.relevant_binary_keys
-      || List.mem f Benl_data.relevant_source_keys
-      || List.mem f !Benl_clflags.more_relevant_binary_keys
-      || List.mem f !Benl_clflags.more_relevant_binary_keys
+      || List.mem f !Benl_data.relevant_binary_keys
+      || List.mem f !Benl_data.relevant_source_keys
     in
     let eval e = fun _ p ->
       if e p query then Package.filter_print !filters stdout p in
