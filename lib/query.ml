@@ -105,17 +105,24 @@ let rec eval kind pkg = function
         end)
       deps
   | EMatch (field, EString package) ->
-      begin try
-        let value = Package.get field pkg in
-        let packages = Benl_core.simple_split '|' package in
-        let packages = List.map Pcre.quote packages in
-        let packages = String.concat "|" packages in
-        let rex = Pcre.regexp (Printf.sprintf "\b(%s)\b" packages) in
-        ignore (Pcre.exec ~rex value);
-        true
-      with Not_found ->
-        false
-      end
+    begin try
+      let value = Package.get field pkg in
+      (try
+         let _ = String.index package '|' in
+         let packages = Benl_core.simple_split '|' package in
+         let packages = List.map Pcre.quote packages in
+         let packages = String.concat "|" packages in
+         let rex = Pcre.regexp (Printf.sprintf "\b(%s)\b" packages) in
+         let _ = Pcre.exec ~rex value in
+         true
+       with Not_found ->
+         let deps = Package.dependencies field pkg in
+         List.exists
+           (fun x -> x.Package.dep_name = package)
+           deps)
+    with Not_found ->
+      false
+    end
   | x ->
       raise (Unexpected_expression (to_string x))
 
