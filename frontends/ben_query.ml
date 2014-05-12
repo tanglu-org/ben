@@ -42,8 +42,7 @@ let filters = ref []
 
 let rec parse_local_args = function
   | "-s"::s::xs ->
-      filters := Benl_core.simple_split ',' s;
-      filters := List.map String.lowercase !filters;
+      filters := List.map String.lowercase (Benl_core.simple_split ',' s);
       parse_local_args xs
   | x::xs -> x::(parse_local_args xs)
   | [] -> []
