@@ -25,6 +25,12 @@ open Benl_modules
 module Marshal = Benl_marshal.Make(Marshallable)
 open Marshallable
 
+module Arg = Benl_arg
+
+let args = ref []
+let anon_fun name =
+  args := name :: !args
+
 let sources_re = Pcre.regexp "Sources"
 let is_source x =
   try
@@ -41,26 +47,16 @@ let usage cmd =
 
 let filters = ref []
 
-let rec parse_local_args = function
-  | "-s"::s::xs ->
-      filters := List.map String.lowercase (Benl_core.simple_split ',' s);
-      parse_local_args xs
-  | x::xs -> x::(parse_local_args xs)
-  | [] -> []
+let spec = Arg.align [
+  "-s", Arg.String (fun s ->
+    filters := List.map String.lowercase (Benl_core.simple_split ',' s)
+  )
+      , " Show only the body of these fields from the matching paragraphs";
+]
 
-let help () =
-  printf "    <query> [options] [ file1 ... ]\n%!";
-  List.iter
-    (fun (option , desc) ->
-      Printf.printf "    %s: %s\n%!" option desc
-    )
-    [ "-s FIELD,FIELD,...", "Show only the body of these fields from the matching paragraphs";
-    ]
-
-let main args =
-  let args = parse_local_args (Benl_frontend.parse_common_args args) in
-  let query, files = match args with
-    | query::files -> query, files
+let main () =
+  let query, files = match List.rev !args with
+    | query :: files -> query, files
     | _ -> usage (sprintf "%s query" Sys.argv.(0))
   in
   let query = Query.of_string query in
@@ -106,5 +102,6 @@ let main args =
 let frontend = {
   Benl_frontend.name = "query";
   Benl_frontend.main = main;
-  Benl_frontend.help = help;
+  Benl_frontend.anon_fun = anon_fun;
+  Benl_frontend.help = spec;
 }

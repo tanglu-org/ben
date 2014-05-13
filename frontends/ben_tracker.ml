@@ -24,6 +24,8 @@ open Benl_clflags
 open Benl_utils
 open Benl_error
 
+module Arg = Benl_arg
+
 let ($) f x = f x
 
 let base = ref "."
@@ -81,48 +83,21 @@ let read_global_config () =
 let lockf () =
   FilePath.concat !cache_dir !lock
 
-let rec parse_local_args = function
-  | ("--config-dir"|"-cd")::x::xs ->
-      config_dir := x;
-      parse_local_args xs
-  | ("--global-conf"|"-g")::x::xs ->
-      global_config := x;
-      parse_local_args xs
-  | ("--transition"|"-t")::x::xs ->
-      tconfig := Some x;
-      parse_local_args xs
-  | ("--update"|"-u")::xs ->
-      update := true;
-      parse_local_args xs
-  | ("--base"|"-b")::x::xs ->
-      base := x;
-      parse_local_args xs
-  | ("--use-projectb")::xs ->
-      Benl_data.use_projectb := true;
-      parse_local_args xs
-  | "--template"::template::xs ->
-      Benl_templates.load_template template;
-      parse_local_args xs
-  | "--no-clean"::xs ->
-      clean := false;
-      parse_local_args xs
-  | x::xs -> x::(parse_local_args xs)
-  | [] -> []
-
-let help () =
-  List.iter
-    (fun (option , desc) ->
-      printf "    %s: %s\n%!" option desc
-    )
-    [ "--base|-b [dir]", "Specifies the \"base\" directory.";
-      "--global-conf|-g [file]", "Specifies the global configuration file";
-      "--config-dir|-cd [dir]", "Location of ben trackers";
-      "--transition|-t [profile/transition]", "Generate only that tracker page";
-      "--update|-u", "Updates cache files";
-      "--use-projectb", "Get package lists from Projectb database";
-      "--template", "Select an HTML template";
-      "--no-clean", "Leave unknown generated HTML files";
-    ]
+let spec = Arg.align [
+  "--config-dir" , Arg.Set_string config_dir, " ";
+  "-cd"          , Arg.Set_string config_dir, " ";
+  "--global-conf", Arg.Set_string global_config, " ";
+  "-g"           , Arg.Set_string global_config, " ";
+  "--transition" , Arg.String (fun t -> tconfig := Some t), " ";
+  "-t"           , Arg.String (fun t -> tconfig := Some t), " ";
+  "--update"     , Arg.Set update, " ";
+  "-u"           , Arg.Set update, " ";
+  "--base"       , Arg.Set_string base, " ";
+  "-b"           , Arg.Set_string base, " ";
+  "--use-projectb", Arg.Set Benl_data.use_projectb, " ";
+  "--template"   , Arg.String (fun t -> Benl_templates.load_template t), " ";
+  "--no-clean"   , Arg.Clear clean, " ";
+]
 
 exception Unknown_profile of string
 
@@ -388,7 +363,6 @@ let () = at_exit (fun () ->
 )
 
 let main args =
-  let _ = parse_local_args (Benl_frontend.parse_common_args args) in
   let () = read_global_config () in
   let lockf = lockf () in
   if test Exists lockf then
@@ -453,5 +427,6 @@ let main args =
 let frontend = {
   Benl_frontend.name = "tracker";
   Benl_frontend.main = main;
-  Benl_frontend.help = help;
+  Benl_frontend.anon_fun = (fun _ -> ());
+  Benl_frontend.help = spec;
 }

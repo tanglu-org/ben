@@ -120,12 +120,12 @@ let save_cache () =
   end
 
 let main args =
-  ignore (Benl_frontend.parse_common_args args);
   download_all ();
   save_cache ()
 
 let frontend = {
   Benl_frontend.name = "download";
   Benl_frontend.main = main;
-  Benl_frontend.help = fun () -> ();
+  Benl_frontend.anon_fun = (fun _ -> ());
+  Benl_frontend.help = [];
 }

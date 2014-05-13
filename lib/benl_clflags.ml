@@ -30,6 +30,7 @@ let architectures = ref !Benl_base.debian_architectures
 let cache_dir = ref (get_env_default "BEN_CACHE_DIR" (Sys.getcwd ()))
 let cache_file = ref "ben.cache"
 let use_cache = ref false
+let use_benrc = ref true
 let media_dir = ref (get_env_default "BEN_MEDIA_DIR" "/usr/share/ben/media")
 let mirror_binaries = ref "http://ftp.fr.debian.org/debian"
 let mirror_sources = ref "http://ftp.fr.debian.org/debian"

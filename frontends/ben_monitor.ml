@@ -23,6 +23,8 @@ open Benl_base
 open Benl_marshal
 open Xhtml.M
 
+module Arg = Benl_arg
+
 module M = Package.Map
 module S = Package.Set
 
@@ -78,45 +80,31 @@ let print_dep_line src deps =
 
 let print_dep_graph x = M.iter print_dep_line x
 
-let rec parse_local_args = function
-  | "--run-debcheck"::xs ->
-      Benl_data.run_debcheck := true;
-      parse_local_args xs
-  | "--color"::xs ->
-      use_colors := true;
-      output_type := Text;
-      parse_local_args xs
-  | "--text"::xs ->
-      output_type := Text;
-      parse_local_args xs
-  | "--html"::xs ->
-      output_type := Xhtml;
-      parse_local_args xs
-  | "--use-projectb"::xs ->
-      Benl_data.use_projectb := true;
-      parse_local_args xs
-  | ("--output"|"-o")::filename::xs ->
-      output_file := Some filename;
-      parse_local_args xs
-  | "--template"::template::xs ->
-      Benl_templates.load_template template;
-      parse_local_args xs
-  | x::xs -> x::(parse_local_args xs)
-  | [] -> []
-
-let help () =
-  List.iter
-    (fun (option , desc) ->
-      Printf.printf "    %s: %s\n%!" option desc
-    )
-    [ "--run-debcheck", "Run dose-debcheck and add virtual .uninstallable field";
-      "--use-projectb", "Get package lists from Projectb database";
-      "--color", "Color if text output";
-      "--text", "Select text output format";
-      "--html", "Select HTML output format";
-      "--output|-o", "Select output file";
-      "--template", "Select an HTML template";
-    ]
+let spec = Arg.align [
+  "--run-debcheck", Arg.Set Benl_data.run_debcheck, " Run debcheck to register installability information";
+  "--color"       , Arg.Unit (fun () ->
+    use_colors := true;
+    output_type := Text)
+                                                  , " Color and use text output";
+  "--text"        , Arg.Unit (fun () ->
+    output_type := Text)
+                                                  , " Select text output format";
+  "--html"        , Arg.Unit (fun () ->
+    output_type := Xhtml)
+                                                  , " Select HTML output format";
+  "--use-projectb", Arg.Set Benl_data.use_projectb, " Get package lists from Projectb database";
+  "--output"      , Arg.String (fun filename ->
+    output_file := Some filename
+  )
+                                                  , " Path to output file";
+  "-o"            , Arg.String (fun filename ->
+    output_file := Some filename
+  )
+                                                  , " Path to output file";
+  "--template"    , Arg.String (fun template ->
+    Benl_templates.load_template template)
+                                                  , " Select an HTML template";
+]
 
 let check_media_dir base =
   let mediad = base // "media" in
@@ -554,7 +542,6 @@ let print_dependency_levels dep_graph rounds =
   end rounds
 
 let main args =
-  let _ = parse_local_args (Benl_frontend.parse_common_args args) in
   let rounds, sources, binaries, dep_graph =
     compute_graph () in
   match !output_type with
@@ -587,5 +574,6 @@ let main args =
 let frontend = {
   Benl_frontend.name = "monitor";
   Benl_frontend.main = main;
-  Benl_frontend.help = help;
+  Benl_frontend.anon_fun = (fun _ -> ());
+  Benl_frontend.help = spec;
 }

@@ -20,15 +20,18 @@
 
 type frontend = {
   name : string;
-  main : string list -> unit;
-  help : unit -> unit
+  main : unit -> unit;
+  anon_fun: string -> unit;
+  help : (Benl_arg.key * Benl_arg.spec * Benl_arg.doc) list
 }
+
+val spec : (Benl_arg.key * Benl_arg.spec * Benl_arg.doc) list ref
 
 val register_frontend : frontend -> unit
 val get_frontend : string -> frontend
+val get_selected_frontend : unit -> frontend
+val set_selected_frontend : frontend -> unit
 val available_frontends : unit -> string list
-val parse_common_args : string list -> string list
 val check_string : string -> Benl_types.expr -> string
 val check_string_list : string -> Benl_types.expr -> string list
 val read_config_file : string -> Benl_types.config
-val main : unit -> unit
