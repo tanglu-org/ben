@@ -90,7 +90,7 @@ let () =
         flag ["link"; "library"; "ocaml"; "native"; "use_libbenl"]
           (S[A"-cclib"; A"-lbenl"]);
         flag ["link"; "program"; "ocaml"; "byte"; "use_libbenl"]
-          (S[A"-dllib"; A"-lbenl"]);
+          (S[A"-I"; A"lib"; A"-dllib"; A"-lbenl"]);
         dep  ["link"; "ocaml"; "use_libbenl"] ["lib/libbenl.a"];
 
         (* rule for the main executable that will link all frontends  *)
