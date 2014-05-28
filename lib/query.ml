@@ -24,11 +24,45 @@ open Benl_base
 
 type t = Benl_types.expr
 
-let of_expr x = x
+let rec optimize query = match query with
+  | EMatch (field, EString package) ->
+    begin match (Benl_core.simple_split '|' package) with
+    | package::[] -> query
+    | packages ->
+      let packages = List.map Pcre.quote packages in
+      let r_string = String.concat "|" packages in
+      let rex = Pcre.regexp (Printf.sprintf "\b(%s)\b" r_string) in
+      EMatch (field, ERegexp (package, rex))
+    end
+  | EMatch (_, (EDep _ | ERegexp _)) -> query
+  | Etrue | Efalse | ESource | EVersion _ | EString _ | ERegexp _ | EDep _ -> query
+  | EMatch (f, e) -> EMatch (f, optimize e)
+  | EList l -> begin match l with
+    | [] -> Etrue
+    | h::[] -> optimize h
+    | _::_ -> EList (List.map optimize l)
+  end
+  | ENot e -> begin match (optimize e) with
+    | Etrue -> Efalse
+    | Efalse -> Etrue
+    | e -> ENot e
+  end
+  | EOr (e1, e2) -> begin match (optimize e1, optimize e2) with
+    | Efalse, e | e, Efalse -> e
+    | Etrue, _ | _, Etrue -> Etrue
+    | e1, e2 -> EOr (e1, e2)
+  end
+  | EAnd (e1, e2) -> begin match (optimize e1, optimize e2) with
+    | Efalse, e | e, Efalse -> Efalse
+    | Etrue, e | e, Etrue -> e
+    | e1, e2 -> EAnd (e1, e2)
+  end
+
+let of_expr x = optimize x
 
 let of_string s =
   let lexbuf = Lexing.from_string s in
-  Benl_parser.full_expr Benl_lexer.token lexbuf
+  optimize (Benl_parser.full_expr Benl_lexer.token lexbuf)
 
 let parens show expr =
   if show
@@ -106,20 +140,10 @@ let rec eval kind pkg = function
       deps
   | EMatch (field, EString package) ->
     begin try
-      let value = Package.get field pkg in
-      (try
-         let _ = String.index package '|' in
-         let packages = Benl_core.simple_split '|' package in
-         let packages = List.map Pcre.quote packages in
-         let packages = String.concat "|" packages in
-         let rex = Pcre.regexp (Printf.sprintf "\b(%s)\b" packages) in
-         let _ = Pcre.exec ~rex value in
-         true
-       with Not_found ->
-         let deps = Package.dependencies field pkg in
-         List.exists
-           (fun x -> x.Package.dep_name = package)
-           deps)
+      let deps = Package.dependencies field pkg in
+      List.exists
+        (fun x -> x.Package.dep_name = package)
+        deps
     with Not_found ->
       false
     end
