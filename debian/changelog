@@ -8,6 +8,10 @@ ben (0.6.11) UNRELEASED; urgency=low
     "no" or "none" as a compression format.
   * Remove --output-type from "ben tracker". Support for other output
     types didn't exist anyway and is not planned.
+  * Simplify queries so that processing is, a bit, faster.
+  * Make templates directory configurable through BEN_TEMPLATES_DIR
+    environment variable.
+  * Automatically set correct date and revision when generating refman.
 
  -- Mehdi Dogguy <mehdi@debian.org>  Sun, 11 May 2014 20:30:29 +0200
 
