@@ -24,7 +24,7 @@ end
 module PAMap = Map.Make(PAIndex)
 
 module Marshallable = struct
-  let magic_number = "BENA0901"
+  let magic_number = "BENA0902"
   type t = {
     src_map : ([`source], [`source] Package.t) Package.Map.t;
     bin_map : [`binary] Package.t PAMap.t
