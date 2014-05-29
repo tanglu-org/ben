@@ -41,7 +41,7 @@ open Benl_frontend
 let read_global_config () =
   if Sys.file_exists !global_config then begin
     let config = Benl_utils.parse_config_file !global_config in
-    List.iter (function
+    StringMap.iter (fun key value -> match (key, value) with
         | "architectures", archs ->
           Benl_base.debian_architectures := check_string_list "architectures" archs
         | "ignored", archs ->

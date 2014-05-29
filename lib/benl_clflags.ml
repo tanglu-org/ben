@@ -19,6 +19,7 @@
 (**************************************************************************)
 
 open Benl_error
+open Benl_core
 
 let get_env_default var default =
   try Sys.getenv var with Not_found -> default
@@ -44,9 +45,9 @@ let reset () =
   let () = areas := ["main"; "contrib"; "non-free"] in
   ()
 
-let config : Benl_types.config ref = ref []
+let config : Benl_types.config ref = ref StringMap.empty
 let get_config key =
-  try List.assoc key !config
+  try StringMap.find key !config
   with Not_found -> raise (Missing_configuration_item key)
 
 let get_cache_file ?(name = !cache_file) () =

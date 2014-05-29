@@ -65,36 +65,36 @@ let check_string_list what = function
 
 let read_config_file filename =
   let config = Benl_utils.parse_config_file filename in
-  let rec process = function
-    | ("mirror", x)::xs ->
+  StringMap.fold (fun key value accu -> match (key, value) with
+    | ("mirror", x) ->
         Benl_clflags.mirror_binaries := check_string "mirror" x;
         Benl_clflags.mirror_sources  := check_string "mirror" x;
-        process xs
-    | ("mirror-binaries", x)::xs ->
+        accu
+    | ("mirror-binaries", x) ->
         Benl_clflags.mirror_binaries := check_string "mirror-binaries" x;
-        process xs
-    | ("mirror-sources", x)::xs ->
+        accu
+    | ("mirror-sources", x) ->
         Benl_clflags.mirror_sources := check_string "mirror-sources" x;
-        process xs
-    | ("areas", x)::xs ->
+        accu
+    | ("areas", x) ->
         Benl_clflags.areas := check_string_list "areas" x;
-        process xs
-    | ("architectures", x)::xs ->
+        accu
+    | ("architectures", x) ->
         Benl_clflags.architectures := check_string_list "architectures" x;
-        process xs
-    | ("suite", x)::xs ->
+        accu
+    | ("suite", x) ->
         Benl_clflags.suite := check_string "suite" x;
-        process xs
-    | ("cache-dir", x)::xs ->
+        accu
+    | ("cache-dir", x) ->
         Benl_clflags.cache_dir := check_string "cache-dir" x;
-        process xs
-    | ("cache-file", x)::xs ->
+        accu
+    | ("cache-file", x) ->
         Benl_clflags.cache_file := check_string "cache-file" x;
-        process xs
-    | ("use-cache", Etrue)::xs ->
+        accu
+    | ("use-cache", Etrue) ->
         Benl_clflags.use_cache := true;
-        process xs
-    | ("more-binary-keys", x)::xs ->
+        accu
+    | ("more-binary-keys", x) ->
         let new_keys = List.map
           String.lowercase
           (check_string_list "more-binary-keys" x)
@@ -102,8 +102,8 @@ let read_config_file filename =
         Benl_data.relevant_binary_keys := StringSet.union
           (StringSet.from_list new_keys)
           !Benl_data.relevant_binary_keys;
-        process xs
-    | ("more-source-keys", x)::xs ->
+        accu
+    | ("more-source-keys", x) ->
         let new_keys = List.map
           String.lowercase
           (check_string_list "more-source-keys" x)
@@ -111,19 +111,20 @@ let read_config_file filename =
         Benl_data.relevant_source_keys := StringSet.union
           (StringSet.from_list new_keys)
           !Benl_data.relevant_source_keys;
-        process xs
-    | ("preferred-compression-format", x)::xs ->
+        accu
+    | ("preferred-compression-format", x) ->
         let format = check_string "preferred-compression-format" x in
         if Benl_compression.is_known format then
           Benl_clflags.preferred_compression_format :=
             Benl_compression.of_string format
         else
           warn (Unknown_input_format format);
-        process xs
-    | x::xs ->
-        x::(process xs)
-    | [] -> []
-  in process config
+        accu
+    | _ ->
+        StringMap.add key value accu
+  )
+  config
+  StringMap.empty
 
 let rec parse_common_args = function
   | "--no-benrc"::xs ->

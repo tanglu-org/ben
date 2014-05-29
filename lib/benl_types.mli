@@ -43,6 +43,6 @@ type expr =
   | EDep of string * comparison * string
 (** The abstract syntax tree of configuration items. *)
 
-type config = (string * expr) list
+type config = expr Benl_core.StringMap.t
 (** The type of parsed configuration files. Configuration files are
     key-value pairs, where values have type [expr]. *)
