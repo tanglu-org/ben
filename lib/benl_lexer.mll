@@ -21,6 +21,7 @@
 {
   open Benl_error
   open Benl_base
+  open Benl_core
   open Benl_parser
 
   let id_from_token s =
@@ -39,12 +40,13 @@ rule stanza empty accu = parse
   | (field_name as name) space* ":" space* (field_value as value) '\n'?
       {
         let name = String.lowercase name in
-        stanza false ((name, value)::accu) lexbuf
+        let accu = StringMap.add name value accu in
+        stanza false accu lexbuf
       }
   | '\n'+ | eof
         {
           if empty then Pervasives.raise End_of_file
-          else List.rev accu
+          else accu
         }
 
 and token = parse
@@ -114,7 +116,7 @@ and comment = parse
   let stanza_fold f lexbuf accu =
     let rec loop accu =
       let stanza =
-        try Some (stanza true [] lexbuf)
+        try Some (stanza true StringMap.empty lexbuf)
         with End_of_file -> None
       in
       match stanza with

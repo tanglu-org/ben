@@ -40,13 +40,13 @@ type origin = {
     ([ `source ] as 'b, 'b Package.t) M.t -> ('b, 'b Package.t) M.t;
 }
 
-let default_relevant_binary_keys =
+let default_relevant_binary_keys = StringSet.from_list
   [ "package"; "source"; "version"; "maintainer"; "architecture";
     "provides"; "depends"; "pre-depends"; "replaces";
     "multi-arch";
     "conflicts"; "breaks"; "suggests"; "recommends"; "enhances" ]
 
-let default_relevant_source_keys =
+let default_relevant_source_keys = StringSet.from_list
   [ "package"; "source"; "version"; "maintainer"; "architecture";
     "directory";
     "binary"; "build-depends"; "build-depends-indep" ]
@@ -62,7 +62,7 @@ let file_origin =
   let get_binaries accu arch =
     Benl_utils.parse_control_file `binary
       (!Benl_clflags.cache_dir // ("Packages_"^arch))
-      (fun x -> List.mem x !relevant_binary_keys)
+      (fun x -> StringSet.mem x !relevant_binary_keys)
       (fun name pkg accu ->
         try
           let old_pkg = PAMap.find (name, arch) accu in
@@ -79,7 +79,7 @@ let file_origin =
   let get_sources accu =
     Benl_utils.parse_control_file `source
       (!Benl_clflags.cache_dir // "Sources")
-      (fun x -> List.mem x !relevant_source_keys)
+      (fun x -> StringSet.mem x !relevant_source_keys)
       (fun name pkg accu ->
         try
           let old_pkg = M.find name accu in
@@ -96,13 +96,6 @@ let file_origin =
   { get_binaries = get_binaries; get_sources = get_sources }
 
 module Projectb = struct
-
-  module StringMap = Map.Make(String)
-  module StringSet = Set.Make(String)
-  module IntMap = Map.Make(struct
-    type t = int
-    let compare : t -> t -> int = compare
-  end)
 
   let mk_origin () =
 
@@ -150,7 +143,7 @@ module Projectb = struct
       (mk_wrapper_maps string_identity "select id, arch_string from architecture")
     in
 
-    let relevant_binary_key_ids = List.map id_of_key !relevant_binary_keys in
+    let relevant_binary_key_ids = List.map id_of_key (StringSet.elements !relevant_binary_keys) in
 
     let get_binaries accu arch =
       Benl_clflags.progress "Querying projectb for %s binaries in unstable..." arch;
@@ -166,8 +159,9 @@ module Projectb = struct
         | [| src_id; key_id; value |] ->
           let src_id = int_of_string src_id
           and key_id = int_of_string key_id in
-          let old = try IntMap.find src_id a with Not_found -> [] in
-          IntMap.add src_id ((key_of_id key_id, value)::old) a
+          let old = try IntMap.find src_id a with Not_found -> StringMap.empty in
+          let old = StringMap.add (key_of_id key_id) value old in
+          IntMap.add src_id old a
         | _ -> assert false
       ) IntMap.empty r#get_all in
       let result = IntMap.fold (fun _ assoc accu ->
@@ -208,7 +202,10 @@ module Projectb = struct
     (* beware! key "directory" does not exist in projectb and is
        handled specifically below *)
       List.map id_of_key
-	(List.filter (fun x -> x <> "directory") !relevant_source_keys)
+	(List.filter
+           (fun x -> x <> "directory")
+           (StringSet.elements !relevant_source_keys)
+        )
     in
 
     let get_sources accu =
@@ -226,12 +223,13 @@ module Projectb = struct
         | [| src_id; key_id; value |] ->
           let src_id = int_of_string src_id
           and key_id = int_of_string key_id in
-          let old = try IntMap.find src_id a with Not_found -> [] in
+          let old = try IntMap.find src_id a with Not_found -> StringMap.empty in
           let key = key_of_id key_id in
           (* translate "source" to "package" for consistency with
              Sources files *)
           let key = if key = "source" then "package" else key in
-          IntMap.add src_id ((key, value)::old) a
+          let old = StringMap.add key value old in
+          IntMap.add src_id old a
         | _ -> assert false
       ) IntMap.empty r#get_all in
     (* get .dsc paths to compute directories *)
@@ -253,7 +251,7 @@ module Projectb = struct
 	let directory = Filename.concat "pool"
           (Filename.dirname (IntMap.find src_id id_indexed_dscs))
 	in
-	("directory", directory) :: pkg
+        StringMap.add "directory" directory pkg
       ) id_indexed_map in
       let result = IntMap.fold (fun _ assoc accu ->
 	let pkg = Package.of_assoc `source assoc in
@@ -317,7 +315,7 @@ let inject_debcheck_data =
   let rex = Pcre.regexp "^  package: (.*)$" in
   fun (bins : [`binary] Package.t PAMap.t)  architectures ->
     let a, b = if !Benl_clflags.quiet then ("\n", "") else ("", "\n") in
-    let all_uninstallable_packages = List.map (fun arch_ref ->
+    let all_uninstallable_packages = List.fold_left (fun map arch_ref ->
       Benl_clflags.progress "Running dose-debcheck on %s..." arch_ref;
       let (ic, oc) as p = Unix.open_process "dose-debcheck --quiet --failures" in
       (* inefficiency: for each architecture, we iterate on all binary
@@ -354,10 +352,10 @@ let inject_debcheck_data =
             "%sW: subprocess dose-debcheck stopped with signal %d%s%!" a i b
       end;
       Benl_clflags.progress "\n";
-      (arch_ref, result)
-    ) architectures in
+      StringMap.add arch_ref result map
+    ) StringMap.empty architectures in
     PAMap.mapi (fun (name, arch) pkg ->
-      let uninstallable_packages = List.assoc arch all_uninstallable_packages in
+      let uninstallable_packages = StringMap.find arch all_uninstallable_packages in
       if Package.Set.mem name uninstallable_packages
       then
         (* the following line is for compatibility only and should be

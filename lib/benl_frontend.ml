@@ -19,6 +19,7 @@
 (**************************************************************************)
 
 open Benl_error
+open Benl_core
 open Benl_types
 
 type frontend = {
@@ -98,16 +99,18 @@ let read_config_file filename =
           String.lowercase
           (check_string_list "more-binary-keys" x)
         in
-        Benl_data.relevant_binary_keys :=
-          new_keys @ !Benl_data.relevant_binary_keys;
+        Benl_data.relevant_binary_keys := StringSet.union
+          (StringSet.from_list new_keys)
+          !Benl_data.relevant_binary_keys;
         process xs
     | ("more-source-keys", x)::xs ->
         let new_keys = List.map
           String.lowercase
           (check_string_list "more-source-keys" x)
         in
-        Benl_data.relevant_source_keys :=
-          new_keys @ !Benl_data.relevant_source_keys;
+        Benl_data.relevant_source_keys := StringSet.union
+          (StringSet.from_list new_keys)
+          !Benl_data.relevant_source_keys;
         process xs
     | ("preferred-compression-format", x)::xs ->
         let format = check_string "preferred-compression-format" x in
@@ -171,16 +174,18 @@ let rec parse_common_args = function
         String.lowercase
         (Benl_core.simple_split ',' x)
       in
-      Benl_data.relevant_binary_keys :=
-        new_keys @ !Benl_data.relevant_binary_keys;
+      Benl_data.relevant_binary_keys := StringSet.union
+        (StringSet.from_list new_keys)
+        !Benl_data.relevant_binary_keys;
       parse_common_args xs
   | "--more-source-keys"::x::xs ->
       let new_keys = List.map
         String.lowercase
         (Benl_core.simple_split ',' x)
       in
-      Benl_data.relevant_source_keys :=
-        new_keys @ !Benl_data.relevant_source_keys;
+      Benl_data.relevant_source_keys := StringSet.union
+        (StringSet.from_list new_keys)
+        !Benl_data.relevant_source_keys;
       parse_common_args xs
   | ("--preferred-compression-format"|"-z")::x::xs ->
       if Benl_compression.is_known x then

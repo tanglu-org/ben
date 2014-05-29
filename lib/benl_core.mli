@@ -18,10 +18,24 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-(** Utility functions.
+(** Utility functions and modules.
 
-    This module contains handy functions not specific to Ben.
+    This module contains handy functions (or modules) not specific to Ben.
 *)
+
+module StringSet : sig
+  include Set.S with type elt = string
+  val from_list : string list -> t
+end
+
+module StringMap : sig
+  include Map.S with type key = string
+  val from_list : (key * int) list -> int t
+end
+
+module IntMap : sig
+  include Map.S with type key = int
+end
 
 val with_in_channel : in_channel -> (in_channel -> 'a) -> 'a
 (** Run the function on the in_channel, taking care of exceptions. *)

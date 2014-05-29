@@ -18,6 +18,27 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
+module StringMap = struct
+  include Map.Make(String)
+  let from_list =
+    List.fold_left
+      (fun map (key, value) -> add key value map)
+      empty
+end
+
+module StringSet = struct
+  include Set.Make(String)
+  let from_list =
+    List.fold_left
+      (fun set elt -> add elt set)
+      empty
+end
+
+module IntMap = Map.Make(struct
+  type t = int
+  let compare : t -> t -> int = compare
+end)
+
 let with_in_channel chan f =
   try
     let res = f chan in

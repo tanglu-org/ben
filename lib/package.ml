@@ -19,8 +19,9 @@
 
 open Printf
 open Benl_types
+open Benl_core
 
-type 'a t = (string * string) list
+type 'a t = string StringMap.t
 
 module Name = struct
   type 'a t = string
@@ -29,8 +30,8 @@ module Name = struct
 end
 
 let filter_print keep outc p =
-  List.iter
-    (fun (f, v) ->
+  StringMap.iter
+    (fun f v ->
       if keep = [] || List.mem (String.lowercase f) keep then
         fprintf outc "%s: %s\n" (Benl_core.capitalize f) v)
     p;
@@ -38,9 +39,9 @@ let filter_print keep outc p =
 
 let print = filter_print []
 
-let get = List.assoc
+let get = StringMap.find
 
-let add k v pkg = (k, v) :: pkg
+let add k v pkg = StringMap.add k v pkg
 
 module Set = struct
   module S = Set.Make(String)
@@ -49,11 +50,16 @@ module Set = struct
   let empty = S.empty
   let add = S.add
   let mem = S.mem
+  let from_list =
+    List.fold_left
+      (fun set elt -> add elt set)
+      empty
   let exists = S.exists
   let iter = S.iter
   let cardinal = S.cardinal
   let elements = S.elements
   let fold = S.fold
+  let filter = S.filter
 end
 
 let rex = Pcre.regexp "^(\\S+)(?: \\((\\S+)\\))?$"
@@ -76,9 +82,10 @@ let of_assoc sort x =
           with Not_found ->
             get "package" x, get "version" x
         in
-        ("source", source) ::
-        ("source-version", version) ::
-        (List.remove_assoc "source" x)
+        StringMap.add "source" source
+          (StringMap.add "source-version" version
+             (StringMap.remove "source" x)
+          )
     | `source -> x
 
 module Map = struct

@@ -273,7 +273,7 @@ let generate_stats monitor_data =
             Package.Name.of_string (Package.get "package" package)
           in
           let overrall_state = overrall_state statuses in
-          let packages = package::packages in
+          let packages = S.add package packages in
           let return all bad =
             all, bad, packages
           in
@@ -288,7 +288,7 @@ let generate_stats monitor_data =
         (all, bad, packages)
         level
     )
-    (0, 0, [])
+    (0, 0, S.empty)
     monitor_data
 
 let starts_with text head =
@@ -338,6 +338,7 @@ let print_html_monitor template sources binaries dep_graph rounds =
   let affected = List.map (fun x ->
     Package.Name.of_string (Package.get "package" (fst x))
   ) (List.flatten monitor_data) in
+  let affected = S.from_list affected in
   let mytitle =
     try
       Query.to_string ~escape:false (Query.of_expr (Benl_clflags.get_config "title"))
@@ -453,13 +454,15 @@ let print_html_monitor template sources binaries dep_graph rounds =
           [ "src"; sprintf "round%d" i ] @
             (if in_testing then [] else ["notintesting"])
         in
-        let deps = S.elements
-          (Package.Map.find (Package.Name.of_string src) dep_graph)
+        let deps = M.find (Package.Name.of_string src) dep_graph in
+        let deps = S.filter (fun p -> S.mem p affected) deps in
+        let deps =
+          if S.is_empty deps then
+            ""
+          else
+            let names = List.map (!!!) (S.elements deps) in
+            "Dependencies: " ^ (String.concat ", " names)
         in
-        let deps = List.filter (fun p -> List.mem p affected) deps in
-        let deps = match (List.map (!!!) deps) with
-          | [] -> ""
-          | _ as l-> "Dependencies: " ^ (String.concat ", " l) in
         let version = Package.get "version" source in
         let directory = Package.get "directory" source in
         let arch_any = Package.get "architecture" source <> "all" in

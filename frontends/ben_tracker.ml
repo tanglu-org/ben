@@ -19,6 +19,7 @@
 
 open Xhtml.M
 open Printf
+open Benl_core
 open Benl_clflags
 open Benl_utils
 open Ben_monitor
@@ -224,21 +225,21 @@ let generate_stats results =
   List.fold_left
     (fun (packages, profiles)
       (all, bad, htmlp, p, t, pkgs, export) ->
-        let pkgs = List.map Package.Name.to_string pkgs in
         let profiles = sadd
           profiles
           (string_of_profile p)
           (htmlp, t, all, bad)
         in
-        let packages = List.fold_left
-          (fun packages package ->
+        let packages = S.fold
+          (fun package packages ->
             if export then
-              sadd packages package (t, p, export)
+              sadd packages (Package.Name.to_string package) (t, p, export)
             else
               packages
           )
+          pkgs
           packages
-          pkgs in
+        in
         packages, profiles
     )
     (SMap.empty, SMap.empty)
@@ -284,17 +285,18 @@ let clean_up smap =
             (fun (name, _, _, _) -> Filename.basename name)
             tlist
           in
-          tlist @ accu
+          let tset = StringSet.from_list tlist in
+          StringSet.union tset accu
         )
         smap
-        []
+        StringSet.empty
     in
     try
       let dir_content = Sys.readdir html_dir in
       Array.iter
         (fun file ->
           if Filename.check_suffix file ".html" &&
-            not (List.mem file known_transitions)
+            not (StringSet.mem file known_transitions)
           then begin
             let file = html_dir $ file in
             p "Removing %s\n" file;
