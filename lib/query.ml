@@ -24,7 +24,7 @@ open Benl_base
 
 type t = Benl_types.expr
 
-let rec optimize query = match query with
+let rec simplify query = match query with
   | EMatch (field, EString package) ->
     begin match (Benl_core.simple_split '|' package) with
     | package::[] -> query
@@ -36,33 +36,33 @@ let rec optimize query = match query with
     end
   | EMatch (_, (EDep _ | ERegexp _)) -> query
   | Etrue | Efalse | ESource | EVersion _ | EString _ | ERegexp _ | EDep _ -> query
-  | EMatch (f, e) -> EMatch (f, optimize e)
+  | EMatch (f, e) -> EMatch (f, simplify e)
   | EList l -> begin match l with
     | [] -> Etrue
-    | h::[] -> optimize h
-    | _::_ -> EList (List.map optimize l)
+    | h::[] -> simplify h
+    | _::_ -> EList (List.map simplify l)
   end
-  | ENot e -> begin match (optimize e) with
+  | ENot e -> begin match (simplify e) with
     | Etrue -> Efalse
     | Efalse -> Etrue
     | e -> ENot e
   end
-  | EOr (e1, e2) -> begin match (optimize e1, optimize e2) with
+  | EOr (e1, e2) -> begin match (simplify e1, simplify e2) with
     | Efalse, e | e, Efalse -> e
     | Etrue, _ | _, Etrue -> Etrue
     | e1, e2 -> EOr (e1, e2)
   end
-  | EAnd (e1, e2) -> begin match (optimize e1, optimize e2) with
+  | EAnd (e1, e2) -> begin match (simplify e1, simplify e2) with
     | Efalse, e | e, Efalse -> Efalse
     | Etrue, e | e, Etrue -> e
     | e1, e2 -> EAnd (e1, e2)
   end
 
-let of_expr x = optimize x
+let of_expr x = simplify x
 
 let of_string s =
   let lexbuf = Lexing.from_string s in
-  optimize (Benl_parser.full_expr Benl_lexer.token lexbuf)
+  simplify (Benl_parser.full_expr Benl_lexer.token lexbuf)
 
 let parens show expr =
   if show

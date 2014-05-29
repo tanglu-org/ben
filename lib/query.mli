@@ -24,7 +24,6 @@ val of_string : string -> t
 val to_string : ?escape:bool -> t -> string
 val fields : Benl_base.Fields.t -> t -> Benl_base.Fields.t
 
-val optimize : t -> t
 val eval : ([> `source] as 'a) -> 'a Package.t -> t -> bool
 val eval_source : [`source] Package.t -> t -> bool
 val eval_binary : [`binary] Package.t -> t -> bool
