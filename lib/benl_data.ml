@@ -103,6 +103,8 @@ module Projectb = struct
 
   let mk_origin () =
 
+    let suite = !Benl_clflags.suite in
+
     (* psql service=projectb must work, e.g. on coccia.debian.org. To make
        it work elsewhere, copy
        coccia.debian.org:/etc/postgresql-common/pg_service.conf to your
@@ -150,7 +152,7 @@ module Projectb = struct
     let relevant_binary_key_ids = List.map id_of_key relevant_binary_keys in
 
     let get_binaries accu arch =
-      Benl_clflags.progress "Querying projectb for %s binaries in staging (+bartholomea)..." arch;
+      Benl_clflags.progress "Querying projectb for %s binaries in staging (+ %s)..." arch suite;
       let sql = sprintf
 	"select b.bin_id, b.key_id, b.value from bin_associations as a join (select * from binaries_metadata where key_id in (%s)) as b on b.bin_id = a.bin join (select * from binaries) as c on c.id = a.bin where a.suite = %d and c.architecture in (%d,%d)
 	UNION ALL
@@ -158,7 +160,7 @@ module Projectb = struct
 	(String.concat "," (List.map string_of_int relevant_binary_key_ids))
 	(id_of_suite "staging") (id_of_arch "all") (id_of_arch arch)
 	(String.concat "," (List.map string_of_int relevant_binary_key_ids))
-	(id_of_suite "bartholomea") (id_of_arch "all") (id_of_arch arch)
+	(id_of_suite suite) (id_of_arch "all") (id_of_arch arch)
       in
       let r = projectb#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
@@ -189,10 +191,10 @@ module Projectb = struct
     in
 
     let sources_in_testing =
-      Benl_clflags.progress "Querying projectb for sources in bartholomea...";
+      Benl_clflags.progress "Querying projectb for sources in %s..." suite;
       let sql = sprintf
 	"select (select value from source_metadata as b where key_id = %d and b.src_id = a.source) from src_associations as a where a.suite = %d"
-	(id_of_key "source") (id_of_suite "bartholomea")
+	(id_of_key "source") (id_of_suite suite)
       in
       let r = projectb#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
@@ -213,7 +215,7 @@ module Projectb = struct
     in
 
     let get_sources accu =
-      Benl_clflags.progress "Querying projectb for sources in staging (+bartholomea)...";
+      Benl_clflags.progress "Querying projectb for sources in staging (+ %s)..." suite;
       (* get general metadata *)
       let sql = sprintf
 	"select b.src_id, b.key_id, b.value from src_associations as a join (select * from source_metadata where key_id in (%s)) as b on b.src_id = a.source where a.suite = %d
@@ -222,7 +224,7 @@ module Projectb = struct
 	(String.concat "," (List.map string_of_int relevant_source_key_ids))
 	(id_of_suite "staging")
 	(String.concat "," (List.map string_of_int relevant_source_key_ids))
-	(id_of_suite "bartholomea")
+	(id_of_suite suite)
       in
       let r = projectb#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
@@ -243,7 +245,7 @@ module Projectb = struct
       let sql = sprintf
 	"select a.source, c.filename from src_associations as a join (select * from dsc_files) as b on b.source = a.source, files as c where (a.suite = %d or a.suite = %d) and b.file = c.id and c.filename like '%%dsc'"
 	(id_of_suite "staging")
-	(id_of_suite "bartholomea")
+	(id_of_suite suite)
       in
       let r = projectb#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
