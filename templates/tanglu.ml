@@ -48,7 +48,7 @@ let () =
     ];
     pts = (fun ~src -> sprintf "http://packages.tanglu.org/src:%s" src);
     changelog = (fun ~letter ~src ~ver -> sprintf "http://packages.debian.org/changelog:%s" src);
-    buildd = (fun ~src ~ver -> sprintf "http://buildd.tanglu.org/search/?q=pkg%%2B%s" src);
+    buildd = (fun ~src ~ver -> sprintf "http://buildd.tanglu.org/source/%s/" src);
     buildds = (fun ~srcs ->
       let srcs = String.concat "," srcs in
       Some (sprintf "https://qa.tanglu.org"));
