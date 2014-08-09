@@ -1,4 +1,4 @@
-ben (0.6.11) UNRELEASED; urgency=low
+ben (0.6.11) unstable; urgency=medium
 
   * Add --no-clean to "ben tracker" to leave unknown generated
     HTML files.
@@ -15,7 +15,7 @@ ben (0.6.11) UNRELEASED; urgency=low
   * Add libocamlnet-ocaml-dev to Build-Depends, needed by Ben_monitor
     through usage of Netencoding (Closes: #750327).
 
- -- Mehdi Dogguy <mehdi@debian.org>  Sun, 11 May 2014 20:30:29 +0200
+ -- Mehdi Dogguy <mehdi@debian.org>  Sat, 09 Aug 2014 10:29:12 +0200
 
 ben (0.6.10.1) unstable; urgency=medium
 
