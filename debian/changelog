@@ -1,3 +1,10 @@
+ben (0.6.11.1) UNRELEASED; urgency=low
+
+  * Add Benl_clflags and Benl_core to ben's nodefined-map when calling
+    dh_ocaml.
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Sat, 09 Aug 2014 11:55:08 +0200
+
 ben (0.6.11) unstable; urgency=medium
 
   * Add --no-clean to "ben tracker" to leave unknown generated
