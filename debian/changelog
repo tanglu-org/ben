@@ -14,8 +14,12 @@ ben (0.7.0) UNRELEASED; urgency=low
   * Automatically set correct date and revision when generating refman.
   * Bump magic number to BENA0902 because of change in internal format
     of cache file. This requires regeneration of .cache files.
+  * Add Benl_clflags and Benl_core to ben's nodefined-map when calling
+    dh_ocaml.
+  * Add libocamlnet-ocaml-dev to Build-Depends, needed by Ben_monitor
+    through usage of Netencoding (Closes: #750327).
 
- -- Mehdi Dogguy <mehdi@debian.org>  Fri, 30 May 2014 00:02:54 +0200
+ -- Mehdi Dogguy <mehdi@debian.org>  Sat, 09 Aug 2014 10:29:12 +0200
 
 ben (0.6.10.1) unstable; urgency=medium
 

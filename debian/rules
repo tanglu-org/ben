@@ -26,4 +26,4 @@ override_dh_install:
 
 .PHONY: override_dh_ocaml
 override_dh_ocaml:
-	dh_ocaml --nodefined-map ben:Benl_error,Benl_templates
+	dh_ocaml --nodefined-map ben:Benl_clflags,Benl_core,Benl_error,Benl_templates

@@ -11,6 +11,7 @@ Build-Depends:
  ocaml-findlib,
  menhir,
  libpcre-ocaml-dev,
+ libocamlnet-ocaml-dev,
  libocamlgraph-ocaml-dev,
  libfileutils-ocaml-dev,
  libtyxml-ocaml-dev (>= 2.1-1~),
