@@ -1,3 +1,10 @@
+ben (0.6.11.2) UNRELEASED; urgency=low
+
+  * Ben should not define any of the modules exported by its library.
+    Update the nodefined-map for Ben accordingly.
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Sat, 09 Aug 2014 12:50:27 +0200
+
 ben (0.6.11.1) unstable; urgency=medium
 
   * Add Benl_clflags and Benl_core to ben's nodefined-map when calling
