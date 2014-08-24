@@ -30,6 +30,7 @@ module S = Package.Set
 
 let use_colors = ref false
 let output_file = ref None
+let input_config = ref None
 let baseurl = ref "file:///.."
 
 type output_type = Text | Xhtml | Levels
@@ -40,12 +41,16 @@ let ( // ) = Filename.concat
 let ( !! ) = Lazy.force
 let ( !!! ) = Package.Name.to_string
 
-let is_affected () =
-  lazy (Query.of_expr (Benl_clflags.get_config "is_affected"))
-let is_good () =
-  lazy (Query.of_expr (Benl_clflags.get_config "is_good"))
-let is_bad () =
-  lazy (Query.of_expr (Benl_clflags.get_config "is_bad"))
+let get_config config key =
+  try StringMap.find key config
+  with Not_found -> Benl_error.raise (Benl_error.Missing_configuration_item key)
+
+let is_affected config =
+  lazy (Query.of_expr (get_config config "is_affected"))
+let is_good config =
+  lazy (Query.of_expr (get_config config "is_good"))
+let is_bad config =
+  lazy (Query.of_expr (get_config config "is_bad"))
 let to_forget = List.fold_left
   (fun accu x -> Benl_base.Fields.add x accu) Benl_base.Fields.empty
   [
@@ -123,10 +128,10 @@ let check_media_dir base =
 let relevant_arch arch_ref arch_pkg =
   (arch_pkg = "all" && arch_ref = "i386") || arch_ref = arch_pkg
 
-let compute_state pkg =
-  if Query.eval_binary pkg !!(is_bad ()) then
+let compute_state config pkg =
+  if Query.eval_binary pkg !!(is_bad config) then
     Outdated
-  else if Query.eval_binary pkg !!(is_good ()) then
+  else if Query.eval_binary pkg !!(is_good config) then
     Up_to_date
   else
     Unknown
@@ -139,37 +144,51 @@ let combine_states state1 state2 =
     | _, Up_to_date -> Up_to_date
     | Unknown, Unknown -> state2
 
-let compute_monitor_data sources binaries rounds =
+let archs_list config =
+  let expr_l = function
+    | Benl_types.EList l -> l
+    | _ -> assert false
+  in
+  let release_archs_list = expr_l (Benl_clflags.get_config config "architectures") in
+  let ignored_archs_list = expr_l (Benl_clflags.get_config config "ignored") in
+  List.sort Pervasives.compare (release_archs_list @ ignored_archs_list)
+
+let compute_monitor_data config sources binaries rounds =
   List.map begin fun xs ->
     let packages = List.sort (fun x y -> compare !!!x !!!y) xs in
     List.map begin fun sname ->
       let src = M.find sname sources in
       let src_name = Package.get "package" src in
       let states =
-        List.map begin fun arch ->
+        List.map begin function
+        | Benl_types.EString arch ->
           (* FIXME: indexing by name+arch is not a good idea after all *)
           arch, PAMap.fold (fun (_, arch') pkg accu ->
             if arch' = arch &&
               Package.get "source" pkg = src_name
             then
-              let state = compute_state pkg in
+              let state = compute_state config pkg in
               combine_states accu state
             else
               accu
           ) binaries Unknown
-        end !Benl_clflags.architectures
+        | _ -> assert false
+        end (archs_list config)
       in src, states
     end packages
   end rounds
 
-let print_text_monitor sources binaries rounds =
-  let monitor_data = compute_monitor_data sources binaries rounds in
+let print_text_monitor config sources binaries rounds =
+  let monitor_data = compute_monitor_data config sources binaries rounds in
   let nmax = M.fold begin fun src _ accu ->
     let n = String.length !!!src in
     if n > accu then n else accu
   end sources 0 in
+  let architectures =
+    List.map (Benl_frontend.to_string "architectures") (archs_list config)
+  in
   let width =
-    String.length (String.concat "   " !Benl_clflags.architectures)+6+nmax
+    String.length (String.concat "   " architectures)+6+nmax
   in
   let nrounds = String.length (string_of_int (List.length rounds)) in
   let hwidth = String.length "> Dependency level  <" + nrounds in
@@ -320,8 +339,13 @@ let beautify_text =
       )
       t
 
-let compute_graph () =
-  let {src_map = sources; bin_map = binaries} = get_data is_affected in
+let compute_graph config =
+  let architectures =
+    List.map
+      (Benl_frontend.to_string "architectures")
+      (archs_list config)
+  in
+  let {src_map = sources; bin_map = binaries} = get_data is_affected architectures config in
   let src_of_bin : ([`binary], [`source] Package.Name.t) M.t =
     PAMap.fold
       (fun (name, _) pkg accu ->
@@ -334,9 +358,9 @@ let compute_graph () =
   let rounds = Dependencies.topo_split dep_graph in
   rounds, sources, binaries, dep_graph
 
-let compute_transition_data () =
-  let rounds, sources, binaries, dep_graph = compute_graph () in
-  let monitor_data = compute_monitor_data sources binaries rounds in
+let compute_transition_data config =
+  let rounds, sources, binaries, dep_graph = compute_graph config in
+  let monitor_data = compute_monitor_data config sources binaries rounds in
   let all, bad, packages = generate_stats monitor_data in
   monitor_data, sources, binaries, dep_graph, all, bad, packages
 
@@ -349,19 +373,24 @@ let has_testing_data monitor_data =
      with Not_found -> false)
   | _ -> false
 
-let print_html_monitor template monitor_data sources binaries dep_graph packages has_testing_data extra =
+let print_html_monitor config template monitor_data sources binaries dep_graph packages has_testing_data extra =
   let affected = packages in
   let mytitle =
     try
-      Query.to_string ~escape:false (Query.of_expr (Benl_clflags.get_config "title"))
-    with _ -> "(no title)" in
+      Query.to_string ~escape:false
+        (Query.of_expr (get_config config "title"))
+    with _ -> "(no title)"
+  in
   let notes =
-    try Query.to_string ~escape:false (Query.of_expr (Benl_clflags.get_config "notes"))
-    with _ -> "" in
-  let is_affected = Query.to_string (Lazy.force (is_affected ())) in
-  let is_good = Query.to_string (Lazy.force (is_good ())) in
-  let is_bad = Query.to_string (Lazy.force (is_bad ())) in
-  let archs_count = List.length !Benl_clflags.architectures in
+    try
+      Query.to_string
+        ~escape:false (Query.of_expr (get_config config "notes"))
+    with _ -> ""
+  in
+  let is_affected = Query.to_string (Lazy.force (is_affected config)) in
+  let is_good = Query.to_string (Lazy.force (is_good config)) in
+  let is_bad = Query.to_string (Lazy.force (is_bad config)) in
+  let archs_count = List.length (archs_list config) in
   let page_title = sprintf "Transition: %s" mytitle in
   let extra_headers = [
     script
@@ -422,9 +451,11 @@ let print_html_monitor template monitor_data sources binaries dep_graph packages
     | "kfreebsd-i386" -> "kbsd32"
     | "powerpc" -> "ppc"
     | x -> x in
-  let archs_columns = List.map begin fun arch ->
-    th [ small [ pcdata (abrege arch) ] ]
-  end !Benl_clflags.architectures in
+  let archs_columns = List.map begin function
+    | Benl_types.EString arch ->
+      th [ small [ pcdata (abrege arch) ] ]
+    | _ -> assert false
+  end (archs_list config) in
   let archs_columns round header =
     tr ~a:[ a_id (sprintf "header%d" round) ]
       header archs_columns in
@@ -440,7 +471,7 @@ let print_html_monitor template monitor_data sources binaries dep_graph packages
                 let pkg = PAMap.find (bin, arch) binaries in
                 Package.get "multi-arch" pkg = "same"
               with Not_found -> false
-            ) !Benl_clflags.architectures
+            ) (List.map (Benl_frontend.to_string "architectures") (archs_list config))
           ) (Package.binaries source)
         in
         let has_ma_same_html =
@@ -541,19 +572,24 @@ let print_dependency_levels dep_graph rounds =
     end packages
   end rounds
 
-let main args =
+let main _ =
+  let config = match !input_config with
+    | Some config -> config
+    | None -> Benl_error.raise Benl_error.Missing_configuration_file
+  in
   let rounds, sources, binaries, dep_graph =
-    compute_graph () in
+    compute_graph config in
   match !output_type with
     | Levels -> print_dependency_levels dep_graph rounds
-    | Text -> print_text_monitor sources binaries rounds
+    | Text -> print_text_monitor config sources binaries rounds
     | Xhtml ->
       let template = Benl_templates.get_registered_template () in
-      let monitor_data = compute_monitor_data sources binaries rounds in
+      let monitor_data = compute_monitor_data config sources binaries rounds in
       let _, _, packages = generate_stats monitor_data in
       let has_testing_data = has_testing_data monitor_data in
       let output =
         print_html_monitor
+          config
           template
           monitor_data
           sources
@@ -571,9 +607,13 @@ let main args =
           check_media_dir (Filename.basename file);
           Benl_utils.dump_xhtml_to_file file output
 
+let anon_fun file =
+  if Benl_core.ends_with file ".ben" then
+    input_config := Some (Benl_frontend.read_config_file file)
+
 let frontend = {
   Benl_frontend.name = "monitor";
   Benl_frontend.main = main;
-  Benl_frontend.anon_fun = (fun _ -> ());
+  Benl_frontend.anon_fun = anon_fun;
   Benl_frontend.help = spec;
 }

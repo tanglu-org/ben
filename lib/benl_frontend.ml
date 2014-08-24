@@ -77,41 +77,50 @@ let to_expr_l l =
   let of_string s = Benl_types.EString s in
   Benl_types.EList (List.map of_string l)
 
-let read_config_file filename =
+let read_config_file ?(multi = false) filename =
   let config = Benl_utils.parse_config_file filename in
   StringMap.fold (fun key value accu -> match (key, value) with
     | ("mirror", x) ->
-        Benl_clflags.mirror_binaries := check_string "mirror" x;
-        Benl_clflags.mirror_sources  := check_string "mirror" x;
-        accu
+        Benl_clflags.mirror_binaries := to_string "mirror" x;
+        Benl_clflags.mirror_sources  := to_string "mirror" x;
+        StringMap.add key value accu
     | ("mirror-binaries", x) ->
-        Benl_clflags.mirror_binaries := check_string "mirror-binaries" x;
-        accu
+        Benl_clflags.mirror_binaries := to_string "mirror-binaries" x;
+        StringMap.add key value accu
     | ("mirror-sources", x) ->
-        Benl_clflags.mirror_sources := check_string "mirror-sources" x;
-        accu
+        Benl_clflags.mirror_sources := to_string "mirror-sources" x;
+        StringMap.add key value accu
     | ("areas", x) ->
-        Benl_clflags.areas := check_string_list "areas" x;
-        accu
+        if multi then
+          StringMap.add key value accu
+        else
+          let () = Benl_clflags.areas := to_string_l key x in
+          accu
     | ("architectures", x) ->
-        Benl_clflags.architectures := check_string_list "architectures" x;
-        accu
+        if multi then
+          StringMap.add key value accu
+        else
+          let () = Benl_clflags.architectures := to_string_l key x in
+          accu
     | ("suite", x) ->
-        Benl_clflags.suite := check_string "suite" x;
-        accu
+        if multi then
+          StringMap.add key value accu
+        else
+          let () = Benl_clflags.suite := to_string key x in
+          accu
     | ("cache-dir", x) ->
-        Benl_clflags.cache_dir := check_string "cache-dir" x;
-        accu
+        Benl_clflags.cache_dir := to_string "cache-dir" x;
+        StringMap.add key value accu
     | ("cache-file", x) ->
-        Benl_clflags.cache_file := check_string "cache-file" x;
-        accu
+        Benl_clflags.cache_file := to_string "cache-file" x;
+        StringMap.add key value accu
     | ("use-cache", Etrue) ->
         Benl_clflags.use_cache := true;
-        accu
+        StringMap.add key value accu
     | ("more-binary-keys", x) ->
         let new_keys = List.map
           String.lowercase
-          (check_string_list "more-binary-keys" x)
+          (to_string_l "more-binary-keys" x)
         in
         Benl_data.relevant_binary_keys := StringSet.union
           (StringSet.from_list new_keys)
@@ -120,25 +129,43 @@ let read_config_file filename =
     | ("more-source-keys", x) ->
         let new_keys = List.map
           String.lowercase
-          (check_string_list "more-source-keys" x)
+          (to_string_l "more-source-keys" x)
         in
         Benl_data.relevant_source_keys := StringSet.union
           (StringSet.from_list new_keys)
           !Benl_data.relevant_source_keys;
         accu
     | ("preferred-compression-format", x) ->
-        let format = check_string "preferred-compression-format" x in
+        let format = to_string "preferred-compression-format" x in
         if Benl_compression.is_known format then
           Benl_clflags.preferred_compression_format :=
             Benl_compression.of_string format
         else
           warn (Unknown_input_format format);
-        accu
+        StringMap.add key value accu
     | _ ->
         StringMap.add key value accu
   )
   config
   StringMap.empty
+
+let read_ben_file filename =
+  let config = read_config_file ~multi:true filename in
+  let default_values = [
+    "architectures", to_expr_l !Benl_clflags.architectures;
+    "ignored", to_expr_l !Benl_base.ignored_architectures;
+    "areas", to_expr_l !Benl_clflags.areas;
+    "suite", Benl_types.EString !Benl_clflags.suite;
+  ] in
+  List.fold_left
+    (fun config (key, value) ->
+      if not (StringMap.mem key config) then
+        StringMap.add key value config
+      else
+        config
+    )
+    config
+    default_values
 
 let spec = ref (Arg.align [
   "--no-benrc", Arg.Clear Benl_clflags.use_benrc, " Do not read .benrc file at startup";
@@ -167,10 +194,10 @@ let spec = ref (Arg.align [
   "--suite"   , Arg.Set_string Benl_clflags.suite, " Suite";
   "--cache-dir", Arg.Set_string Benl_clflags.cache_dir, " Path to cache directory";
   "--config"  , Arg.String (fun c ->
-    Benl_clflags.config := read_config_file c)
+    ignore (read_config_file c))
                                             , " Path to configuration file";
   "-c"  , Arg.String (fun c ->
-    Benl_clflags.config := read_config_file c)
+    ignore (read_config_file c))
                                             , " Path to configuration file";
   "--cache"   , Arg.Set_string Benl_clflags.cache_file, " Path to cache file";
   "-C"        , Arg.Set_string Benl_clflags.cache_file, " Path to cache file";

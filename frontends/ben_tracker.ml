@@ -159,37 +159,30 @@ let profile_of_file file =
     profile_of_string $ Filename.basename (Filename.dirname file)
   with _ -> Unknown
 
-let get_transition_data file =
+let read_transition_config file =
   let (!!) = Filename.basename in
-  let profile = profile_of_file file in
   let transition = FilePath.chop_extension !!file in
-  let () =
-    p "Computing data for (%s) %s\n"
-      (string_of_profile profile)
-      transition
-  in
-  (* Reset config variables before reading .ben files *)
-  let () = Benl_clflags.reset () in
   (* Read a .ben file *)
-  let () = Benl_clflags.config :=
-    Benl_frontend.read_config_file file in
-  let transition_data = Ben_monitor.compute_transition_data () in
+  transition, (Benl_frontend.read_ben_file file)
+
+let get_transition_data config =
+  let transition_data = Ben_monitor.compute_transition_data config in
   let monitor_data, sources, binaries, dep_graph, all, bad, packages =
     transition_data in
   let has_testing_data = Ben_monitor.has_testing_data monitor_data in
   let export =
     try
-      Benl_clflags.get_config "export" = Benl_types.Etrue
+      Benl_clflags.get_config config "export" = Benl_types.Etrue
     with _ -> true in
-  !Benl_clflags.config, (profile, transition, export, transition_data, has_testing_data)
+  export, transition_data, has_testing_data
 
 let print_html_monitor config template file transition_data has_testing_data =
-  Benl_clflags.config := config;
   let monitor_data, sources, binaries, dep_graph, _, _, packages =
     transition_data
   in
   let output =
     Ben_monitor.print_html_monitor
+      config
       template
       monitor_data
       sources
@@ -369,7 +362,12 @@ let main args =
     eprintf "Please wait until %s is removed!\n" lockf
   else
     try
-      touch lockf;
+      let lockf_b = Filename.dirname lockf in
+      let () = if test Exists lockf_b then
+          touch lockf
+        else
+          eprintf "%s doesn't exist. Skipping creation of lock file.\n" lockf_b
+      in
       if update_test ()  then update_cache ();
       let htmld = Filename.concat !base "html" in
       if test (Not Exists) htmld then
@@ -380,31 +378,43 @@ let main args =
                       And (Has_extension "ben",
                       And (Is_file, Is_readable))) in
       let template = Benl_templates.get_registered_template () in
-      (* Should we yell if all .ben files were broken? *)
-      (* i.e. results == [] *)
-      let results =
+      let transitions =
         match !tconfig with
-        (* Here we suppose that config is relative to base directory *)
-          | Some transition ->
-            let transition = Filename.concat !config_dir transition in
-            [ get_transition_data transition ]
-          | None ->
-            find test_cond confd
-              (fun results transition ->
-                match profile_of_file transition with
-                  | Old -> results
-                  | _ ->
-                    try
-                      let result = get_transition_data transition in
-                      result :: results
-                    with Benl_error.Error e -> (* Ben file has errors *)
-                      warn e;
-                      results
-              )
-              []
+        | Some transition ->
+          let file = Filename.concat !config_dir transition in
+          let name, config = read_transition_config file in
+          [ name, (config, file) ]
+        | None ->
+          find test_cond confd
+            (fun results transition ->
+              let name, config = read_transition_config transition in
+              (name, (config, transition)) :: results
+            )
+            []
+      in
+      let results =
+        List.fold_left
+          (fun results (name, (config, file)) ->
+            let profile = profile_of_file file in
+            if profile = Old then
+              results
+            else
+              let () =
+                p "Computing data for (%s) %s\n"
+                  (string_of_profile profile)
+                  name
+              in
+              try
+                (config, name, profile, get_transition_data config) :: results
+              with Benl_error.Error e -> (* Ben file has errors *)
+                warn e;
+                results
+          )
+          []
+          transitions
       in
       let () = List.iter
-        (fun (config, (_, transition, _, transition_data, has_testing_data)) ->
+        (fun (config, transition, _, (_, transition_data, has_testing_data)) ->
           print_html_monitor
             config
             template
@@ -414,7 +424,14 @@ let main args =
         )
         results
       in
-      let packages, profiles = generate_stats (List.map snd results) in
+      let results =
+        List.map
+          (fun (config, t, p, (export, transition_data, has_testing_data)) ->
+            p, t, export, transition_data, has_testing_data
+          )
+          results
+      in
+      let packages, profiles = generate_stats results in
       let () = dump_yaml packages "packages.yaml" in
       let () = clean_up profiles in
       (match !tconfig with

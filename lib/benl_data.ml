@@ -280,9 +280,9 @@ module Projectb = struct
 
 end
 
-let filter_affected { src_map = srcs; bin_map = bins } is_affected =
+let filter_affected { src_map = srcs; bin_map = bins } is_affected config =
   let src_map = M.fold begin fun name src accu ->
-    if Query.eval_source src !!(is_affected ()) then
+    if Query.eval_source src !!(is_affected config) then
       M.add name src accu
     else accu
   end srcs M.empty in
@@ -291,8 +291,8 @@ let filter_affected { src_map = srcs; bin_map = bins } is_affected =
     let src_name = Package.Name.of_string src_name in
     try
       let src = M.find src_name srcs in
-      if Query.eval_binary pkg !!(is_affected ())
-      || Query.eval_source src !!(is_affected ())
+      if Query.eval_binary pkg !!(is_affected config)
+      || Query.eval_source src !!(is_affected config)
       then begin
         M.add src_name src saccu
         ,
@@ -365,22 +365,22 @@ let inject_debcheck_data =
       else pkg
     ) bins
 
-let get_data is_affected =
+let get_data is_affected architectures config =
   let file = Benl_clflags.get_cache_file () in
   if !Benl_clflags.use_cache && Sys.file_exists file then
-    filter_affected (Marshal.load file) is_affected
+    filter_affected (Marshal.load file) is_affected config
   else
     let origin =
       if !use_projectb then Projectb.mk_origin () else file_origin
     in
     let src_raw = origin.get_sources M.empty in
     let bin_raw = List.fold_left
-      origin.get_binaries PAMap.empty !Benl_clflags.architectures
+      origin.get_binaries PAMap.empty architectures
     in
     let bin_raw = if !run_debcheck
-      then inject_debcheck_data bin_raw !Benl_clflags.architectures
+      then inject_debcheck_data bin_raw architectures
       else bin_raw
     in
     let data = { src_map = src_raw; bin_map = bin_raw; } in
     Marshal.dump file data;
-    filter_affected data is_affected
+    filter_affected data is_affected config

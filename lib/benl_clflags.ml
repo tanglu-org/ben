@@ -41,16 +41,9 @@ let areas = ref ["main"; "contrib"; "non-free"]
 let preferred_compression_format = ref Benl_compression.default
 let quiet = ref false
 
-let reset () =
-  let () = architectures := !Benl_base.debian_architectures in
-  let () = suite := "unstable" in
-  let () = areas := ["main"; "contrib"; "non-free"] in
-  ()
-
-let config : Benl_types.config ref = ref StringMap.empty
-let get_config key =
-  try StringMap.find key !config
-  with Not_found -> raise (Missing_configuration_item key)
+let get_config config key =
+  try StringMap.find key config
+  with Not_found -> Benl_error.raise (Benl_error.Missing_configuration_item key)
 
 let get_cache_file ?(name = !cache_file) () =
   if Sys.file_exists name

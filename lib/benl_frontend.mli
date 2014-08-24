@@ -32,9 +32,10 @@ val get_frontend : string -> frontend
 val get_selected_frontend : unit -> frontend
 val set_selected_frontend : frontend -> unit
 val available_frontends : unit -> string list
-val read_config_file : string -> Benl_types.config
 
 val to_string : string -> Benl_types.expr -> string
 val to_string_l : string -> Benl_types.expr -> string list
 val to_expr_l : string list -> Benl_types.expr
 
+val read_config_file : ?multi:bool -> string -> Benl_types.config
+val read_ben_file : string -> Benl_types.config
