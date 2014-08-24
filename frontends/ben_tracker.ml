@@ -44,13 +44,13 @@ let read_global_config () =
     let config = Benl_utils.parse_config_file !global_config in
     StringMap.iter (fun key value -> match (key, value) with
         | "architectures", archs ->
-          Benl_base.debian_architectures := check_string_list "architectures" archs
+          Benl_base.debian_architectures := to_string_l "architectures" archs
         | "ignored", archs ->
-          Benl_base.ignored_architectures := check_string_list "ignored" archs
+          Benl_base.ignored_architectures := to_string_l "ignored" archs
         | "suite", (EString suite) ->
           Benl_clflags.suite := suite
         | "areas", areas ->
-          Benl_clflags.areas := check_string_list "areas" areas
+          Benl_clflags.areas := to_string_l "areas" areas
         | "base", (EString path) ->
           base := path
         | "config-dir", (EString path) ->

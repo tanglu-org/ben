@@ -61,17 +61,21 @@ let fail fmt = Printf.ksprintf
   (fun x -> raise (Error_in_configuration_file x))
   fmt
 
-let check_string what = function
+let to_string what = function
   | EString s -> s
   | _ -> fail "%s must be a string" what
 
-let check_string_list what = function
+let to_string_l what = function
   | EList ys ->
       List.map begin function
         | EString s -> s
         | _ -> fail "%s must be a list of strings" what
       end ys
   | _ -> fail "%s must be a list of strings" what
+
+let to_expr_l l =
+  let of_string s = Benl_types.EString s in
+  Benl_types.EList (List.map of_string l)
 
 let read_config_file filename =
   let config = Benl_utils.parse_config_file filename in
