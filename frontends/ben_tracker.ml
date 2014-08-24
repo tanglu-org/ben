@@ -84,19 +84,19 @@ let lockf () =
   FilePath.concat !cache_dir !lock
 
 let spec = Arg.align [
-  "--config-dir" , Arg.Set_string config_dir, " ";
+  "--config-dir" , Arg.Set_string config_dir, " Specify tracker's global configuration directory";
   "-cd"          , Arg.Set_string config_dir, " ";
-  "--global-conf", Arg.Set_string global_config, " ";
+  "--global-conf", Arg.Set_string global_config, " Specify tracker's global configuration file";
   "-g"           , Arg.Set_string global_config, " ";
-  "--transition" , Arg.String (fun t -> tconfig := Some t), " ";
+  "--transition" , Arg.String (fun t -> tconfig := Some t), " Specify selected transition";
   "-t"           , Arg.String (fun t -> tconfig := Some t), " ";
-  "--update"     , Arg.Set update, " ";
+  "--update"     , Arg.Set update, " Do update the cache file";
   "-u"           , Arg.Set update, " ";
-  "--base"       , Arg.Set_string base, " ";
+  "--base"       , Arg.Set_string base, " Specify tracker's base directory";
   "-b"           , Arg.Set_string base, " ";
-  "--use-projectb", Arg.Set Benl_data.use_projectb, " ";
-  "--template"   , Arg.String (fun t -> Benl_templates.load_template t), " ";
-  "--no-clean"   , Arg.Clear clean, " ";
+  "--use-projectb", Arg.Set Benl_data.use_projectb, " Use Projectb to fetch information about distributions";
+  "--template"   , Arg.String (fun t -> Benl_templates.load_template t), " Specify template to use";
+  "--no-clean"   , Arg.Clear clean, " Do not clean HTML directory before exiting";
 ]
 
 exception Unknown_profile of string
