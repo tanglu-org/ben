@@ -202,4 +202,6 @@ let spec = ref (Arg.align [
       warn (Unknown_input_format x))
                                                 , " Preferred compression format";
   "-h", Arg.Unit (fun () -> Pervasives.raise (Arg.Help "Use -help or --help instead\n")), " Display this list of options";
+  "-V", Arg.Unit (fun () -> Benl_clflags.show_version := true), " Display version number (and build date) and exists.";
+  "--version", Arg.Set Benl_clflags.show_version, " Display version number (and build date) and exists.";
 ])

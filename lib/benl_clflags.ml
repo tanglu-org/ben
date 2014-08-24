@@ -24,6 +24,7 @@ open Benl_core
 let get_env_default var default =
   try Sys.getenv var with Not_found -> default
 
+let show_version = ref false
 let dry_run = ref false
 let verbose = ref false
 let architectures = ref !Benl_base.debian_architectures

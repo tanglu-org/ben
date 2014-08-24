@@ -41,6 +41,15 @@ exception Subprocess_died_unexpectedly of Unix.process_status
 let try_exec cmd =
   Sys.command (sprintf "%s >/dev/null 2>&1" cmd) = 0
 
+let try_run cmd = (* reads one single line *)
+  let in_c = Unix.open_process_in cmd in
+  let line = input_line in_c in
+  let _ = Unix.close_process_in in_c in
+  line
+
+let version = try_run "dpkg-parsechangelog | sed -n 's/Version: //p'"
+let build_date = try_run "date +'%F %T %Z'"
+
 let require pkg =
   if not (try_exec (sprintf "ocamlfind query %s" pkg)) then
     raise (Missing_findlib_package pkg)
@@ -118,6 +127,8 @@ let () =
             Cmd
               (S [A"sed";
                   A"-e"; A (sprintf "s/@STATIC_FRONTENDS@/%s/" static);
+                  A"-e"; A (sprintf "s/@VERSION@/%s/" version);
+                  A"-e"; A (sprintf "s/@BUILD_DATE@/%s/" build_date);
                   P"bin/ben.mlp"; Sh">"; P"bin/ben.ml"])
         end;
 
