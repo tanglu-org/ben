@@ -76,6 +76,7 @@ http://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form[BNF] formulae:
            | <field> ~ "<list>"
            | source
            | <comparison> "<string>"
+           | <field> ~ "<string>" <comparison> "<string>"
 
  <field> ::= .<string>
 
