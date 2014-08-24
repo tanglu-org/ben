@@ -59,10 +59,10 @@ export CAML_LD_LIBRARY_PATH=$(CURDIR)/_build/lib
 BINDIR := $(DESTDIR)$(PREFIX)/bin
 PLUGINSDIR := $(DESTDIR)$(PREFIX)/lib/ben/templates
 
-all: ocamlbuild templates $(GENERATED) doc
+all: build templates $(GENERATED) doc
 
-.PHONY: ocamlbuild doc clean env
-ocamlbuild:
+.PHONY: build doc clean env
+build:
 	$(OCAMLBUILD_ENV) $(OCAMLBUILD) $(TARGETS)
 
 doc:
@@ -71,7 +71,7 @@ doc:
 typerex: OCAMLBUILD_ENV := OCAMLFIND_COMMANDS='ocamlc=ocp-ocamlc ocamlopt=ocp-ocamlopt'
 typerex: all
 
-%.png: ocamlbuild
+%.png: build
 	dot -Tpng $(patsubst %.png,_build/%.dot,$@) > $@
 
 .PHONY: templates build-templates install-templates
