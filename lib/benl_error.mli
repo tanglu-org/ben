@@ -29,6 +29,7 @@ type error =
   | Unknown_output_format of string
   | Unknown_input_format of string
   | Unexpected_expression of string
+  | Missing_configuration_file
   | Error_in_configuration_file of string
   | Missing_configuration_item of string
   | Unknown_configuration_item of string
