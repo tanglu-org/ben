@@ -32,6 +32,7 @@ let packages = [
   "fileutils";
   "threads";
   "postgresql";
+  "parmap";
 ]
 
 exception Require_findlib

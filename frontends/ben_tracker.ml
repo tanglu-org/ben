@@ -440,6 +440,9 @@ let () = at_exit (fun () ->
   rm [lockf ()]
 )
 
+let pmap f l = Parmap.parmap f (Parmap.L l)
+let piter f l = Parmap.pariter f (Parmap.L l)
+
 let main args =
   let () = read_global_config () in
   let lockf = lockf () in
@@ -478,35 +481,43 @@ let main args =
       in
       (* Read found .ben files *)
       let transitions =
-        List.map
+        pmap
           (fun (transition, profile) ->
-            let name, config = read_transition_config transition in
-            name, (config, transition, profile)
+            try
+              let name, config = read_transition_config transition in
+              Some (name, (config, transition, profile))
+            with Benl_error.Error e -> (* Ben file has errors *)
+              warn e;
+              None
           )
           transition_files
       in
+      let transitions =
+        List.fold_left
+          (fun transitions -> function
+          | Some t -> t :: transitions
+          | None -> transitions
+          )
+          []
+          transitions
+      in
       (* Compute data for each transition *)
       let results =
-        List.fold_left
-          (fun results (name, (config, file, profile)) ->
+        pmap
+          (fun (name, (config, file, profile)) ->
             let () =
               p "Computing data for (%s) %s\n"
                 (string_of_profile profile)
                 name
             in
-            try
-              (config, name, profile, get_transition_data config) :: results
-            with Benl_error.Error e -> (* Ben file has errors *)
-              warn e;
-              results
+            config, name, profile, (get_transition_data config)
           )
-          []
           transitions
       in
       (* Compute collisions *)
       let collisions = compute_collisions results in
       (* Generate an HTML page for each transition *)
-      let () = List.iter
+      let () = piter
         (fun (config, transition, _, (_, transition_data, has_testing_data)) ->
           print_html_monitor
             config
@@ -520,7 +531,7 @@ let main args =
       in
       (* Generate the packages.yaml file *)
       let results =
-        List.map
+        pmap
           (fun (config, t, p, (export, transition_data, has_testing_data)) ->
             p, t, export, transition_data, has_testing_data
           )
