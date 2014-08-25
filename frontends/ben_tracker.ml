@@ -176,9 +176,70 @@ let get_transition_data config =
     with _ -> true in
   export, transition_data, has_testing_data
 
-let print_html_monitor config template file transition_data has_testing_data =
+module SMap = Map.Make(String)
+
+let sadd mp p t =
+  let ts =
+    try SMap.find p mp
+    with _ -> [] in
+  SMap.add p (t::ts) mp
+
+let smerge _ v1 v2 = match v1, v2 with
+  | Some v1, Some v2 -> Some (v1 @ v2)
+  | Some v1, None    -> Some v1
+  | None   , Some v2 -> Some v2
+  | _                -> None
+
+let html_path_t name =
+  let htmlf = FilePath.replace_extension name "html" in
+  Filename.concat "html" htmlf
+
+let print_html_collisions (hits : (SMap.key * SMap.key list) list) =
+  let hits = List.fold_left
+    (fun map (pkg, transitions) ->
+      List.fold_left
+        (fun map t -> sadd map t pkg)
+        map
+        transitions
+    )
+    SMap.empty
+    hits
+  in
+  div ~a:[ a_id "collisions" ] [
+    b [ pcdata "Collisions:" ];
+    let hits =
+      SMap.fold
+        (fun transition packages list ->
+          let elt =
+            li [ Ben_monitor.a_link
+                   (FilePath.replace_extension transition "html")
+                   transition;
+                 pcdata " through ";
+                 pcdata (String.concat ", " packages)
+               ]
+          in
+          elt :: list
+        )
+        hits
+        []
+    in
+    match hits with
+    | [] -> pcdata "(none)"
+    | h::l -> ul h l
+  ]
+
+let print_html_monitor config template file transition_data has_testing_data collisions =
   let monitor_data, sources, binaries, dep_graph, _, _, packages =
     transition_data
+  in
+  let ($) = Filename.concat in
+  let (!!) = Filename.basename in
+  let collisions_div =
+    try
+      let hits = SMap.find !!file collisions in
+      Some (print_html_collisions hits)
+    with Not_found ->
+      None
   in
   let output =
     Ben_monitor.print_html_monitor
@@ -190,12 +251,9 @@ let print_html_monitor config template file transition_data has_testing_data =
       dep_graph
       packages
       has_testing_data
-      None
+      collisions_div
   in
-  let ($) = Filename.concat in
-  let (!!) = Filename.basename in
-  let htmlf = FilePath.replace_extension !!file "html" in
-  let htmlp = "html" $ htmlf in
+  let htmlp = html_path_t !!file in
   let html = !base $ htmlp in
   p "Generating %s\n" htmlp;
   try
@@ -203,21 +261,45 @@ let print_html_monitor config template file transition_data has_testing_data =
   with _ ->
     eprintf "Something bad happened while generating %s!\n" html
 
-module SMap = Map.Make(String)
-
-let sadd mp p t =
-  let ts =
-    try SMap.find p mp
-    with _ -> [] in
-  SMap.add p (t::ts) mp
+let compute_collisions results =
+  let data_map = List.fold_left
+    (fun
+      data_map
+      (_, transition, _, (_, transition_data, has_testing_data)) ->
+        let  _, _, _, _, _, _, pkgs = transition_data in
+        let new_data = Benl_data.S.fold
+          (fun package data ->
+            SMap.add (Package.Name.to_string package) [transition] data
+          )
+          pkgs
+          SMap.empty
+        in
+        SMap.merge smerge data_map new_data
+    )
+    SMap.empty
+    results
+  in
+  let collision_map = SMap.fold
+    (fun pkg transitions map ->
+      List.fold_left
+        (fun map t ->
+          let ts_left = List.filter (fun r -> t <> r) transitions in
+          sadd map t (pkg,ts_left)
+        )
+        map
+        transitions
+    )
+    data_map
+    SMap.empty
+  in
+  collision_map
 
 let generate_stats results =
   List.fold_left
     (fun (packages, profiles)
       (p, t, export, transition_data, _) ->
         let _, _, _, _, all, bad, pkgs = transition_data in
-        let htmlf = FilePath.replace_extension t "html" in
-        let htmlp = Filename.concat "html" htmlf in
+        let htmlp = html_path_t t in
         let profiles = sadd
           profiles
           (string_of_profile p)
@@ -421,6 +503,8 @@ let main args =
           []
           transitions
       in
+      (* Compute collisions *)
+      let collisions = compute_collisions results in
       (* Generate an HTML page for each transition *)
       let () = List.iter
         (fun (config, transition, _, (_, transition_data, has_testing_data)) ->
@@ -430,6 +514,7 @@ let main args =
             transition
             transition_data
             has_testing_data
+            collisions
         )
         results
       in
