@@ -559,7 +559,13 @@ let print_html_monitor config template monitor_data sources binaries dep_graph p
     [a_link (Filename.concat !baseurl "index.html") "Transitions";
      pcdata (Printf.sprintf " → %s" mytitle)
     ] in
-  let html = template.Template.page page_title subtitle extra_headers (hbody content) footer in
+  let html = template.Template.page
+    page_title
+    subtitle
+    extra_headers
+    (hbody content)
+    footer
+  in
   html
 
 let print_dependency_levels dep_graph rounds =

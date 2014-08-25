@@ -226,7 +226,10 @@ let generate_stats results =
         let packages = Benl_data.S.fold
           (fun package packages ->
             if export then
-              sadd packages (Package.Name.to_string package) (t, p, export)
+              sadd
+                packages
+                (Package.Name.to_string package)
+                (t, p, export)
             else
               packages
           )
