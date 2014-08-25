@@ -378,41 +378,47 @@ let main args =
                       And (Has_extension "ben",
                       And (Is_file, Is_readable))) in
       let template = Benl_templates.get_registered_template () in
-      let transitions =
+      (* Computing list of transitions *)
+      let transition_files =
         match !tconfig with
-        | Some transition ->
-          let file = Filename.concat !config_dir transition in
-          let name, config = read_transition_config file in
-          [ name, (config, file) ]
+        | Some transition -> [transition, profile_of_file transition]
         | None ->
           find test_cond confd
             (fun results transition ->
-              let name, config = read_transition_config transition in
-              (name, (config, transition)) :: results
+              match profile_of_file transition with
+              | Old -> results
+              | profile -> (transition, profile) :: results
             )
             []
       in
+      (* Read found .ben files *)
+      let transitions =
+        List.map
+          (fun (transition, profile) ->
+            let name, config = read_transition_config transition in
+            name, (config, transition, profile)
+          )
+          transition_files
+      in
+      (* Compute data for each transition *)
       let results =
         List.fold_left
-          (fun results (name, (config, file)) ->
-            let profile = profile_of_file file in
-            if profile = Old then
+          (fun results (name, (config, file, profile)) ->
+            let () =
+              p "Computing data for (%s) %s\n"
+                (string_of_profile profile)
+                name
+            in
+            try
+              (config, name, profile, get_transition_data config) :: results
+            with Benl_error.Error e -> (* Ben file has errors *)
+              warn e;
               results
-            else
-              let () =
-                p "Computing data for (%s) %s\n"
-                  (string_of_profile profile)
-                  name
-              in
-              try
-                (config, name, profile, get_transition_data config) :: results
-              with Benl_error.Error e -> (* Ben file has errors *)
-                warn e;
-                results
           )
           []
           transitions
       in
+      (* Generate an HTML page for each transition *)
       let () = List.iter
         (fun (config, transition, _, (_, transition_data, has_testing_data)) ->
           print_html_monitor
@@ -424,6 +430,7 @@ let main args =
         )
         results
       in
+      (* Generate the packages.yaml file *)
       let results =
         List.map
           (fun (config, t, p, (export, transition_data, has_testing_data)) ->
@@ -433,7 +440,9 @@ let main args =
       in
       let packages, profiles = generate_stats results in
       let () = dump_yaml packages "packages.yaml" in
+      (* Clean up the HTML directory from old files *)
       let () = clean_up profiles in
+      (* Generate the index page *)
       (match !tconfig with
         | None -> tracker template profiles
         | Some _ -> ())
