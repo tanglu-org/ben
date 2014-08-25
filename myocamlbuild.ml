@@ -26,6 +26,7 @@ let packages = [
   "dynlink";
   "unix";
   "pcre";
+  "re.pcre";
   "netstring";
   "ocamlgraph";
   "tyxml";

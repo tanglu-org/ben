@@ -87,7 +87,7 @@ and regexp separator buf = parse
       {
         if c = separator then
           let res = Buffer.contents buf in
-          let reg = Pcre.regexp res in
+          let reg = Re_pcre.regexp res in
           (res, reg)
         else begin
           Buffer.add_char buf c;

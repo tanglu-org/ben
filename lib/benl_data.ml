@@ -312,7 +312,7 @@ let filter_affected { src_map = srcs; bin_map = bins } is_affected config =
   { src_map = src_map; bin_map = bin_map }
 
 let inject_debcheck_data =
-  let rex = Pcre.regexp "^  package: (.*)$" in
+  let rex = Re_pcre.regexp "^  package: (.*)$" in
   fun (bins : [`binary] Package.t PAMap.t)  architectures ->
     let a, b = if !Benl_clflags.quiet then ("\n", "") else ("", "\n") in
     let all_uninstallable_packages = List.fold_left (fun map arch_ref ->
@@ -332,8 +332,8 @@ let inject_debcheck_data =
             accu
           | Some line ->
             try
-              let r = Pcre.exec ~rex line in
-              let package = Pcre.get_substring r 1 in
+              let r = Re_pcre.exec ~rex line in
+              let package = Re_pcre.get_substring r 1 in
               loop (Package.Set.add (Package.Name.of_string package) accu)
             with Not_found -> loop accu
         end

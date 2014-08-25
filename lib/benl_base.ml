@@ -88,20 +88,20 @@ end = struct
   external verrevcmp : string -> string -> int = "caml_verrevcmp"
 
   let decomp =
-    let rex = Pcre.regexp "^(?:(\\d+):)?(?:([^\\s-]+)|(\\S+)-([^\\s-]+))$" in
+    let rex = Re_pcre.regexp "^(?:(\\d+):)?(?:([^\\s-]+)|(\\S+)-([^\\s-]+))$" in
     fun x ->
       try
-        let r = Pcre.exec ~rex x in
+        let r = Re_pcre.exec ~rex x in
         let epoch =
-          try int_of_string (Pcre.get_substring r 1)
+          try int_of_string (Re_pcre.get_substring r 1)
           with Not_found -> 0
         in
         let upstream =
-          try Pcre.get_substring r 2
-          with Not_found -> Pcre.get_substring r 3
+          try Re_pcre.get_substring r 2
+          with Not_found -> Re_pcre.get_substring r 3
         in
         let debian =
-          try Pcre.get_substring r 4
+          try Re_pcre.get_substring r 4
           with Not_found -> "0"
         in
         (epoch, upstream, debian)

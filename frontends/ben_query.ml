@@ -31,10 +31,10 @@ let args = ref []
 let anon_fun name =
   args := name :: !args
 
-let sources_re = Pcre.regexp "Sources"
+let sources_re = Re_pcre.regexp "Sources"
 let is_source x =
   try
-    ignore (Pcre.exec ~rex:sources_re x);
+    ignore (Re_pcre.exec ~rex:sources_re x);
     true
   with Not_found -> false
 

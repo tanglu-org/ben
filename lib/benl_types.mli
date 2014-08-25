@@ -22,7 +22,7 @@
 type field = string
 (** A field name *)
 
-type regexp = string * Pcre.regexp
+type regexp = string * Re_pcre.regexp
 (** A pair of a PCRE regexp and its string representation (as parsed
     from configuration, used for pretty-printing). *)
 

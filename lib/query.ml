@@ -29,9 +29,9 @@ let rec simplify query = match query with
     begin match (Benl_core.simple_split '|' package) with
     | package::[] -> query
     | packages ->
-      let packages = List.map Pcre.quote packages in
+      let packages = List.map Re_pcre.quote packages in
       let r_string = String.concat "|" packages in
-      let rex = Pcre.regexp (Printf.sprintf "\b(%s)\b" r_string) in
+      let rex = Re_pcre.regexp (Printf.sprintf "\b(%s)\b" r_string) in
       EMatch (field, ERegexp (package, rex))
     end
   | EMatch (_, (EDep _ | ERegexp _)) -> query
@@ -106,7 +106,7 @@ let rec eval kind pkg = function
   | EMatch (field, ERegexp (r, rex)) ->
       begin try
         let value = Package.get field pkg in
-        ignore (Pcre.exec ~rex value);
+        ignore (Re_pcre.exec ~rex value);
         true
       with Not_found ->
         false
