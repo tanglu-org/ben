@@ -40,6 +40,7 @@ let suite = ref "unstable"
 let areas = ref ["main"; "contrib"; "non-free"]
 let preferred_compression_format = ref Benl_compression.default
 let quiet = ref false
+let parallel = ref (Parmap.get_default_ncores ())
 
 let get_config config key =
   try StringMap.find key config
