@@ -440,9 +440,6 @@ let () = at_exit (fun () ->
   rm [lockf ()]
 )
 
-let pmap f l = Parmap.parmap f (Parmap.L l)
-let piter f l = Parmap.pariter f (Parmap.L l)
-
 let main args =
   let () = read_global_config () in
   let lockf = lockf () in
@@ -481,7 +478,7 @@ let main args =
       in
       (* Read found .ben files *)
       let transitions =
-        pmap
+        Benl_parallel.map
           (fun (transition, profile) ->
             try
               let name, config = read_transition_config transition in
@@ -508,7 +505,7 @@ let main args =
       in
       (* Compute data for each transition *)
       let results =
-        pmap
+        Benl_parallel.map
           (fun (name, (config, file, profile)) ->
             let () =
               p "Computing data for (%s) %s\n"
@@ -531,7 +528,7 @@ let main args =
       (* Compute collisions *)
       let collisions = compute_collisions results in
       (* Generate an HTML page for each transition *)
-      let () = piter
+      let () = Benl_parallel.iter
         (fun (config, transition, _, (_, transition_data, has_testing_data)) ->
           print_html_monitor
             config
@@ -545,7 +542,7 @@ let main args =
       in
       (* Generate the packages.yaml file *)
       let results =
-        pmap
+        Benl_parallel.map
           (fun (config, t, p, (export, transition_data, has_testing_data)) ->
             p, t, export, transition_data, has_testing_data
           )
