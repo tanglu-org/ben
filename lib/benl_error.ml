@@ -90,3 +90,10 @@ let () =
 
 let raise e = Pervasives.raise (Error e)
 let warn e = Printf.eprintf "W: %s\n%!" (string_of_error e)
+
+let warn_exn msg e =
+  Printf.eprintf "W: %s: %s\n%!" msg (Printexc.to_string e)
+
+let error_exn msg e =
+  Printf.eprintf "E: %s: %s\n" msg (Printexc.to_string e);
+  Printexc.print_backtrace stderr

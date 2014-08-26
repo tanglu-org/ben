@@ -49,3 +49,9 @@ val raise : error -> 'a
 
 val warn : error -> unit
 (** Emit a warning. *)
+
+val warn_exn : string -> exn -> unit
+(** Emit a warning. *)
+
+val error_exn : string -> exn -> unit
+(** Emit an error. *)

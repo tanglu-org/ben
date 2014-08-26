@@ -165,16 +165,20 @@ let read_transition_config file =
   (* Read a .ben file *)
   transition, (Benl_frontend.read_ben_file file)
 
-let get_transition_data config =
-  let transition_data = Ben_monitor.compute_transition_data config in
-  let monitor_data, sources, binaries, dep_graph, all, bad, packages =
-    transition_data in
-  let has_testing_data = Ben_monitor.has_testing_data monitor_data in
-  let export =
-    try
-      Benl_clflags.get_config config "export" = Benl_types.Etrue
-    with _ -> true in
-  export, transition_data, has_testing_data
+let get_transition_data name config =
+  try
+    let transition_data = Ben_monitor.compute_transition_data config in
+    let monitor_data, sources, binaries, dep_graph, all, bad, packages =
+      transition_data in
+    let has_testing_data = Ben_monitor.has_testing_data monitor_data in
+    let export =
+      try
+        Benl_clflags.get_config config "export" = Benl_types.Etrue
+      with _ -> true in
+    Some (export, transition_data, has_testing_data)
+  with e ->
+    Benl_error.warn_exn ("Failed to process transition " ^ name) e;
+    None
 
 module SMap = Map.Make(String)
 
@@ -258,8 +262,8 @@ let print_html_monitor config template file transition_data has_testing_data col
   p "Generating %s\n" htmlp;
   try
     Benl_utils.dump_xhtml_to_file html output
-  with _ ->
-    eprintf "Something bad happened while generating %s!\n" html
+  with e ->
+    Benl_error.warn_exn ("Failed to generate" ^ html) e
 
 let compute_collisions results =
   let data_map = List.fold_left
@@ -347,10 +351,8 @@ let dump_yaml smap file =
     let newfile = FilePath.add_extension file "new" in
     dump_to_file newfile string;
     mv newfile file
-  with exc ->
-    eprintf "E: %s\n" $ Printexc.to_string exc;
-    Printexc.print_backtrace stderr;
-    eprintf "Something bad happened while generating %s!\n" file
+  with exn ->
+    Benl_error.error_exn ("Failed to generate " ^ file) exn
 
 let clean_up smap =
   if !clean then begin
@@ -431,10 +433,8 @@ let tracker template profiles =
   try
     p "Generating index...\n";
     dump_xhtml_to_file index output
-  with exc ->
-    eprintf "E: %s\n" $ Printexc.to_string exc;
-    Printexc.print_backtrace stderr;
-    eprintf "Something bad happened while generating index.html!\n"
+  with exn ->
+    Benl_error.error_exn "Failed to generate index.html" exn
 
 let () = at_exit (fun () ->
   rm [lockf ()]
@@ -486,9 +486,14 @@ let main args =
             try
               let name, config = read_transition_config transition in
               Some (name, (config, transition, profile))
-            with Benl_error.Error e -> (* Ben file has errors *)
+            with
+            | Benl_error.Error e -> (* Ben file has errors *)
               warn e;
               None
+            | e ->
+              Benl_error.warn_exn ("Failed to read " ^ transition) e;
+              None
+
           )
           transition_files
       in
@@ -510,9 +515,18 @@ let main args =
                 (string_of_profile profile)
                 name
             in
-            config, name, profile, (get_transition_data config)
+            config, name, profile, (get_transition_data name config)
           )
           transitions
+      in
+      let results =
+        List.fold_left
+          (fun results -> function
+          | (c, n, p, Some d) -> (c, n, p, d) :: results
+          | _ -> results
+          )
+          []
+          results
       in
       (* Compute collisions *)
       let collisions = compute_collisions results in
@@ -545,9 +559,8 @@ let main args =
       (match !tconfig with
         | None -> tracker template profiles
         | Some _ -> ())
-    with exc ->
-      eprintf "E: %s\n" $ Printexc.to_string exc;
-      Printexc.print_backtrace stderr
+    with exn ->
+      Benl_error.error_exn "General error" exn
 
 let frontend = {
   Benl_frontend.name = "tracker";
