@@ -22,3 +22,4 @@ val set_level : int -> unit
 
 val map : ?level:int -> ('a -> 'b) -> 'a list -> 'b list
 val iter : ?level:int -> ('a -> unit) -> 'a list -> unit
+val fold : ?level:int -> ('a -> 'b -> 'a) -> 'a -> 'b list -> ('a -> 'a -> 'a) -> 'a

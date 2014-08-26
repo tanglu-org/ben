@@ -37,3 +37,10 @@ let iter ?(level = !level) f l =
   Parmap.pariter ~ncores:level
     f
     (Parmap.L l)
+
+let fold ?(level = !level) f a l m =
+  Parmap.parfold ~ncores:level
+    (fun e a -> f a e)
+    (Parmap.L l)
+    a
+    m
