@@ -315,8 +315,8 @@ let inject_debcheck_data =
   let rex = Re_pcre.regexp "^  package: (.*)$" in
   fun (bins : [`binary] Package.t PAMap.t)  architectures ->
     let a, b = if !Benl_clflags.quiet then ("\n", "") else ("", "\n") in
-    let all_uninstallable_packages = List.fold_left (fun map arch_ref ->
-      Benl_clflags.progress "Running dose-debcheck on %s..." arch_ref;
+    let all_uninstallable_packages = Benl_parallel.fold (fun map arch_ref ->
+      Benl_clflags.progress "Running dose-debcheck on %s...\n" arch_ref;
       let (ic, oc) as p = Unix.open_process "dose-debcheck --quiet --failures" in
       (* inefficiency: for each architecture, we iterate on all binary
          packages, not only on binary packages of said architectures *)
@@ -351,9 +351,8 @@ let inject_debcheck_data =
           Printf.eprintf
             "%sW: subprocess dose-debcheck stopped with signal %d%s%!" a i b
       end;
-      Benl_clflags.progress "\n";
       StringMap.add arch_ref result map
-    ) StringMap.empty architectures in
+    ) StringMap.empty architectures StringMap.fusion in
     PAMap.mapi (fun (name, arch) pkg ->
       let uninstallable_packages = StringMap.find arch all_uninstallable_packages in
       if Package.Set.mem name uninstallable_packages

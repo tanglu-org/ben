@@ -20,10 +20,20 @@
 
 module StringMap = struct
   include Map.Make(String)
+
   let from_list =
     List.fold_left
       (fun map (key, value) -> add key value map)
       empty
+
+  let fusion m1 m2 =
+    let smerge _ v1 v2 = match v1, v2 with
+      | Some v1, Some v2 -> Some v1
+      | Some v1, None    -> Some v1
+      | None   , Some v2 -> Some v2
+      | _                -> None
+    in
+    merge smerge m1 m2
 end
 
 module StringSet = struct

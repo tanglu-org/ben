@@ -31,6 +31,7 @@ end
 module StringMap : sig
   include Map.S with type key = string
   val from_list : (key * int) list -> int t
+  val fusion : 'a t -> 'a t -> 'a t
 end
 
 module IntMap : sig
