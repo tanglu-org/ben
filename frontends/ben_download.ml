@@ -36,7 +36,7 @@ let download_sources () =
   let dst = !Benl_clflags.cache_dir/"Sources" in
   let tmp = Filename.temp_file "Sources." "" in
   let commands =
-    List.map
+    Benl_parallel.map
       (fun area ->
          let url = sprintf "%s/dists/%s/%s/source/Sources%s"
            !Benl_clflags.mirror_sources
@@ -72,7 +72,7 @@ let download_binaries arch =
   let dst = !Benl_clflags.cache_dir/"Packages_"^arch in
   let tmp = Filename.temp_file ("Packages.") "" in
   let commands =
-    List.map
+    Benl_parallel.map
       (fun area ->
          let url = sprintf "%s/dists/%s/%s/binary-%s/Packages%s"
            !Benl_clflags.mirror_binaries
@@ -106,13 +106,16 @@ let download_binaries arch =
 
 let download_all () =
   download_sources ();
-  List.iter download_binaries !Benl_clflags.architectures;;
+  Benl_parallel.iter download_binaries !Benl_clflags.architectures;;
 
 let save_cache () =
   if !Benl_clflags.use_cache then begin
     let src_raw = Benl_data.file_origin.get_sources M.empty in
-    let bin_raw = List.fold_left
-      Benl_data.file_origin.get_binaries PAMap.empty !Benl_clflags.architectures
+    let bin_raw = Benl_parallel.fold
+      Benl_data.file_origin.get_binaries
+      PAMap.empty
+      !Benl_clflags.architectures
+      PAMap.fusion
     in
     let data = { src_map = src_raw; bin_map = bin_raw; } in
     let file = Benl_clflags.get_cache_file () in
