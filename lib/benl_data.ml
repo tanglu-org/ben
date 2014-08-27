@@ -103,10 +103,10 @@ module Projectb = struct
        mirror.ftp-master.debian.org. To make it work elsewhere, copy
        mirror.ftp-master.debian.org:/etc/postgresql-common/pg_service.conf
        to your ~/.pg_service.conf and set up tunnels accordingly. *)
-    let projectb = new Postgresql.connection ~conninfo:"service=projectb" () in
+    let projectb = new Postgresql.connection ~conninfo:"service=projectb" in
 
     let mk_wrapper_maps transform sql =
-      let r = projectb#exec sql in
+      let r = (projectb ())#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
       Array.fold_left (fun (a, b) row ->
 	match row with
@@ -146,13 +146,13 @@ module Projectb = struct
     let relevant_binary_key_ids = List.map id_of_key (StringSet.elements !relevant_binary_keys) in
 
     let get_binaries accu arch =
-      Benl_clflags.progress "Querying projectb for %s binaries in unstable..." arch;
+      Benl_clflags.progress "Querying projectb for %s binaries in unstable...\n" arch;
       let sql = sprintf
 	"select b.bin_id, b.key_id, b.value from bin_associations as a join (select * from binaries_metadata where key_id in (%s)) as b on b.bin_id = a.bin join (select * from binaries) as c on c.id = a.bin where a.suite = %d and c.architecture in (%d,%d)"
 	(String.concat "," (List.map string_of_int relevant_binary_key_ids))
 	(id_of_suite "unstable") (id_of_arch "all") (id_of_arch arch)
       in
-      let r = projectb#exec sql in
+      let r = (projectb ())#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
       let id_indexed_map = Array.fold_left (fun a row ->
 	match row with
@@ -177,24 +177,22 @@ module Projectb = struct
 	with Not_found ->
           PAMap.add (name, arch) pkg accu
       ) id_indexed_map accu in
-      Benl_clflags.progress "\n";
       result
     in
 
     let sources_in_testing =
-      Benl_clflags.progress "Querying projectb for sources in testing...";
+      Benl_clflags.progress "Querying projectb for sources in testing...\n";
       let sql = sprintf
 	"select (select value from source_metadata as b where key_id = %d and b.src_id = a.source) from src_associations as a where a.suite = %d"
 	(id_of_key "source") (id_of_suite "testing")
       in
-      let r = projectb#exec sql in
+      let r = (projectb ())#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
       let result = Array.fold_left (fun a row ->
 	match row with
         | [| source |] -> StringSet.add source a
         | _ -> assert false
       ) StringSet.empty r#get_all in
-      Benl_clflags.progress "\n";
       result
     in
 
@@ -209,14 +207,14 @@ module Projectb = struct
     in
 
     let get_sources accu =
-      Benl_clflags.progress "Querying projectb for sources in unstable...";
+      Benl_clflags.progress "Querying projectb for sources in unstable...\n";
       (* get general metadata *)
       let sql = sprintf
 	"select b.src_id, b.key_id, b.value from src_associations as a join (select * from source_metadata where key_id in (%s)) as b on b.src_id = a.source where a.suite = %d"
 	(String.concat "," (List.map string_of_int relevant_source_key_ids))
 	(id_of_suite "unstable")
       in
-      let r = projectb#exec sql in
+      let r = (projectb ())#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
       let id_indexed_map = Array.fold_left (fun a row ->
 	match row with
@@ -237,7 +235,7 @@ module Projectb = struct
 	"select a.source, c.filename from src_associations as a join (select * from dsc_files) as b on b.source = a.source, files as c where a.suite = %d and b.file = c.id and c.filename like '%%dsc'"
 	(id_of_suite "unstable")
       in
-      let r = projectb#exec sql in
+      let r = (projectb ())#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
       let id_indexed_dscs = Array.fold_left (fun a row ->
 	match row with
@@ -272,7 +270,6 @@ module Projectb = struct
 	with Not_found ->
           M.add name pkg accu
       ) id_indexed_map accu in
-      Benl_clflags.progress "\n";
       result
     in
 
@@ -369,8 +366,8 @@ let generate_cache file architectures =
     if !use_projectb then Projectb.mk_origin () else file_origin
   in
   let src_raw = origin.get_sources M.empty in
-  let bin_raw = List.fold_left
-    origin.get_binaries PAMap.empty architectures
+  let bin_raw = Benl_parallel.fold
+    origin.get_binaries PAMap.empty architectures PAMap.fusion
   in
   let bin_raw = if !run_debcheck
     then inject_debcheck_data bin_raw architectures
