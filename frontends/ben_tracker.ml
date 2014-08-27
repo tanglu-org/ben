@@ -165,9 +165,9 @@ let read_transition_config file =
   (* Read a .ben file *)
   transition, (Benl_frontend.read_ben_file file)
 
-let get_transition_data name config =
+let get_transition_data data name config =
   try
-    let transition_data = Ben_monitor.compute_transition_data config in
+    let transition_data = Ben_monitor.compute_transition_data data config in
     let monitor_data, sources, binaries, dep_graph, all, bad, packages =
       transition_data in
     let has_testing_data = Ben_monitor.has_testing_data monitor_data in
@@ -453,7 +453,7 @@ let main args =
         else
           eprintf "%s doesn't exist. Skipping creation of lock file.\n" lockf_b
       in
-      if update_test ()  then update_cache ();
+      if update_test () then update_cache ();
       let htmld = Filename.concat !base "html" in
       if test (Not Exists) htmld then
         mkdir ~parent:true htmld;
@@ -503,6 +503,8 @@ let main args =
           []
           transitions
       in
+      (* Read ben.cache *)
+      let cache = Benl_data.load_cache () in
       (* Compute data for each transition *)
       let results =
         Benl_parallel.map
@@ -512,7 +514,7 @@ let main args =
                 (string_of_profile profile)
                 name
             in
-            config, name, profile, (get_transition_data name config)
+            config, name, profile, (get_transition_data cache name config)
           )
           transitions
       in

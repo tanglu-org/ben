@@ -339,13 +339,13 @@ let beautify_text =
       )
       t
 
-let compute_graph config =
+let compute_graph data config =
   let architectures =
     List.map
       (Benl_frontend.to_string "architectures")
       (archs_list config)
   in
-  let {src_map = sources; bin_map = binaries} = get_data is_affected architectures config in
+  let {src_map = sources; bin_map = binaries} = get_data ~cache:(Some data) is_affected architectures config in
   let src_of_bin : ([`binary], [`source] Package.Name.t) M.t =
     PAMap.fold
       (fun (name, _) pkg accu ->
@@ -358,8 +358,8 @@ let compute_graph config =
   let rounds = Dependencies.topo_split dep_graph in
   rounds, sources, binaries, dep_graph
 
-let compute_transition_data config =
-  let rounds, sources, binaries, dep_graph = compute_graph config in
+let compute_transition_data data config =
+  let rounds, sources, binaries, dep_graph = compute_graph data config in
   let monitor_data = compute_monitor_data config sources binaries rounds in
   let all, bad, packages = generate_stats monitor_data in
   monitor_data, sources, binaries, dep_graph, all, bad, packages
@@ -583,8 +583,9 @@ let main _ =
     | Some config -> config
     | None -> Benl_error.raise Benl_error.Missing_configuration_file
   in
+  let data = Benl_data.load_cache () in
   let rounds, sources, binaries, dep_graph =
-    compute_graph config in
+    compute_graph data config in
   match !output_type with
     | Levels -> print_dependency_levels dep_graph rounds
     | Text -> print_text_monitor config sources binaries rounds

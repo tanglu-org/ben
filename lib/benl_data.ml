@@ -365,22 +365,34 @@ let inject_debcheck_data =
       else pkg
     ) bins
 
-let get_data is_affected architectures config =
+let generate_cache file architectures =
+  let origin =
+    if !use_projectb then Projectb.mk_origin () else file_origin
+  in
+  let src_raw = origin.get_sources M.empty in
+  let bin_raw = List.fold_left
+    origin.get_binaries PAMap.empty architectures
+  in
+  let bin_raw = if !run_debcheck
+    then inject_debcheck_data bin_raw architectures
+    else bin_raw
+  in
+  let data = { src_map = src_raw; bin_map = bin_raw; } in
+  Marshal.dump file data;
+  data
+
+let load_cache () =
   let file = Benl_clflags.get_cache_file () in
-  if !Benl_clflags.use_cache && Sys.file_exists file then
-    filter_affected (Marshal.load file) is_affected config
+  let generate () = generate_cache file !Benl_clflags.architectures in
+  if Sys.file_exists file then
+    if !Benl_clflags.use_cache then
+      Marshal.load file
+    else
+      generate ()
   else
-    let origin =
-      if !use_projectb then Projectb.mk_origin () else file_origin
-    in
-    let src_raw = origin.get_sources M.empty in
-    let bin_raw = List.fold_left
-      origin.get_binaries PAMap.empty architectures
-    in
-    let bin_raw = if !run_debcheck
-      then inject_debcheck_data bin_raw architectures
-      else bin_raw
-    in
-    let data = { src_map = src_raw; bin_map = bin_raw; } in
-    Marshal.dump file data;
-    filter_affected data is_affected config
+    generate ()
+
+let get_data ?(cache = None) is_affected architectures config =
+  match cache with
+  | None -> filter_affected (load_cache ()) is_affected config
+  | Some data -> filter_affected data is_affected config
