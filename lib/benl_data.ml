@@ -382,14 +382,10 @@ let generate_cache file architectures =
 
 let load_cache () =
   let file = Benl_clflags.get_cache_file () in
-  let generate () = generate_cache file !Benl_clflags.architectures in
-  if Sys.file_exists file then
-    if !Benl_clflags.use_cache then
-      Marshal.load file
-    else
-      generate ()
+  if !Benl_clflags.use_cache && Sys.file_exists file then
+    Marshal.load file
   else
-    generate ()
+    generate_cache file !Benl_clflags.architectures
 
 let get_data ?(cache = None) is_affected architectures config =
   match cache with

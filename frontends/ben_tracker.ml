@@ -504,7 +504,14 @@ let main args =
           transitions
       in
       (* Read ben.cache *)
-      let cache = Benl_data.load_cache () in
+      let cache =
+        if !update then
+          Benl_data.generate_cache
+            (Benl_clflags.get_cache_file ())
+            !Benl_clflags.architectures
+        else
+          Benl_data.load_cache ()
+      in
       (* Compute data for each transition *)
       let results =
         Benl_parallel.map
