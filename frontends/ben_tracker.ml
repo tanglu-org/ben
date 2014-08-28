@@ -32,7 +32,6 @@ let base = ref "."
 let config_dir = ref "config"
 let global_config = ref (FilePath.concat !config_dir "global.conf")
 let lock = ref "ben.lock"
-let update = ref false
 let clean = ref true
 let tconfig = ref None
 
@@ -90,8 +89,8 @@ let spec = Arg.align [
   "-g"           , Arg.Set_string global_config, " ";
   "--transition" , Arg.String (fun t -> tconfig := Some t), " Specify selected transition";
   "-t"           , Arg.String (fun t -> tconfig := Some t), " ";
-  "--update"     , Arg.Set update, " Do update the cache file";
-  "-u"           , Arg.Set update, " ";
+  "--update"     , Arg.Set Benl_clflags.update, " Do update the cache file";
+  "-u"           , Arg.Set Benl_clflags.update, " ";
   "--base"       , Arg.Set_string base, " Specify tracker's base directory";
   "-b"           , Arg.Set_string base, " ";
   "--use-projectb", Arg.Set Benl_data.use_projectb, " Use Projectb to fetch information about distributions";
@@ -147,12 +146,21 @@ let clear_cache () =
 
 let update_test () =
   let cachef = Benl_clflags.get_cache_file () in
-     !update
-  || test (Not Exists) cachef
+     !Benl_clflags.update
+  || (!Benl_clflags.use_cache && test (Not Exists) cachef)
 
-let update_cache () =
-  let () = clear_cache () in
-  if not !Benl_data.use_projectb then Ben_download.download_all ()
+let read_cache () =
+  if update_test () then begin
+    if not !Benl_data.use_projectb then begin
+      clear_cache ();
+      Ben_download.download_all ();
+    end;
+    Benl_data.generate_cache
+      (Benl_clflags.get_cache_file ())
+      !Benl_clflags.architectures
+  end
+  else
+    Benl_data.load_cache ()
 
 let profile_of_file file =
   try
@@ -453,7 +461,6 @@ let main args =
         else
           eprintf "%s doesn't exist. Skipping creation of lock file.\n" lockf_b
       in
-      if update_test () then update_cache ();
       let htmld = Filename.concat !base "html" in
       if test (Not Exists) htmld then
         mkdir ~parent:true htmld;
@@ -504,14 +511,7 @@ let main args =
           transitions
       in
       (* Read ben.cache *)
-      let cache =
-        if !update then
-          Benl_data.generate_cache
-            (Benl_clflags.get_cache_file ())
-            !Benl_clflags.architectures
-        else
-          Benl_data.load_cache ()
-      in
+      let cache = read_cache () in
       (* Compute data for each transition *)
       let results =
         Benl_parallel.map
