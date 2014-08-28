@@ -41,6 +41,13 @@ let ( // ) = Filename.concat
 let ( !! ) = Lazy.force
 let ( !!! ) = Package.Name.to_string
 
+let map_fun f l =
+  let fr = Benl_frontend.get_selected_frontend () in
+  if fr.Benl_frontend.name = "monitor" then
+    Benl_parallel.map ~level:(Benl_parallel.get_level ()) f l
+  else
+    List.map f l
+
 let get_config config key =
   try StringMap.find key config
   with Not_found -> Benl_error.raise (Benl_error.Missing_configuration_item key)
@@ -154,9 +161,9 @@ let archs_list config =
   List.sort Pervasives.compare (release_archs_list @ ignored_archs_list)
 
 let compute_monitor_data config sources binaries rounds =
-  List.map begin fun xs ->
+  map_fun begin fun xs ->
     let packages = List.sort (fun x y -> compare !!!x !!!y) xs in
-    List.map begin fun sname ->
+    map_fun begin fun sname ->
       let src = M.find sname sources in
       let src_name = Package.get "package" src in
       let states =
