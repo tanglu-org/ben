@@ -235,7 +235,7 @@ let print_html_collisions (hits : (SMap.key * SMap.key list) list) =
         hits
         []
     in
-    match hits with
+    match List.rev hits with
     | [] -> pcdata "(none)"
     | h::l -> ul h l
   ]
