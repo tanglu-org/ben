@@ -40,6 +40,7 @@ let filter_print keep outc p =
 let print = filter_print []
 
 let get = StringMap.find
+let has = StringMap.mem
 
 let add k v pkg = StringMap.add k v pkg
 
@@ -92,6 +93,7 @@ module Map = struct
   module M = Map.Make(String)
   type ('a, 'b) t = 'b M.t
   let empty = M.empty
+  let is_empty = M.is_empty
   let add = M.add
   let iter = M.iter
   let find = M.find

@@ -28,6 +28,7 @@ module Name : sig
 end
 
 val get : string -> 'a t -> string
+val has : string -> 'a t -> bool
 val add : string -> string -> 'a t -> 'a t
 val print : out_channel -> 'a t -> unit
 val filter_print : string list -> out_channel -> 'a t -> unit
@@ -54,6 +55,7 @@ val of_assoc :
 module Map : sig
   type ('a, 'b) t
   val empty : ('a, 'b) t
+  val is_empty : ('a, 'b) t -> bool
   val add : 'a Name.t -> 'b -> ('a, 'b) t -> ('a, 'b) t
   val find : 'a Name.t -> ('a, 'b) t -> 'b
   val iter : ('a Name.t -> 'b -> unit) -> ('a, 'b) t -> unit
