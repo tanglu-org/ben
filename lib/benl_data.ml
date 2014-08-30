@@ -308,34 +308,62 @@ let filter_affected { src_map = srcs; bin_map = bins } is_affected config =
   ) bins bin_map in
   { src_map = src_map; bin_map = bin_map }
 
-let inject_debcheck_data =
+let read_debcheck =
   let rex = Re_pcre.regexp "^  package: (.*)$" in
+  fun ic ->
+    let check_empty accu =
+      if Package.Map.is_empty accu then
+        Printf.eprintf "W: no uninstallable packages!\n%!";
+      accu
+    in
+    let reason buf =
+      let r = ExtString.String.strip (Buffer.contents buf) in
+      let () = Buffer.reset buf in
+      r
+    in
+    let rec read_pkg accu =
+      begin match (try Some (input_line ic) with End_of_file -> None) with
+      | None ->
+        check_empty accu
+      | Some line ->
+        try
+          let r = Re_pcre.exec ~rex line in
+          let package = Re_pcre.get_substring r 1 in
+          let buf = Buffer.create 1024 in
+          let () = Buffer.add_string buf line in
+          let () = Buffer.add_char buf '\n' in
+          read_reason (Package.Name.of_string package) accu buf
+        with Not_found -> read_pkg accu
+      end
+    and read_reason pkg accu buf =
+      begin match (try Some (input_line ic) with End_of_file -> None) with
+      | None ->
+        let accu = Package.Map.add pkg (reason buf) accu in
+        read_pkg accu
+      | Some line ->
+        if line = " -" then
+          let accu = Package.Map.add pkg (reason buf) accu in
+          read_pkg accu
+        else
+          let () = Buffer.add_string buf line in
+          let () = Buffer.add_char buf '\n' in
+          read_reason pkg accu buf
+      end
+    in read_pkg Package.Map.empty
+
+let inject_debcheck_data =
   fun (bins : [`binary] Package.t PAMap.t)  architectures ->
     let a, b = if !Benl_clflags.quiet then ("\n", "") else ("", "\n") in
     let all_uninstallable_packages = Benl_parallel.fold (fun map arch_ref ->
       Benl_clflags.progress "Running dose-debcheck on %s...\n" arch_ref;
-      let (ic, oc) as p = Unix.open_process "dose-debcheck --quiet --failures" in
+      let (ic, oc) as p = Unix.open_process "dose-debcheck --explain --quiet --failures" in
       (* inefficiency: for each architecture, we iterate on all binary
          packages, not only on binary packages of said architectures *)
       PAMap.iter (fun (name, arch) pkg ->
         if arch = arch_ref then Package.print oc pkg
       ) bins;
       close_out oc;
-      let rec loop accu =
-        begin match (try Some (input_line ic) with End_of_file -> None) with
-          | None ->
-            if Package.Set.is_empty accu then
-              Printf.eprintf "W: no uninstallable packages!\n%!";
-            accu
-          | Some line ->
-            try
-              let r = Re_pcre.exec ~rex line in
-              let package = Re_pcre.get_substring r 1 in
-              loop (Package.Set.add (Package.Name.of_string package) accu)
-            with Not_found -> loop accu
-        end
-      in
-      let result = loop Package.Set.empty in
+      let result = read_debcheck ic in
       begin match Unix.close_process p with
         | Unix.WEXITED (0|1) -> ()
         | Unix.WEXITED i ->
@@ -351,14 +379,13 @@ let inject_debcheck_data =
       StringMap.add arch_ref result map
     ) StringMap.empty architectures StringMap.fusion in
     PAMap.mapi (fun (name, arch) pkg ->
-      let uninstallable_packages = StringMap.find arch all_uninstallable_packages in
-      if Package.Set.mem name uninstallable_packages
-      then
-        (* the following line is for compatibility only and should be
-           removed eventually *)
-        let pkg = Package.add "edos-debcheck" "uninstallable" pkg in
-        Package.add "uninstallable" "yes" pkg
-      else pkg
+      try
+        let uninstallable_packages = StringMap.find arch all_uninstallable_packages in
+        let reason = Package.Map.find name uninstallable_packages in
+        let pkg = Package.add "uninstallable" "yes" pkg in
+        Package.add "debcheck-reason" reason pkg
+      with Not_found ->
+        pkg
     ) bins
 
 let generate_cache file architectures =

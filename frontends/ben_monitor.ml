@@ -170,15 +170,21 @@ let compute_monitor_data config sources binaries rounds =
         List.map begin function
         | Benl_types.EString arch ->
           (* FIXME: indexing by name+arch is not a good idea after all *)
-          arch, PAMap.fold (fun (_, arch') pkg accu ->
-            if arch' = arch &&
-              Package.get "source" pkg = src_name
+          arch, PAMap.fold (fun (_, arch') pkg (reasons, accu) ->
+            if arch' = arch && Package.get "source" pkg = src_name
             then
+              let reason =
+                try
+                  Printf.sprintf "  %s\n"
+                    (Package.get "debcheck-reason" pkg)
+                with _ -> ""
+              in
+              let reasons = Printf.sprintf "%s%s" reasons reason in
               let state = compute_state config pkg in
-              combine_states accu state
+              reasons, combine_states accu state
             else
-              accu
-          ) binaries Unknown
+              reasons, accu
+          ) binaries ("", Unknown)
         | _ -> assert false
         end (archs_list config)
       in src, states
@@ -220,7 +226,7 @@ let print_text_monitor config sources binaries rounds =
       let sname = Package.get "package" src in
       let sname = if in_testing then sname else "_"^sname in
       printf "%*s:" (nmax+3) sname;
-      List.iter begin fun (arch, state) ->
+      List.iter begin fun (arch, (_, state)) ->
         printf " %s" (format_arch state arch)
       end states;
       printf "\n";
@@ -267,9 +273,9 @@ let overrall_state l =
     List.partition
       (fun (arch,_) -> List.mem arch !Benl_base.ignored_architectures)
       l in
-  if List.for_all (fun (_,status) -> status = Unknown) release_archs then
+  if List.for_all (fun (_,(_,status)) -> status = Unknown) release_archs then
     Unknown
-  else if List.for_all (fun (_,status) -> status <> Outdated) release_archs then
+  else if List.for_all (fun (_,(_,status)) -> status <> Outdated) release_archs then
     Up_to_date
   else
     Outdated
@@ -528,8 +534,8 @@ let print_html_monitor config template monitor_data sources binaries dep_graph p
               changelog template (sprintf "%s" version) directory (escape src);
               pcdata ")" ] @ has_ma_same_html)
           ::
-          (List.map begin fun (_, state) ->
-            (td ~a:[ a_class [ Benl_base.class_of_status state ] ]
+          (List.map begin fun (arch, (reasons, state)) ->
+            (td ~a:[ a_class [ Benl_base.class_of_status state ]; a_title reasons ]
                [ small [ pcdata (Benl_base.string_of_status state) ] ])
           end states)
           )
