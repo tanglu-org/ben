@@ -566,7 +566,8 @@ let main args =
         | None -> tracker template profiles
         | Some _ -> ())
     with exn ->
-      Benl_error.error_exn "General error" exn
+      Benl_error.error_exn "General error" exn;
+      exit(42)
 
 let frontend = {
   Benl_frontend.name = "tracker";
