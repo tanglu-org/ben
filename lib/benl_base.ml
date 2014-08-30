@@ -53,14 +53,14 @@ let string_of_string escaping string =
     string
 
 let debian_architectures = ref
-  [ "amd64"; "armel"; "armhf";
+  [ "amd64"; "armel"; "armhf"; "arm64";
     "i386"; "kfreebsd-amd64"; "kfreebsd-i386";
-    "mips"; "mipsel"; "powerpc"; "s390x" ]
+    "mips"; "mipsel"; "powerpc"; "ppc64el"; "s390x" ]
 
-let ignored_architectures : string list ref = ref []
+let ignored_architectures = ref ["arm64"; "ppc64el"]
 
 let debian_ports_architectures =
-  [ "alpha"; "arm64"; "hppa";
+  [ "alpha"; "hppa";
     "m68k"; "powerpcspe"; "ppc64";
     "sh4"; "sparc64"; "x32" ]
 
