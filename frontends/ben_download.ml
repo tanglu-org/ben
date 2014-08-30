@@ -104,9 +104,9 @@ let download_binaries arch =
       ignore (Sys.command (sprintf "rm -f %s" tmp))
   end;;
 
-let download_all () =
+let download_all architectures =
   download_sources ();
-  Benl_parallel.iter download_binaries !Benl_clflags.architectures;;
+  Benl_parallel.iter download_binaries architectures;;
 
 let save_cache () =
   if !Benl_clflags.use_cache then begin
@@ -123,7 +123,7 @@ let save_cache () =
   end
 
 let main args =
-  download_all ();
+  download_all !Benl_clflags.architectures;
   save_cache ()
 
 let frontend = {

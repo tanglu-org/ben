@@ -377,14 +377,14 @@ let generate_cache file architectures =
   Marshal.dump file data;
   data
 
-let load_cache () =
+let load_cache architectures =
   let file = Benl_clflags.get_cache_file () in
   if !Benl_clflags.use_cache && Sys.file_exists file then
     Marshal.load file
   else
-    generate_cache file !Benl_clflags.architectures
+    generate_cache file architectures
 
 let get_data ?(cache = None) is_affected architectures config =
   match cache with
-  | None -> filter_affected (load_cache ()) is_affected config
+  | None -> filter_affected (load_cache architectures) is_affected config
   | Some data -> filter_affected data is_affected config

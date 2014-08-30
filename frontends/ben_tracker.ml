@@ -149,18 +149,18 @@ let update_test () =
      !Benl_clflags.update
   || (!Benl_clflags.use_cache && test (Not Exists) cachef)
 
-let read_cache () =
+let read_cache architectures =
   if update_test () then begin
     if not !Benl_data.use_projectb then begin
       clear_cache ();
-      Ben_download.download_all ();
+      Ben_download.download_all architectures;
     end;
     Benl_data.generate_cache
       (Benl_clflags.get_cache_file ())
-      !Benl_clflags.architectures
+      architectures
   end
   else
-    Benl_data.load_cache ()
+    Benl_data.load_cache architectures
 
 let profile_of_file file =
   try
@@ -511,7 +511,7 @@ let main args =
           transitions
       in
       (* Read ben.cache *)
-      let cache = read_cache () in
+      let cache = read_cache !Benl_base.debian_architectures in
       (* Compute data for each transition *)
       let results =
         Benl_parallel.map

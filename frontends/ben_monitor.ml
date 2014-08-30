@@ -590,7 +590,11 @@ let main _ =
     | Some config -> config
     | None -> Benl_error.raise Benl_error.Missing_configuration_file
   in
-  let data = Benl_data.load_cache () in
+  let archs_list = Benl_frontend.to_string_l
+    "architectures"
+    (Benl_clflags.get_config config "architectures")
+  in
+  let data = Benl_data.load_cache archs_list in
   let rounds, sources, binaries, dep_graph =
     compute_graph data config in
   match !output_type with
