@@ -310,6 +310,7 @@ let filter_affected { src_map = srcs; bin_map = bins } is_affected config =
 
 let read_debcheck =
   let rex = Re_pcre.regexp "^  package: (.*)$" in
+  let ignore = Re_pcre.regexp "^ +(architecture|status|source): " in
   fun ic ->
     let check_empty accu =
       if Package.Map.is_empty accu then
@@ -345,9 +346,12 @@ let read_debcheck =
           let accu = Package.Map.add pkg (reason buf) accu in
           read_pkg accu
         else
-          let () = Buffer.add_string buf line in
-          let () = Buffer.add_char buf '\n' in
-          read_reason pkg accu buf
+          if Re_pcre.pmatch ~rex:ignore line then
+            read_reason pkg accu buf
+          else
+            let () = Buffer.add_string buf line in
+            let () = Buffer.add_char buf '\n' in
+            read_reason pkg accu buf
       end
     in read_pkg Package.Map.empty
 
