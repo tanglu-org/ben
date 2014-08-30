@@ -43,7 +43,8 @@ let read_global_config () =
     let config = Benl_utils.parse_config_file !global_config in
     StringMap.iter (fun key value -> match (key, value) with
         | "architectures", archs ->
-          Benl_base.debian_architectures := to_string_l "architectures" archs
+          Benl_base.debian_architectures := to_string_l "architectures" archs;
+          Benl_clflags.architectures := to_string_l "architectures" archs
         | "ignored", archs ->
           Benl_base.ignored_architectures := to_string_l "ignored" archs
         | "suite", (EString suite) ->
