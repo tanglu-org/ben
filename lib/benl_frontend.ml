@@ -112,8 +112,9 @@ let read_config_file ?(multi = false) filename =
         Benl_clflags.cache_dir := to_string "cache-dir" x;
         StringMap.add key value accu
     | ("cache-file", x) ->
-        Benl_clflags.cache_file := to_string "cache-file" x;
-        StringMap.add key value accu
+        let name = to_string "cache-file" x in
+        Benl_clflags.set_cache_file name;
+        accu
     | ("use-cache", Etrue) ->
         Benl_clflags.use_cache := true;
         StringMap.add key value accu
@@ -201,8 +202,8 @@ let spec = ref (Arg.align [
   "-c"  , Arg.String (fun c ->
     ignore (read_config_file c))
                                             , " Path to configuration file";
-  "--cache"   , Arg.Set_string Benl_clflags.cache_file, " Path to cache file";
-  "-C"        , Arg.Set_string Benl_clflags.cache_file, " Path to cache file";
+  "--cache"   , Arg.String Benl_clflags.set_cache_file, " Path to cache file";
+  "-C"        , Arg.String Benl_clflags.set_cache_file, " Path to cache file";
   "--use-cache", Arg.Set Benl_clflags.use_cache, " Enable use of cache file, if available";
   "--more-binary-keys", Arg.String (fun x ->
     let new_keys = List.map

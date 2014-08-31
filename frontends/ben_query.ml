@@ -87,7 +87,6 @@ let main () =
         Benl_utils.parse_control_in_channel kind filename ic keep accu ()
       end
     | filename when is_cache filename ->
-      let filename = Benl_clflags.get_cache_file ~name:filename () in
       let { src_map = srcs; bin_map = bins } = Marshal.load filename in
       begin match kind with
       | `binary -> PAMap.iter (eval Query.eval_binary) bins

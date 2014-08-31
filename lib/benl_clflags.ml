@@ -46,13 +46,15 @@ let get_config config key =
   try StringMap.find key config
   with Not_found -> Benl_error.raise (Benl_error.Missing_configuration_item key)
 
-let get_cache_file ?(name = !cache_file) () =
-  if Sys.file_exists name
-  then name
-  else let filecache = Filename.concat !cache_dir name in
-       if Sys.file_exists filecache
-       then filecache
-       else name (* Let the system generate an error *)
+let set_cache_file name =
+  let basename = Filename.basename name in
+  let dirname = Filename.dirname name in
+  cache_dir := dirname;
+  cache_file := basename
+
+let get_cache_file () =
+  Filename.concat !cache_dir !cache_file
+  (* Let the system generate an error if the file is missing *)
 
 let progress fmt =
   if !quiet then
