@@ -158,7 +158,8 @@ let archs_list config =
   in
   let release_archs_list = expr_l (Benl_clflags.get_config config "architectures") in
   let ignored_archs_list = expr_l (Benl_clflags.get_config config "ignored") in
-  List.sort Pervasives.compare (release_archs_list @ ignored_archs_list)
+  let archs_list = Benl_core.uniq (release_archs_list @ ignored_archs_list) in
+  List.sort Pervasives.compare archs_list
 
 let compute_monitor_data config sources binaries rounds =
   map_fun begin fun xs ->

@@ -59,6 +59,10 @@ let debian_architectures = ref
 
 let ignored_architectures = ref ["arm64"; "ppc64el"]
 
+let archs_list () =
+  let archs_list = Benl_core.uniq (!debian_architectures @ !ignored_architectures) in
+  List.sort Pervasives.compare archs_list
+
 let debian_ports_architectures =
   [ "alpha"; "hppa";
     "m68k"; "powerpcspe"; "ppc64";

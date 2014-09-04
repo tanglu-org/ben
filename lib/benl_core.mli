@@ -62,6 +62,9 @@ val list_rev_mapi : (int -> 'a -> 'b) -> 'a list -> 'b list
 (** Same as [List.rev_map], but calls the function with the index of
     the current element. *)
 
+val uniq : 'a list -> 'a list
+(** Remove duplicates in a list. *)
+
 val simple_split : char -> string -> string list
 (** [simple_split sep s] splits [s] using [sep] as delimiter. *)
 

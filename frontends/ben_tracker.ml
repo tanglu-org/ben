@@ -512,7 +512,7 @@ let main args =
           transitions
       in
       (* Read ben.cache *)
-      let cache = read_cache !Benl_base.debian_architectures in
+      let cache = read_cache (Benl_base.archs_list ()) in
       (* Compute data for each transition *)
       let results =
         Benl_parallel.map

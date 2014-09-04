@@ -99,6 +99,13 @@ let list_rev_mapi f xs =
     | x::xs -> aux (i+1) ((f i x)::accu) xs
   in aux 0 [] xs
 
+let rec uniq = function
+  | [] -> []
+  | h::l ->
+    if List.mem h l
+    then uniq l
+    else h :: (uniq l)
+
 let simple_split delim str =
   let n = String.length str in
   let rec aux i accu =
