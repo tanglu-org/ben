@@ -387,6 +387,7 @@ let inject_debcheck_data =
         let uninstallable_packages = StringMap.find arch all_uninstallable_packages in
         let reason = Package.Map.find name uninstallable_packages in
         let pkg = Package.add "uninstallable" "yes" pkg in
+        let pkg = Package.add "edos-debcheck" "uninstallable" pkg in
         Package.add "debcheck-reason" reason pkg
       with Not_found ->
         pkg
