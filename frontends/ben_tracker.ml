@@ -204,8 +204,7 @@ let smerge _ v1 v2 = match v1, v2 with
   | _                -> None
 
 let html_path_t name =
-  let htmlf = FilePath.replace_extension name "html" in
-  Filename.concat "html" htmlf
+  Filename.concat "html" (Printf.sprintf "%s.html" name)
 
 let print_html_collisions (hits : (SMap.key * SMap.key list) list) =
   let hits = List.fold_left
