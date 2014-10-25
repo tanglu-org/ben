@@ -176,8 +176,8 @@ let spec = ref (Arg.align [
   "--no-benrc", Arg.Clear Benl_clflags.use_benrc, " Do not read .benrc file at startup";
   "--dry-run" , Arg.Set Benl_clflags.dry_run, " Dry run";
   "-n"        , Arg.Set Benl_clflags.dry_run, " Dry run";
-  "--parallel", Arg.Int Benl_parallel.set_level, " Set number of cores to use";
-  "-P"        , Arg.Int Benl_parallel.set_level, " Set number of cores to use";
+  "--parallel", Arg.Int Benl_parallel.set_level, " Set parallelism level";
+  "-P"        , Arg.Int Benl_parallel.set_level, " Set parallelism level";
   "--quiet"   , Arg.Set Benl_clflags.quiet, " Quiet mode";
   "-q"        , Arg.Set Benl_clflags.quiet, " Quiet mode";
   "--verbose" , Arg.Set Benl_clflags.verbose, " Verbose mode";
