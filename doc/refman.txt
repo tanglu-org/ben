@@ -207,6 +207,10 @@ paragraphs.
 
  $ ben query ".package ~ /gentoo/" -s Package,Version ...
 
+TIP: ben query considers files matching `[sS]ources.*` to be Sources
+files, to be able to make the distinction with Packages files. This is
+useful especially when you use the `source` predicate.
+
 === monitor
 
 The `monitor` fontend builds a monitoring page for a transition. A
