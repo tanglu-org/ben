@@ -18,6 +18,21 @@ ben (0.7.0) UNRELEASED; urgency=low
     Update the nodefined-map for Ben accordingly.
   * Add libocamlnet-ocaml-dev to Build-Depends, needed by Ben_monitor
     through usage of Netencoding (Closes: #750327).
+  * Using -stdin, ben monitor will read its input file from the
+    standard input (Closes: #747887).
+  * Document how ben query makes the difference between Packages and
+    Sources files (Closes: #747879).
+  * Use Arg module to process CLI arguments.
+  * Parallelize (using ParMap) ben's processing in all frontends, except
+    query.
+    - Add libparmap-ocaml-dev to Build-Depends.
+  * Use Re.Pcre instead of Pcre in a few places to be able to parallelize
+    since this requires serializing a few data structures.
+  * Add a collision detector in ben tracker (Closes: #730619).
+  * Read and show explanations given by dose-debcheck.
+    - Add libextlib-ocaml-dev to Build-Depends.
+  * Suppose no ignored architectures when ignored item is missing in
+    the configuration file.
 
  -- Mehdi Dogguy <mehdi@debian.org>  Sat, 09 Aug 2014 10:29:12 +0200
 
