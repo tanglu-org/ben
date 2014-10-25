@@ -603,7 +603,7 @@ let print_dependency_levels dep_graph rounds =
 let main _ =
   let config = match !input_source with
     | Benl_types.NoSource -> Benl_error.raise Benl_error.Missing_configuration_file
-    | _ as source -> Benl_frontend.read_config source
+    | _ as source -> Benl_frontend.read_config ~multi:true source
   in
   let archs_list = Benl_frontend.to_string_l
     "architectures"
