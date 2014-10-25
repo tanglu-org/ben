@@ -136,7 +136,9 @@ specific set. The shared set of command-line options is:
 [options="header"]
 |====================================================================
 | Option                | Action
-| --dry-run             | Dry run
+| --no-benrc            | Do not read .benrc file at startup
+| --dry-run\|-n         | Dry run
+| --parallel\|-P        | Set parallelism level
 | --quiet\|-q           | Quiet mode
 | --verbose             | Verbose mode
 | --mirror uri          | Package mirror to use
@@ -146,12 +148,13 @@ specific set. The shared set of command-line options is:
 | --archs a,...         | Architectures to consider (comma separated)
 | --suite a             | Suite
 | --cache-dir d         | Path to cache dir
-| --cache-file\|-C f    | Specify the name of the cache file
+| --cache\|-C f         | Specify the name of the cache file
 | --use-cache           | Use cache whenever possible
 | --config\|-c c        | Config file
 | --more-binary-keys l  | Comma separated list of further relevant binary keys
 | --more-source-keys l  | Comma separated list of further relevant source keys
 | --preferred-compression-format\|-z format | Preferred compression format (Default: Gzip)
+| --version\|-V         | Display version number (and build date) and exit.
 |=====================================================================
 
 Ben knows about the following compression formats: Gzip, Bz2, Xz and Plain (for
@@ -211,6 +214,9 @@ TIP: ben query considers files matching `[sS]ources.*` to be Sources
 files, to be able to make the distinction with Packages files. This is
 useful especially when you use the `source` predicate.
 
+While other frontends can take advantage from multi-core architectures, ben
+query is still sequential. This may be fixed in future versions.
+
 === monitor
 
 The `monitor` fontend builds a monitoring page for a transition. A
@@ -268,8 +274,8 @@ There are other optional fields:
 | --color                 | Color if text output
 | --text                  | Select text output format
 | --html                  | Select HTML output format
-| --output file           | Select output file
-| -o file                 | (Same as above)
+| --output\|-o file       | Select output file
+| --stdin                 | Use stdin to read the input file
 | --template template     | Select an HTML template
 |=========================================================================
 
@@ -311,6 +317,7 @@ result in the `base` directory.
 | Option                  | Action
 | --base\|-b [dir]        | Specifies the "base" directory
 | --config-dir\|-cd [dir] | Location of ben trackers
+| --global-conf\|-g       | Specify tracker's global configuration file
 | --transition\|-t [profile/transition] | Generate only that tracker page
 | --update\|-u            | Updates cache files
 | --use-projectb          | Get package lists from Projectb database
