@@ -224,7 +224,7 @@ let print_html_collisions (hits : (SMap.key * SMap.key list) list) =
         (fun transition packages list ->
           let elt =
             li [ Ben_monitor.a_link
-                   (FilePath.replace_extension transition "html")
+                   (transition ^ ".html")
                    transition;
                  pcdata " through ";
                  pcdata (String.concat ", " packages)
