@@ -30,7 +30,7 @@ module S = Package.Set
 
 let use_colors = ref false
 let output_file = ref None
-let input_config = ref None
+let input_source = ref Benl_types.NoSource
 let baseurl = ref "file:///.."
 
 type output_type = Text | Xhtml | Levels
@@ -113,6 +113,10 @@ let spec = Arg.align [
     output_file := Some filename
   )
                                                   , " Path to output file";
+  "-stdin"        , Arg.Unit (fun () ->
+    input_source := Benl_types.Stdin
+  )
+                                                  , " Use stdin to read the input file";
   "--template"    , Arg.String (fun template ->
     Benl_templates.load_template template)
                                                   , " Select an HTML template";
@@ -593,9 +597,9 @@ let print_dependency_levels dep_graph rounds =
   end rounds
 
 let main _ =
-  let config = match !input_config with
-    | Some config -> config
-    | None -> Benl_error.raise Benl_error.Missing_configuration_file
+  let config = match !input_source with
+    | Benl_types.NoSource -> Benl_error.raise Benl_error.Missing_configuration_file
+    | _ as source -> Benl_frontend.read_config source
   in
   let archs_list = Benl_frontend.to_string_l
     "architectures"
@@ -634,7 +638,7 @@ let main _ =
 
 let anon_fun file =
   if Benl_core.ends_with file ".ben" then
-    input_config := Some (Benl_frontend.read_config_file file)
+    input_source := Benl_types.File file
 
 let frontend = {
   Benl_frontend.name = "monitor";

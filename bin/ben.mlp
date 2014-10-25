@@ -78,5 +78,5 @@ let () =
     let frontend = Benl_frontend.get_selected_frontend () in
     let benrc = Filename.concat (Sys.getenv "HOME") ".benrc" in
     if !Benl_clflags.use_benrc && Sys.file_exists benrc then
-      ignore (read_config_file benrc);
+      ignore (read_config (Benl_types.File benrc));
     Printexc.catch frontend.main ()

@@ -29,6 +29,7 @@ val parse_control_file :
   ('a Package.Name.t -> 'a Package.t -> 'b -> 'b) ->
   'b -> 'b
 
+val parse_config_from_in_channel : ?filename:string -> in_channel -> Benl_types.config
 val parse_config_file : string -> Benl_types.config
 
 val file_content : string -> string

@@ -40,20 +40,21 @@ let parse_control_file kind filename keep f accu =
     parse_control_in_channel kind base ic keep f accu
   end
 
+let parse_config_from_in_channel ?(filename = "stdin") ic =
+  let lexbuf = from_channel ic in
+  let pos = lexbuf.lex_curr_p in
+  lexbuf.lex_curr_p <- { pos with pos_fname = filename };
+  try
+    Benl_parser.config_file Benl_lexer.token lexbuf
+  with Benl_parser.Error ->
+    let pos = Lexing.lexeme_start_p lexbuf in
+    raise (Parsing_error
+             (pos.pos_fname,
+              pos.pos_lnum,
+              pos.pos_cnum-pos.pos_bol))
+
 let parse_config_file filename =
-  with_in_file filename begin fun ic ->
-    let lexbuf = from_channel ic in
-    let pos = lexbuf.lex_curr_p in
-    lexbuf.lex_curr_p <- { pos with pos_fname = filename };
-    try
-      Benl_parser.config_file Benl_lexer.token lexbuf
-    with Benl_parser.Error ->
-      let pos = Lexing.lexeme_start_p lexbuf in
-      raise (Parsing_error
-               (pos.pos_fname,
-                pos.pos_lnum,
-                pos.pos_cnum-pos.pos_bol))
-  end
+  with_in_file filename (parse_config_from_in_channel ~filename)
 
 let file_content file =
   let lines = ref "" in

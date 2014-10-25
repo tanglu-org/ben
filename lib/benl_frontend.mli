@@ -37,5 +37,5 @@ val to_string : string -> Benl_types.expr -> string
 val to_string_l : string -> Benl_types.expr -> string list
 val to_expr_l : string list -> Benl_types.expr
 
-val read_config_file : ?multi:bool -> string -> Benl_types.config
+val read_config : ?multi:bool -> Benl_types.source -> Benl_types.config
 val read_ben_file : string -> Benl_types.config

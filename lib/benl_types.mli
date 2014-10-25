@@ -46,3 +46,5 @@ type expr =
 type config = expr Benl_core.StringMap.t
 (** The type of parsed configuration files. Configuration files are
     key-value pairs, where values have type [expr]. *)
+
+type source = File of string | Stdin | NoSource

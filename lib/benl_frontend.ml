@@ -77,8 +77,12 @@ let to_expr_l l =
   let of_string s = Benl_types.EString s in
   Benl_types.EList (List.map of_string l)
 
-let read_config_file ?(multi = false) filename =
-  let config = Benl_utils.parse_config_file filename in
+let read_config ?(multi = false) source =
+  let config = match source with
+    | File filename -> Benl_utils.parse_config_file filename
+    | Stdin -> Benl_utils.parse_config_from_in_channel stdin
+    | NoSource -> assert false
+  in
   StringMap.fold (fun key value accu -> match (key, value) with
     | ("mirror", x) ->
         Benl_clflags.mirror_binaries := to_string "mirror" x;
@@ -151,7 +155,7 @@ let read_config_file ?(multi = false) filename =
   StringMap.empty
 
 let read_ben_file filename =
-  let config = read_config_file ~multi:true filename in
+  let config = read_config ~multi:true (File filename) in
   let default_values = [
     "architectures", to_expr_l !Benl_clflags.architectures;
     "ignored", to_expr_l !Benl_base.ignored_architectures;
@@ -197,10 +201,10 @@ let spec = ref (Arg.align [
   "--suite"   , Arg.Set_string Benl_clflags.suite, " Suite";
   "--cache-dir", Arg.Set_string Benl_clflags.cache_dir, " Path to cache directory";
   "--config"  , Arg.String (fun c ->
-    ignore (read_config_file c))
+    ignore (read_config (File c)))
                                             , " Path to configuration file";
   "-c"  , Arg.String (fun c ->
-    ignore (read_config_file c))
+    ignore (read_config (File c)))
                                             , " Path to configuration file";
   "--cache"   , Arg.String Benl_clflags.set_cache_file, " Path to cache file";
   "-C"        , Arg.String Benl_clflags.set_cache_file, " Path to cache file";
