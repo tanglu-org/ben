@@ -31,7 +31,7 @@ let args = ref []
 let anon_fun name =
   args := name :: !args
 
-let sources_re = Re_pcre.regexp "Sources"
+let sources_re = Re_pcre.regexp "[sS]ources.*"
 let is_source x =
   try
     ignore (Re_pcre.exec ~rex:sources_re x);
