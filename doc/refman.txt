@@ -1,5 +1,5 @@
-Ben's reference manual
-======================
+// -*- Doc -*-
+= Ben's reference manual
 :Author: Mehdi Dogguy and Stéphane Glondu
 :Date: {localdate}
 :Revision: {localrevision}
@@ -24,8 +24,7 @@ WARNING: This document is still work in progress!
 
 :numbered!:
 [abstract]
-Introduction
-------------
+== Introduction
 _Ben_ is the name of a set of utilities written in
 http://caml.inria.fr[OCaml] and available through the `ben`
 command. The major feature of _Ben_ is to provide a full featured
@@ -37,8 +36,7 @@ configuration.
 
 :numbered:
 
-Getting the source code
------------------------
+== Getting the source code
 _Ben_ is maintained in a Git repository available online at
 http://anonscm.debian.org/gitweb/?p=collab-maint/ben.git. Getting the
 sources is as simple as:
@@ -52,8 +50,7 @@ The source tree has a `debian/` directory. It is a native
 Debian package, so you can use the standard building tools in order to
 build it.
 
-Query language
---------------
+== Query language
 
 The main feature of _Ben_ is a transition tracker. The
 transition tracker selects a set of affected packages and computes a
@@ -124,8 +121,7 @@ Now that the concept of query is explained, we will focus on other
 parts of _Ben_. We will see how we can use the queries for each
 frontend.
 
-Frontends
----------
+== Frontends
 _Ben_ is a set of utilities available through the `ben` command. Each
 utility is called a _frontend_ and there are four:
 
@@ -171,8 +167,7 @@ needs.
 
 The rest of this section describes each frontend.
 
-download
-~~~~~~~~
+=== download
 
 This frontend is the simplest one as it has no command-line options,
 except the shared ones. It downloads all Sources.gz files and all
@@ -186,8 +181,7 @@ in the current directory.
 
 NOTE: `ben download` doesn't read `ben.cache` files yet.
 
-query
-~~~~~
+=== query
 
 This utility is pretty much like
 http://man.cx/grep-dctrl(1)[`grep-dctrl(1)`]. Given a list of Packages
@@ -213,8 +207,7 @@ paragraphs.
 
  $ ben query ".package ~ /gentoo/" -s Package,Version ...
 
-monitor
-~~~~~~~
+=== monitor
 
 The `monitor` fontend builds a monitoring page for a transition. A
 transition is decribed by three queries:
@@ -276,8 +269,7 @@ There are other optional fields:
 | --template template     | Select an HTML template
 |=========================================================================
 
-tracker
-~~~~~~~
+=== tracker
 
 This frontend uses `monitor` to generate a summary page about all
 known transitions. An example of such summary can be found at
@@ -322,8 +314,7 @@ result in the `base` directory.
 | --no-clean              | Leave unknown generated HTML files
 |====================================================================
 
-HTML Templates
---------------
+== HTML Templates
 
 Ben has a simple templating mechanism to generate customized HTML
 pages. Templates are loaded dynamically when `monitor` or `tracker`
@@ -345,7 +336,7 @@ you're building on a bytecode-only architecture, you should build a
 If your template needs a CSS (Cascading Style Sheets) or some images,
 you should install them under `/usr/share/ben/media`.
 
-Reporting issues
-----------------
+== Reporting issues
 
-Please report bugs against _Ben_ through the Debian BTS.
+Please report bugs against _Ben_ through the Debian BTS. Reported bugs
+can be seen on https://bugs.debian.org/cgi-bin/pkgreport.cgi?repeatmerged=no&src=ben
