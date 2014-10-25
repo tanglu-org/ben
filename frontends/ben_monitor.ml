@@ -161,7 +161,11 @@ let archs_list config =
     | _ -> assert false
   in
   let release_archs_list = expr_l (Benl_clflags.get_config config "architectures") in
-  let ignored_archs_list = expr_l (Benl_clflags.get_config config "ignored") in
+  let ignored_archs_list =
+    try
+      expr_l (Benl_clflags.get_config config "ignored")
+    with _ -> []
+  in
   let archs_list = Benl_core.uniq (release_archs_list @ ignored_archs_list) in
   List.sort Pervasives.compare archs_list
 
