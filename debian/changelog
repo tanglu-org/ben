@@ -1,4 +1,4 @@
-ben (0.7.0) UNRELEASED; urgency=low
+ben (0.7.0) unstable; urgency=medium
 
   * Add --no-clean to "ben tracker" to leave unknown generated
     HTML files.
@@ -34,7 +34,7 @@ ben (0.7.0) UNRELEASED; urgency=low
   * Suppose no ignored architectures when ignored item is missing in
     the configuration file.
 
- -- Mehdi Dogguy <mehdi@debian.org>  Sat, 09 Aug 2014 10:29:12 +0200
+ -- Mehdi Dogguy <mehdi@debian.org>  Sat, 25 Oct 2014 15:59:23 +0200
 
 ben (0.6.10.1) unstable; urgency=medium
 
