@@ -103,7 +103,8 @@ module Projectb = struct
 
   let mk_origin () =
 
-    let suite = !Benl_clflags.suite in
+    (* let suite = !Benl_clflags.suite in *)
+    let suite = "chromodoris" in
 
     (* psql service=projectb must work, e.g. on coccia.debian.org. To make
        it work elsewhere, copy
