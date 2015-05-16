@@ -63,7 +63,7 @@ let download_sources () =
     if r <> 0 then
       raise (Curl_error r)
     else
-      ignore (Sys.command (sprintf "rm -f %s" tmp))
+      FileUtil.rm ~force:FileUtil.Force [tmp]
   end;;
 
 let download_binaries arch =
@@ -101,7 +101,7 @@ let download_binaries arch =
     if r <> 0 then
       raise (Curl_error r)
     else
-      ignore (Sys.command (sprintf "rm -f %s" tmp))
+      FileUtil.rm ~force:FileUtil.Force [tmp]
   end;;
 
 let download_all architectures =
