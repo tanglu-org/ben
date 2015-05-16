@@ -445,7 +445,9 @@ let tracker template profiles =
     Benl_error.error_exn "Failed to generate index.html" exn
 
 let () = at_exit (fun () ->
-  rm [lockf ()]
+  try
+    rm [lockf ()]
+  with _ -> ()
 )
 
 let main args =
