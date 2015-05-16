@@ -322,6 +322,13 @@ let read_debcheck =
       let () = Buffer.reset buf in
       r
     in
+    let get_package_name p =
+      let p = Re_pcre.get_substring p 1 in
+      try
+        snd (ExtString.String.split p ":")
+      with _ ->
+        p
+    in
     let rec read_pkg accu =
       begin match (try Some (input_line ic) with End_of_file -> None) with
       | None ->
@@ -329,7 +336,7 @@ let read_debcheck =
       | Some line ->
         try
           let r = Re_pcre.exec ~rex line in
-          let package = Re_pcre.get_substring r 1 in
+          let package = get_package_name r in
           let buf = Buffer.create 1024 in
           let () = Buffer.add_string buf line in
           let () = Buffer.add_char buf '\n' in
@@ -360,7 +367,8 @@ let inject_debcheck_data =
     let a, b = if !Benl_clflags.quiet then ("\n", "") else ("", "\n") in
     let all_uninstallable_packages = Benl_parallel.fold (fun map arch_ref ->
       Benl_clflags.progress "Running dose-debcheck on %s...\n" arch_ref;
-      let (ic, oc) as p = Unix.open_process "dose-debcheck --explain --quiet --failures" in
+      let dose_debcheck_cmd = Printf.sprintf "dose-debcheck --deb-native-arch=%s --explain --quiet --failures" arch_ref in
+      let (ic, oc) as p = Unix.open_process dose_debcheck_cmd in
       (* inefficiency: for each architecture, we iterate on all binary
          packages, not only on binary packages of said architectures *)
       PAMap.iter (fun (name, arch) pkg ->
