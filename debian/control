@@ -11,10 +11,14 @@ Build-Depends:
  ocaml-findlib,
  menhir,
  libpcre-ocaml-dev,
+ libocamlnet-ocaml-dev,
  libocamlgraph-ocaml-dev,
  libfileutils-ocaml-dev,
  libtyxml-ocaml-dev (>= 2.1-1~),
  libpostgresql-ocaml-dev,
+ libparmap-ocaml-dev,
+ libre-ocaml-dev,
+ libextlib-ocaml-dev,
  ocaml-nox (>= 3.11.1-3~),
  asciidoc,
  docbook-xml,
@@ -22,7 +26,7 @@ Build-Depends:
  libxml2-utils,
  xsltproc,
  source-highlight
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Section: ocaml
 Homepage: http://ben.debian.net
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=collab-maint/ben.git
@@ -67,7 +71,7 @@ Depends:
 Provides: ${ocaml:Provides}
 Enhances: devscripts
 Recommends:
- dose-debcheck
+ dose-distcheck
 Description: toolbox for Debian maintainers
  This is a collection of useful tools that Debian maintainers can use
  to make their packaging work easier. They all work with regular

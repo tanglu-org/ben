@@ -40,16 +40,19 @@ type origin = {
     ([ `source ] as 'b, 'b Package.t) M.t -> ('b, 'b Package.t) M.t;
 }
 
-let relevant_binary_keys =
+let default_relevant_binary_keys = StringSet.from_list
   [ "package"; "source"; "version"; "maintainer"; "architecture";
     "provides"; "depends"; "pre-depends"; "replaces";
     "multi-arch";
     "conflicts"; "breaks"; "suggests"; "recommends"; "enhances" ]
 
-let relevant_source_keys =
+let default_relevant_source_keys = StringSet.from_list
   [ "package"; "source"; "version"; "maintainer"; "architecture";
     "directory";
     "binary"; "build-depends"; "build-depends-indep" ]
+
+let relevant_binary_keys = ref default_relevant_binary_keys
+let relevant_source_keys = ref default_relevant_source_keys
 
 let ( // ) = Filename.concat
 let ( !! ) = Lazy.force
@@ -59,7 +62,7 @@ let file_origin =
   let get_binaries accu arch =
     Benl_utils.parse_control_file `binary
       (!Benl_clflags.cache_dir // ("Packages_"^arch))
-      (fun x -> List.mem x relevant_binary_keys)
+      (fun x -> StringSet.mem x !relevant_binary_keys)
       (fun name pkg accu ->
         try
           let old_pkg = PAMap.find (name, arch) accu in
@@ -76,7 +79,7 @@ let file_origin =
   let get_sources accu =
     Benl_utils.parse_control_file `source
       (!Benl_clflags.cache_dir // "Sources")
-      (fun x -> List.mem x relevant_source_keys)
+      (fun x -> StringSet.mem x !relevant_source_keys)
       (fun name pkg accu ->
         try
           let old_pkg = M.find name accu in
@@ -94,26 +97,16 @@ let file_origin =
 
 module Projectb = struct
 
-  module StringMap = Map.Make(String)
-  module StringSet = Set.Make(String)
-  module IntMap = Map.Make(struct
-    type t = int
-    let compare : t -> t -> int = compare
-  end)
-
   let mk_origin () =
 
     (* let suite = !Benl_clflags.suite in *)
     let suite = "chromodoris" in
 
-    (* psql service=projectb must work, e.g. on coccia.debian.org. To make
-       it work elsewhere, copy
-       coccia.debian.org:/etc/postgresql-common/pg_service.conf to your
-       ~/.pg_service.conf and set up tunnels accordingly. *)
-    let projectb = new Postgresql.connection ~conninfo:"service=projectb" () in
+    (* psql service=projectb must work, e.g. on curie.tanglu.org *)
+    let projectb = new Postgresql.connection ~conninfo:"service=projectb" in
 
     let mk_wrapper_maps transform sql =
-      let r = projectb#exec sql in
+      let r = (projectb ())#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
       Array.fold_left (fun (a, b) row ->
 	match row with
@@ -150,10 +143,10 @@ module Projectb = struct
       (mk_wrapper_maps string_identity "select id, arch_string from architecture")
     in
 
-    let relevant_binary_key_ids = List.map id_of_key relevant_binary_keys in
+    let relevant_binary_key_ids = List.map id_of_key (StringSet.elements !relevant_binary_keys) in
 
     let get_binaries accu arch =
-      Benl_clflags.progress "Querying projectb for %s binaries in staging (+ %s)..." arch suite;
+      Benl_clflags.progress "Querying projectb for %s binaries in staging (+ %s)...\n" arch suite;
       let sql = sprintf
 	"select b.bin_id, b.key_id, b.value from bin_associations as a join (select * from binaries_metadata where key_id in (%s)) as b on b.bin_id = a.bin join (select * from binaries) as c on c.id = a.bin where a.suite = %d and c.architecture in (%d,%d)
 	UNION ALL
@@ -163,15 +156,16 @@ module Projectb = struct
 	(String.concat "," (List.map string_of_int relevant_binary_key_ids))
 	(id_of_suite suite) (id_of_arch "all") (id_of_arch arch)
       in
-      let r = projectb#exec sql in
+      let r = (projectb ())#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
       let id_indexed_map = Array.fold_left (fun a row ->
 	match row with
         | [| src_id; key_id; value |] ->
           let src_id = int_of_string src_id
           and key_id = int_of_string key_id in
-          let old = try IntMap.find src_id a with Not_found -> [] in
-          IntMap.add src_id ((key_of_id key_id, value)::old) a
+          let old = try IntMap.find src_id a with Not_found -> StringMap.empty in
+          let old = StringMap.add (key_of_id key_id) value old in
+          IntMap.add src_id old a
         | _ -> assert false
       ) IntMap.empty r#get_all in
       let result = IntMap.fold (fun _ assoc accu ->
@@ -187,24 +181,22 @@ module Projectb = struct
 	with Not_found ->
           PAMap.add (name, arch) pkg accu
       ) id_indexed_map accu in
-      Benl_clflags.progress "\n";
       result
     in
 
     let sources_in_testing =
-      Benl_clflags.progress "Querying projectb for sources in %s..." suite;
+      Benl_clflags.progress "Querying projectb for sources in %s...\n" suite;
       let sql = sprintf
 	"select (select value from source_metadata as b where key_id = %d and b.src_id = a.source) from src_associations as a where a.suite = %d"
 	(id_of_key "source") (id_of_suite suite)
       in
-      let r = projectb#exec sql in
+      let r = (projectb ())#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
       let result = Array.fold_left (fun a row ->
 	match row with
         | [| source |] -> StringSet.add source a
         | _ -> assert false
       ) StringSet.empty r#get_all in
-      Benl_clflags.progress "\n";
       result
     in
 
@@ -212,11 +204,14 @@ module Projectb = struct
     (* beware! key "directory" does not exist in projectb and is
        handled specifically below *)
       List.map id_of_key
-	(List.filter (fun x -> x <> "directory") relevant_source_keys)
+	(List.filter
+           (fun x -> x <> "directory")
+           (StringSet.elements !relevant_source_keys)
+        )
     in
 
     let get_sources accu =
-      Benl_clflags.progress "Querying projectb for sources in staging (+ %s)..." suite;
+      Benl_clflags.progress "Querying projectb for sources in staging (+ %s)...\n" suite;
       (* get general metadata *)
       let sql = sprintf
 	"select b.src_id, b.key_id, b.value from src_associations as a join (select * from source_metadata where key_id in (%s)) as b on b.src_id = a.source where a.suite = %d
@@ -227,19 +222,20 @@ module Projectb = struct
 	(String.concat "," (List.map string_of_int relevant_source_key_ids))
 	(id_of_suite suite)
       in
-      let r = projectb#exec sql in
+      let r = (projectb ())#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
       let id_indexed_map = Array.fold_left (fun a row ->
 	match row with
         | [| src_id; key_id; value |] ->
           let src_id = int_of_string src_id
           and key_id = int_of_string key_id in
-          let old = try IntMap.find src_id a with Not_found -> [] in
+          let old = try IntMap.find src_id a with Not_found -> StringMap.empty in
           let key = key_of_id key_id in
           (* translate "source" to "package" for consistency with
              Sources files *)
           let key = if key = "source" then "package" else key in
-          IntMap.add src_id ((key, value)::old) a
+          let old = StringMap.add key value old in
+          IntMap.add src_id old a
         | _ -> assert false
       ) IntMap.empty r#get_all in
     (* get .dsc paths to compute directories *)
@@ -248,7 +244,7 @@ module Projectb = struct
 	(id_of_suite "staging")
 	(id_of_suite suite)
       in
-      let r = projectb#exec sql in
+      let r = (projectb ())#exec sql in
       assert (r#status = Postgresql.Tuples_ok);
       let id_indexed_dscs = Array.fold_left (fun a row ->
 	match row with
@@ -262,7 +258,7 @@ module Projectb = struct
 	let directory = Filename.concat "pool"
           (Filename.dirname (IntMap.find src_id id_indexed_dscs))
 	in
-	("directory", directory) :: pkg
+        StringMap.add "directory" directory pkg
       ) id_indexed_map in
       let result = IntMap.fold (fun _ assoc accu ->
 	let pkg = Package.of_assoc `source assoc in
@@ -283,7 +279,6 @@ module Projectb = struct
 	with Not_found ->
           M.add name pkg accu
       ) id_indexed_map accu in
-      Benl_clflags.progress "\n";
       result
     in
 
@@ -291,9 +286,9 @@ module Projectb = struct
 
 end
 
-let filter_affected { src_map = srcs; bin_map = bins } is_affected =
+let filter_affected { src_map = srcs; bin_map = bins } is_affected config =
   let src_map = M.fold begin fun name src accu ->
-    if Query.eval_source src !!(is_affected ()) then
+    if Query.eval_source src !!(is_affected config) then
       M.add name src accu
     else accu
   end srcs M.empty in
@@ -302,8 +297,8 @@ let filter_affected { src_map = srcs; bin_map = bins } is_affected =
     let src_name = Package.Name.of_string src_name in
     try
       let src = M.find src_name srcs in
-      if Query.eval_binary pkg !!(is_affected ())
-      || Query.eval_source src !!(is_affected ())
+      if Query.eval_binary pkg !!(is_affected config)
+      || Query.eval_source src !!(is_affected config)
       then begin
         M.add src_name src saccu
         ,
@@ -322,34 +317,74 @@ let filter_affected { src_map = srcs; bin_map = bins } is_affected =
   ) bins bin_map in
   { src_map = src_map; bin_map = bin_map }
 
+let read_debcheck =
+  let rex = Re_pcre.regexp "^  package: (.*)$" in
+  let ignore = Re_pcre.regexp "^ +(architecture|status|source): " in
+  fun ic ->
+    let check_empty accu =
+      if Package.Map.is_empty accu then
+        Printf.eprintf "W: no uninstallable packages!\n%!";
+      accu
+    in
+    let reason buf =
+      let r = ExtString.String.strip (Buffer.contents buf) in
+      let () = Buffer.reset buf in
+      r
+    in
+    let get_package_name p =
+      let p = Re_pcre.get_substring p 1 in
+      try
+        snd (ExtString.String.split p ":")
+      with _ ->
+        p
+    in
+    let rec read_pkg accu =
+      begin match (try Some (input_line ic) with End_of_file -> None) with
+      | None ->
+        check_empty accu
+      | Some line ->
+        try
+          let r = Re_pcre.exec ~rex line in
+          let package = get_package_name r in
+          let buf = Buffer.create 1024 in
+          let () = Buffer.add_string buf line in
+          let () = Buffer.add_char buf '\n' in
+          read_reason (Package.Name.of_string package) accu buf
+        with Not_found -> read_pkg accu
+      end
+    and read_reason pkg accu buf =
+      begin match (try Some (input_line ic) with End_of_file -> None) with
+      | None ->
+        let accu = Package.Map.add pkg (reason buf) accu in
+        read_pkg accu
+      | Some line ->
+        if line = " -" then
+          let accu = Package.Map.add pkg (reason buf) accu in
+          read_pkg accu
+        else
+          if Re_pcre.pmatch ~rex:ignore line then
+            read_reason pkg accu buf
+          else
+            let () = Buffer.add_string buf line in
+            let () = Buffer.add_char buf '\n' in
+            read_reason pkg accu buf
+      end
+    in read_pkg Package.Map.empty
+
 let inject_debcheck_data =
-  let rex = Pcre.regexp "^  package: (.*)$" in
   fun (bins : [`binary] Package.t PAMap.t)  architectures ->
     let a, b = if !Benl_clflags.quiet then ("\n", "") else ("", "\n") in
-    let all_uninstallable_packages = List.map (fun arch_ref ->
-      Benl_clflags.progress "Running dose-debcheck on %s..." arch_ref;
-      let (ic, oc) as p = Unix.open_process "dose-debcheck --quiet --failures" in
+    let all_uninstallable_packages = Benl_parallel.fold (fun map arch_ref ->
+      Benl_clflags.progress "Running dose-debcheck on %s...\n" arch_ref;
+      let dose_debcheck_cmd = Printf.sprintf "dose-debcheck --deb-native-arch=%s --explain --quiet --failures" arch_ref in
+      let (ic, oc) as p = Unix.open_process dose_debcheck_cmd in
       (* inefficiency: for each architecture, we iterate on all binary
          packages, not only on binary packages of said architectures *)
       PAMap.iter (fun (name, arch) pkg ->
         if arch = arch_ref then Package.print oc pkg
       ) bins;
       close_out oc;
-      let rec loop accu =
-        begin match (try Some (input_line ic) with End_of_file -> None) with
-          | None ->
-            if Package.Set.is_empty accu then
-              Printf.eprintf "W: no uninstallable packages!\n%!";
-            accu
-          | Some line ->
-            try
-              let r = Pcre.exec ~rex line in
-              let package = Pcre.get_substring r 1 in
-              loop (Package.Set.add (Package.Name.of_string package) accu)
-            with Not_found -> loop accu
-        end
-      in
-      let result = loop Package.Set.empty in
+      let result = read_debcheck ic in
       begin match Unix.close_process p with
         | Unix.WEXITED (0|1) -> ()
         | Unix.WEXITED i ->
@@ -362,36 +397,43 @@ let inject_debcheck_data =
           Printf.eprintf
             "%sW: subprocess dose-debcheck stopped with signal %d%s%!" a i b
       end;
-      Benl_clflags.progress "\n";
-      (arch_ref, result)
-    ) architectures in
+      StringMap.add arch_ref result map
+    ) StringMap.empty architectures StringMap.fusion in
     PAMap.mapi (fun (name, arch) pkg ->
-      let uninstallable_packages = List.assoc arch all_uninstallable_packages in
-      if Package.Set.mem name uninstallable_packages
-      then
-        (* the following line is for compatibility only and should be
-           removed eventually *)
+      try
+        let uninstallable_packages = StringMap.find arch all_uninstallable_packages in
+        let reason = Package.Map.find name uninstallable_packages in
+        let pkg = Package.add "uninstallable" "yes" pkg in
         let pkg = Package.add "edos-debcheck" "uninstallable" pkg in
-        Package.add "uninstallable" "yes" pkg
-      else pkg
+        Package.add "debcheck-reason" reason pkg
+      with Not_found ->
+        pkg
     ) bins
 
-let get_data is_affected =
+let generate_cache file architectures =
+  let origin =
+    if !use_projectb then Projectb.mk_origin () else file_origin
+  in
+  let src_raw = origin.get_sources M.empty in
+  let bin_raw = Benl_parallel.fold
+    origin.get_binaries PAMap.empty architectures PAMap.fusion
+  in
+  let bin_raw = if !run_debcheck
+    then inject_debcheck_data bin_raw architectures
+    else bin_raw
+  in
+  let data = { src_map = src_raw; bin_map = bin_raw; } in
+  Marshal.dump file data;
+  data
+
+let load_cache architectures =
   let file = Benl_clflags.get_cache_file () in
   if !Benl_clflags.use_cache && Sys.file_exists file then
-    filter_affected (Marshal.load file) is_affected
+    Marshal.load file
   else
-    let origin =
-      if !use_projectb then Projectb.mk_origin () else file_origin
-    in
-    let src_raw = origin.get_sources M.empty in
-    let bin_raw = List.fold_left
-      origin.get_binaries PAMap.empty !Benl_clflags.architectures
-    in
-    let bin_raw = if !run_debcheck
-      then inject_debcheck_data bin_raw !Benl_clflags.architectures
-      else bin_raw
-    in
-    let data = { src_map = src_raw; bin_map = bin_raw; } in
-    Marshal.dump file data;
-    filter_affected data is_affected
+    generate_cache file architectures
+
+let get_data ?(cache = None) is_affected architectures config =
+  match cache with
+  | None -> filter_affected (load_cache architectures) is_affected config
+  | Some data -> filter_affected data is_affected config

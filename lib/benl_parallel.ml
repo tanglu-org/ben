@@ -1,5 +1,5 @@
 (**************************************************************************)
-(*  Copyright © 2009 Stéphane Glondu <steph@glondu.net>                   *)
+(*  Copyright © 2014 Mehdi Dogguy <mehdi@dogguy.org>                      *)
 (*                                                                        *)
 (*  This program is free software: you can redistribute it and/or modify  *)
 (*  it under the terms of the GNU Affero General Public License as        *)
@@ -17,34 +17,30 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-(** Ben-specific basic datatypes. *)
+let level = ref (Parmap.get_default_ncores ())
 
-type field = string
-(** A field name *)
+let set_level l =
+  if l > 0 then begin
+    Parmap.set_default_ncores l;
+    level := l
+  end
 
-type regexp = string * Re_pcre.regexp
-(** A pair of a PCRE regexp and its string representation (as parsed
-    from configuration, used for pretty-printing). *)
+let get_level () =
+  !level
 
-type comparison = Le | Lt | Eq | Gt | Ge
+let map ?(level = !level) f l =
+  Parmap.parmap ~ncores:level
+    f
+    (Parmap.L l)
 
-type expr =
-  | Etrue
-  | Efalse
-  | EMatch of field * expr
-  | ENot of expr
-  | EAnd of expr * expr
-  | EOr of expr * expr
-  | ESource
-  | EList of expr list
-  | EString of string
-  | ERegexp of regexp
-  | EVersion of comparison * string
-  | EDep of string * comparison * string
-(** The abstract syntax tree of configuration items. *)
+let iter ?(level = !level) f l =
+  Parmap.pariter ~ncores:level
+    f
+    (Parmap.L l)
 
-type config = expr Benl_core.StringMap.t
-(** The type of parsed configuration files. Configuration files are
-    key-value pairs, where values have type [expr]. *)
-
-type source = File of string | Stdin | NoSource
+let fold ?(level = !level) f a l m =
+  Parmap.parfold ~ncores:level
+    (fun e a -> f a e)
+    (Parmap.L l)
+    a
+    m

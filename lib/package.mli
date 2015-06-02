@@ -28,6 +28,7 @@ module Name : sig
 end
 
 val get : string -> 'a t -> string
+val has : string -> 'a t -> bool
 val add : string -> string -> 'a t -> 'a t
 val print : out_channel -> 'a t -> unit
 val filter_print : string list -> out_channel -> 'a t -> unit
@@ -37,21 +38,24 @@ module Set : sig
   val empty : 'a t
   val is_empty : 'a t -> bool
   val add : 'a Name.t -> 'a t -> 'a t
+  val from_list : 'a Name.t list -> 'a t
   val mem : 'a Name.t -> 'a t -> bool
   val exists : ('a Name.t -> bool) -> 'a t -> bool
   val iter : ('a Name.t -> unit) -> 'a t -> unit
   val cardinal : 'a t -> int
   val elements : 'a t -> 'a Name.t list
   val fold : ('a Name.t -> 'b -> 'b) -> 'a t -> 'b -> 'b
+  val filter : ('a Name.t -> bool) -> 'a t -> 'a t
 end
 
 val of_assoc :
   ([< `binary | `source] as 'a) ->
-  (string * string) list -> 'a t
+  string Benl_core.StringMap.t -> 'a t
 
 module Map : sig
   type ('a, 'b) t
   val empty : ('a, 'b) t
+  val is_empty : ('a, 'b) t -> bool
   val add : 'a Name.t -> 'b -> ('a, 'b) t -> ('a, 'b) t
   val find : 'a Name.t -> ('a, 'b) t -> 'b
   val iter : ('a Name.t -> 'b -> unit) -> ('a, 'b) t -> unit

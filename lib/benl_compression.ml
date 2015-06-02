@@ -1,5 +1,6 @@
 (**************************************************************************)
-(*  Copyright © 2009 Stéphane Glondu <steph@glondu.net>                   *)
+(*  Copyright © 2009-2014 Stéphane Glondu <steph@glondu.net>              *)
+(*            © 2010-2014 Mehdi Dogguy <mehdi@dogguy.org>                 *)
 (*                                                                        *)
 (*  This program is free software: you can redistribute it and/or modify  *)
 (*  it under the terms of the GNU Affero General Public License as        *)
@@ -17,34 +18,58 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-(** Ben-specific basic datatypes. *)
+open Benl_error
 
-type field = string
-(** A field name *)
+type t = Gzip | Bz2 | Xz | Plain
 
-type regexp = string * Re_pcre.regexp
-(** A pair of a PCRE regexp and its string representation (as parsed
-    from configuration, used for pretty-printing). *)
+let to_string = function
+  | Gzip -> "Gzip"
+  | Bz2 -> "Bz2"
+  | Xz -> "Xz"
+  | Plain -> "Plain"
 
-type comparison = Le | Lt | Eq | Gt | Ge
+let of_string s = match (String.lowercase s) with
+  | "gzip" | "gz" -> Gzip
+  | "bz2" -> Bz2
+  | "xz" -> Xz
+  | "plain" | "no" | "none" -> Plain
+  | _ -> raise (Unknown_input_format s)
 
-type expr =
-  | Etrue
-  | Efalse
-  | EMatch of field * expr
-  | ENot of expr
-  | EAnd of expr * expr
-  | EOr of expr * expr
-  | ESource
-  | EList of expr list
-  | EString of string
-  | ERegexp of regexp
-  | EVersion of comparison * string
-  | EDep of string * comparison * string
-(** The abstract syntax tree of configuration items. *)
+let default = Gzip
 
-type config = expr Benl_core.StringMap.t
-(** The type of parsed configuration files. Configuration files are
-    key-value pairs, where values have type [expr]. *)
+let is_known s =
+  try
+    ignore (of_string s);
+    true
+  with _ ->
+    false
 
-type source = File of string | Stdin | NoSource
+let is_compressed s =
+  try
+    (of_string s) <> Plain
+  with _ ->
+    false
+
+let file_extension filename =
+  try
+    Some (FilePath.get_extension filename)
+  with _ ->
+    None
+
+let file_is_compressed filename =
+  try
+    is_compressed (FilePath.get_extension filename)
+  with _ ->
+    false
+
+let extension = function
+  | Gzip -> ".gz"
+  | Bz2 -> ".bz2"
+  | Xz -> ".xz"
+  | Plain -> ""
+
+let display_tool = function
+  | Gzip -> "zcat"
+  | Bz2 -> "bzcat"
+  | Xz -> "xzcat"
+  | Plain -> "cat"

@@ -24,11 +24,45 @@ open Benl_base
 
 type t = Benl_types.expr
 
-let of_expr x = x
+let rec simplify query = match query with
+  | EMatch (field, EString package) ->
+    begin match (Benl_core.simple_split '|' package) with
+    | package::[] -> query
+    | packages ->
+      let packages = List.map Re_pcre.quote packages in
+      let r_string = String.concat "|" packages in
+      let rex = Re_pcre.regexp (Printf.sprintf "\b(%s)\b" r_string) in
+      EMatch (field, ERegexp (package, rex))
+    end
+  | EMatch (_, (EDep _ | ERegexp _)) -> query
+  | Etrue | Efalse | ESource | EVersion _ | EString _ | ERegexp _ | EDep _ -> query
+  | EMatch (f, e) -> EMatch (f, simplify e)
+  | EList l -> begin match l with
+    | [] -> Etrue
+    | h::[] -> simplify h
+    | _::_ -> EList (List.map simplify l)
+  end
+  | ENot e -> begin match (simplify e) with
+    | Etrue -> Efalse
+    | Efalse -> Etrue
+    | e -> ENot e
+  end
+  | EOr (e1, e2) -> begin match (simplify e1, simplify e2) with
+    | Efalse, e | e, Efalse -> e
+    | Etrue, _ | _, Etrue -> Etrue
+    | e1, e2 -> EOr (e1, e2)
+  end
+  | EAnd (e1, e2) -> begin match (simplify e1, simplify e2) with
+    | Efalse, e | e, Efalse -> Efalse
+    | Etrue, e | e, Etrue -> e
+    | e1, e2 -> EAnd (e1, e2)
+  end
+
+let of_expr x = simplify x
 
 let of_string s =
   let lexbuf = Lexing.from_string s in
-  Benl_parser.full_expr Benl_lexer.token lexbuf
+  simplify (Benl_parser.full_expr Benl_lexer.token lexbuf)
 
 let parens show expr =
   if show
@@ -72,7 +106,7 @@ let rec eval kind pkg = function
   | EMatch (field, ERegexp (r, rex)) ->
       begin try
         let value = Package.get field pkg in
-        ignore (Pcre.exec ~rex value);
+        ignore (Re_pcre.exec ~rex value);
         true
       with Not_found ->
         false
@@ -105,10 +139,14 @@ let rec eval kind pkg = function
         end)
       deps
   | EMatch (field, EString package) ->
-    let deps = Package.dependencies field pkg in
-    List.exists
-      (fun x -> x.Package.dep_name = package)
-      deps
+    begin try
+      let deps = Package.dependencies field pkg in
+      List.exists
+        (fun x -> x.Package.dep_name = package)
+        deps
+    with Not_found ->
+      false
+    end
   | x ->
       raise (Unexpected_expression (to_string x))
 

@@ -19,6 +19,7 @@
 
 %{
   open Benl_types
+  open Benl_core
 %}
 
 %token <Benl_types.field> FIELD
@@ -69,4 +70,6 @@ config_item:
 | i = IDENT EQ e = expr SEMICOLON { (i, e) }
 
 config_file:
-| xs = list(config_item) EOF { xs }
+| xs = list(config_item) EOF {
+  List.fold_left (fun accu (key, value) -> StringMap.add key value accu) StringMap.empty xs
+}

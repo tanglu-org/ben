@@ -1,3 +1,104 @@
+ben (0.7.0) unstable; urgency=medium
+
+  * Add --no-clean to "ben tracker" to leave unknown generated
+    HTML files.
+  * "ben tracker" will clean up the HTML directory by default from
+    now on.
+  * Add ability to read uncompressed files by specifying "plain",
+    "no" or "none" as a compression format.
+  * Remove --output-type from "ben tracker". Support for other output
+    types didn't exist anyway and is not planned.
+  * Simplify queries so that processing is, a bit, faster.
+  * Make templates directory configurable through BEN_TEMPLATES_DIR
+    environment variable.
+  * Automatically set correct date and revision when generating refman.
+  * Bump magic number to BENA0902 because of change in internal format
+    of cache file. This requires regeneration of .cache files.
+  * Ben should not define any of the modules exported by its library.
+    Update the nodefined-map for Ben accordingly.
+  * Add libocamlnet-ocaml-dev to Build-Depends, needed by Ben_monitor
+    through usage of Netencoding (Closes: #750327).
+  * Using -stdin, ben monitor will read its input file from the
+    standard input (Closes: #747887).
+  * Document how ben query makes the difference between Packages and
+    Sources files (Closes: #747879).
+  * Use Arg module to process CLI arguments.
+  * Parallelize (using ParMap) ben's processing in all frontends, except
+    query.
+    - Add libparmap-ocaml-dev to Build-Depends.
+  * Use Re.Pcre instead of Pcre in a few places to be able to parallelize
+    since this requires serializing a few data structures.
+  * Add a collision detector in ben tracker (Closes: #730619).
+  * Read and show explanations given by dose-debcheck.
+    - Add libextlib-ocaml-dev to Build-Depends.
+  * Suppose no ignored architectures when ignored item is missing in
+    the configuration file.
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Sat, 25 Oct 2014 15:59:23 +0200
+
+ben (0.6.10.1) unstable; urgency=medium
+
+  * Fix built regexp to use for string matching.
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Sun, 04 May 2014 09:31:23 +0200
+
+ben (0.6.10) unstable; urgency=medium
+
+  * Fix a bug in "ben query": Expand the list of kept field names
+    using Benl_data.relevant_*_keys and Benl_clflags.more_relevant_*_keys
+  * A little speed-up for queries on fixed strings (Closes: #732836).
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Sun, 04 May 2014 02:23:18 +0200
+
+ben (0.6.9) unstable; urgency=medium
+
+  * dose-debcheck package does not exist. Recommend dose-distcheck
+    instead (Closes: #746507).
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Thu, 01 May 2014 13:20:10 +0200
+
+ben (0.6.8) unstable; urgency=medium
+
+  * Add --more-binary-keys and --more-binary-keys CLI options to be
+    able to specify further relevant binary or source keys to consider
+    when running `ben monitor`.
+    This is a way to extend the default list of keys considered by Ben
+    and which was introduced in 6f532423296083bed50b85a6ffb29b53e1349e23.
+  * Remove ia64 from default list of architectures (Closes: #743724).
+  * Translate to lowercase user-specified field names
+  * Capitalize field names (and take into account a word separator) when
+    printing them.
+  * Add --preferred-compression-format (or -z) command line option to
+    specify which compression algorithm to use. Known formats are Gzip,
+    Bz2 and Xz. This automatically makes them known to "ben download"
+    and "ben query".
+  * Update architectures lists:
+    - Remove sparc from Debian architectures.
+    - Add HPPA in Debian Ports list.
+  * Now cache-dir, cache-file and use-cache can be set in configuration
+    files.
+  * Read $HOME/.benrc file at startup and provide --no-benrc to skip it
+    (Closes: #746046).
+
+ -- Mehdi Dogguy <mehdi@debian.org>  Sun, 27 Apr 2014 23:12:15 +0200
+
+ben (0.6.7) unstable; urgency=low
+
+  [ Stéphane Glondu ]
+  * In monitor, consider all binary packages of affected source packages
+  * Sort transitions in tracker index (Closes: #732833)
+  * Download .gz package lists instead of .bz2 (Closes: #736159)
+  * Bump Standards-Version to 3.9.5
+
+  [ Nobuhiro Iwamatsu ]
+  * Update achitecture lists (Closes: #729090)
+
+  [ Colin Watson ]
+  * Tolerate templates with buildds or critical_bugs entries that return
+    None (Closes: #728708)
+
+ -- Stéphane Glondu <glondu@debian.org>  Mon, 27 Jan 2014 11:26:46 +0100
+
 ben (0.6.6) unstable; urgency=low
 
   * Simplify computation of dependency levels by using ocamlgraph's SCC

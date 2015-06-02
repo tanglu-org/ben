@@ -1,2 +1,2 @@
 # OCamldoc generated documentation
- -thread -package unix -package pcre -package ocamlgraph -package tyxml -package fileutils -package threads -package postgresql
+ -thread -package unix -package pcre -package ocamlgraph -package tyxml -package fileutils -package threads -package postgresql -package re.pcre -package parmap -package extlib

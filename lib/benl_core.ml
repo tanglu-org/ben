@@ -18,6 +18,37 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
+module StringMap = struct
+  include Map.Make(String)
+
+  let from_list =
+    List.fold_left
+      (fun map (key, value) -> add key value map)
+      empty
+
+  let fusion m1 m2 =
+    let smerge _ v1 v2 = match v1, v2 with
+      | Some v1, Some v2 -> Some v1
+      | Some v1, None    -> Some v1
+      | None   , Some v2 -> Some v2
+      | _                -> None
+    in
+    merge smerge m1 m2
+end
+
+module StringSet = struct
+  include Set.Make(String)
+  let from_list =
+    List.fold_left
+      (fun set elt -> add elt set)
+      empty
+end
+
+module IntMap = Map.Make(struct
+  type t = int
+  let compare : t -> t -> int = compare
+end)
+
 let with_in_channel chan f =
   try
     let res = f chan in
@@ -68,6 +99,13 @@ let list_rev_mapi f xs =
     | x::xs -> aux (i+1) ((f i x)::accu) xs
   in aux 0 [] xs
 
+let rec uniq = function
+  | [] -> []
+  | h::l ->
+    if List.mem h l
+    then uniq l
+    else h :: (uniq l)
+
 let simple_split delim str =
   let n = String.length str in
   let rec aux i accu =
@@ -76,6 +114,11 @@ let simple_split delim str =
       aux (j+1) (String.sub str i (j-i) :: accu)
     else List.rev accu
   in aux 0 []
+
+let capitalize ?(sep = '-') s =
+  let l = simple_split sep s in
+  let l = List.map String.capitalize l in
+  String.concat (String.make 1 sep) l
 
 let starts_with str x =
   let n = String.length str and p = String.length x in

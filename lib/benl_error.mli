@@ -27,7 +27,9 @@ type error =
   | Bad_marshalled_data of string
   | Unknown_command of string
   | Unknown_output_format of string
+  | Unknown_input_format of string
   | Unexpected_expression of string
+  | Missing_configuration_file
   | Error_in_configuration_file of string
   | Missing_configuration_item of string
   | Unknown_configuration_item of string
@@ -47,3 +49,9 @@ val raise : error -> 'a
 
 val warn : error -> unit
 (** Emit a warning. *)
+
+val warn_exn : string -> exn -> unit
+(** Emit a warning. *)
+
+val error_exn : string -> exn -> unit
+(** Emit an error. *)

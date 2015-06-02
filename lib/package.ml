@@ -19,8 +19,9 @@
 
 open Printf
 open Benl_types
+open Benl_core
 
-type 'a t = (string * string) list
+type 'a t = string StringMap.t
 
 module Name = struct
   type 'a t = string
@@ -29,18 +30,19 @@ module Name = struct
 end
 
 let filter_print keep outc p =
-  List.iter
-    (fun (f, v) ->
+  StringMap.iter
+    (fun f v ->
       if keep = [] || List.mem (String.lowercase f) keep then
-        fprintf outc "%s: %s\n" (String.capitalize f) v)
+        fprintf outc "%s: %s\n" (Benl_core.capitalize f) v)
     p;
   fprintf outc "\n"
 
 let print = filter_print []
 
-let get = List.assoc
+let get = StringMap.find
+let has = StringMap.mem
 
-let add k v pkg = (k, v) :: pkg
+let add k v pkg = StringMap.add k v pkg
 
 module Set = struct
   module S = Set.Make(String)
@@ -49,14 +51,19 @@ module Set = struct
   let empty = S.empty
   let add = S.add
   let mem = S.mem
+  let from_list =
+    List.fold_left
+      (fun set elt -> add elt set)
+      empty
   let exists = S.exists
   let iter = S.iter
   let cardinal = S.cardinal
   let elements = S.elements
   let fold = S.fold
+  let filter = S.filter
 end
 
-let rex = Pcre.regexp "^(\\S+)(?: \\((\\S+)\\))?$"
+let rex = Re_pcre.regexp "^(\\S+)(?: \\((\\S+)\\))?$"
 
 let of_assoc sort x =
   match sort with
@@ -64,11 +71,11 @@ let of_assoc sort x =
         let source, version =
           try
             let name = get "source" x in
-            let r = Pcre.exec ~rex name in
-            let name = Pcre.get_substring r 1 in
+            let r = Re_pcre.exec ~rex name in
+            let name = Re_pcre.get_substring r 1 in
             let version =
               try
-                Pcre.get_substring r 2
+                Re_pcre.get_substring r 2
               with Not_found ->
                 get "version" x
             in
@@ -76,15 +83,17 @@ let of_assoc sort x =
           with Not_found ->
             get "package" x, get "version" x
         in
-        ("source", source) ::
-        ("source-version", version) ::
-        (List.remove_assoc "source" x)
+        StringMap.add "source" source
+          (StringMap.add "source-version" version
+             (StringMap.remove "source" x)
+          )
     | `source -> x
 
 module Map = struct
   module M = Map.Make(String)
   type ('a, 'b) t = 'b M.t
   let empty = M.empty
+  let is_empty = M.is_empty
   let add = M.add
   let iter = M.iter
   let find = M.find
@@ -99,11 +108,11 @@ module Map = struct
 end
 
 let get_and_split =
-  let rex = Pcre.regexp "(?:[, |]|\\([^)]+\\))+" in
+  let rex = Re_pcre.regexp "(?:[, |]|\\([^)]+\\))+" in
   fun field x ->
     try
       let deps = get field x in
-      Pcre.split ~rex deps
+      Re_pcre.split ~rex deps
     with Not_found -> []
 
 let build_depends x =
@@ -118,13 +127,13 @@ type dependency = {
 }
 
 let split_name_and_version =
-  let rex = Pcre.regexp "^\\s*(\\S+)\\s*(\\(([<>=]+)\\s*([^)]+)\\))?\\s*(\\[\\s*([^\\]]+)\\s*\\])?\\s*$" in
+  let rex = Re_pcre.regexp "^\\s*(\\S+)\\s*(\\(([<>=]+)\\s*([^)]+)\\))?\\s*(\\[\\s*([^\\]]+)\\s*\\])?\\s*$" in
   fun x ->
     try
-      let r = Pcre.exec ~rex x in
+      let r = Re_pcre.exec ~rex x in
       let dep =
         try
-          let cmp = match Pcre.get_substring r 3 with
+          let cmp = match Re_pcre.get_substring r 3 with
             | "<=" -> Le
             | "<<" -> Lt
             | ">=" -> Ge
@@ -134,22 +143,22 @@ let split_name_and_version =
             | ">" -> Gt
             | x -> ksprintf failwith "invalid comparison operator: %s" x
           in
-          Some (cmp, Pcre.get_substring r 4)
+          Some (cmp, Re_pcre.get_substring r 4)
         with Not_found ->
           None
       in {
-        dep_name = Pcre.get_substring r 1;
+        dep_name = Re_pcre.get_substring r 1;
         dep_version = dep;
       }
     with Not_found ->
       ksprintf failwith "unable to parse: %s" x
 
 let dependencies =
-  let rex = Pcre.regexp "(?:\\s*[,|]\\s*)+" in
+  let rex = Re_pcre.regexp "(?:\\s*[,|]\\s*)+" in
   fun field x ->
     try
       let deps = get field x in
-      let deps = Pcre.split ~rex deps in
+      let deps = Re_pcre.split ~rex deps in
       List.map split_name_and_version deps
     with Not_found ->
       []

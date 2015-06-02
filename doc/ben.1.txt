@@ -58,18 +58,26 @@ OPTIONS
 *--cache-file|-C f*::
     Specify the name of the cache file
 
-*--use-cache::
+*--use-cache*::
     Use cache whenever possible
 
 *--config|-c c*::
     Config file
 
+*--more-binary-keys l*::
+    Comma separated list of further relevant binary keys
+
+*--more-source-keys l*::
+    Comma separated list of further relevant source keys
+
+*--preferred-compression-format f*::
+    Preferred compression format (Default: Gzip)
 
 FRONTENDS
 ---------
 *download*::
     has no command-line options, except the shared ones. It downloads
-    all Sources.bz2 files and all Packages.bz2 files for selected
+    all Sources.gz files and all Packages.gz files for selected
     architectures and areas.
 
 *query*::

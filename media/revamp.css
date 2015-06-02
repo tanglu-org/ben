@@ -75,6 +75,15 @@ div#body {
     padding: 1em 1em; /* 0em 0em */
 }
 
+div#collisions {
+    clear: both;
+    border-top: 2px solid #d70751;
+    margin: 1em -1em -1em -1em;
+    padding-top: 1em;
+    padding-right: 1em;
+    padding-left: 1em;
+}
+
 table.containertable {
   padding: 0.5em 0.5em;
 }

@@ -19,14 +19,19 @@
 (**************************************************************************)
 
 open Benl_error
+open Benl_core
 open Benl_types
+
+module Arg = Benl_arg
 
 type frontend = {
   name : string;
-  main : string list -> unit;
-  help : unit -> unit
+  main : unit -> unit;
+  anon_fun: string -> unit;
+  help : (Arg.key * Arg.spec * Arg.doc) list
 }
 let frontends = ref []
+let current_frontend = ref None
 
 let register_frontend sc =
   frontends := (sc.name, sc) :: !frontends
@@ -34,6 +39,14 @@ let register_frontend sc =
 let get_frontend x =
   try List.assoc x !frontends
   with Not_found -> raise (Unknown_command x)
+
+let get_selected_frontend () =
+  match !current_frontend with
+  | None -> Pervasives.raise (Arg.Help "No frontend selected!")
+  | Some frontend -> frontend
+
+let set_selected_frontend x =
+  current_frontend := Some x
 
 let available_frontends () =
   List.map fst !frontends
@@ -48,11 +61,11 @@ let fail fmt = Printf.ksprintf
   (fun x -> raise (Error_in_configuration_file x))
   fmt
 
-let check_string what = function
+let to_string what = function
   | EString s -> s
   | _ -> fail "%s must be a string" what
 
-let check_string_list what = function
+let to_string_l what = function
   | EList ys ->
       List.map begin function
         | EString s -> s
@@ -60,120 +73,173 @@ let check_string_list what = function
       end ys
   | _ -> fail "%s must be a list of strings" what
 
-let read_config_file filename =
-  let config = Benl_utils.parse_config_file filename in
-  let rec process = function
-    | ("mirror", x)::xs ->
-        Benl_clflags.mirror_binaries := check_string "mirror" x;
-        Benl_clflags.mirror_sources  := check_string "mirror" x;
-        process xs
-    | ("mirror-binaries", x)::xs ->
-        Benl_clflags.mirror_binaries := check_string "mirror-binaries" x;
-        process xs
-    | ("mirror-sources", x)::xs ->
-        Benl_clflags.mirror_sources := check_string "mirror-sources" x;
-        process xs
-    | ("areas", x)::xs ->
-        Benl_clflags.areas := check_string_list "areas" x;
-        process xs
-    | ("architectures", x)::xs ->
-        Benl_clflags.architectures := check_string_list "architectures" x;
-        process xs
-    | ("suite", x)::xs ->
-        Benl_clflags.suite := check_string "suite" x;
-        process xs
-    | x::xs ->
-        x::(process xs)
-    | [] -> []
-  in process config
+let to_expr_l l =
+  let of_string s = Benl_types.EString s in
+  Benl_types.EList (List.map of_string l)
 
-let rec parse_common_args = function
-  | ("--dry-run" | "-n")::xs ->
-      Benl_clflags.dry_run := true;
-      parse_common_args xs
-  | ("--quiet" | "-q")::xs ->
-      Benl_clflags.quiet := true;
-      parse_common_args xs
-  | ("--verbose" | "-v")::xs ->
-      Benl_clflags.verbose := true;
-      parse_common_args xs
-  | "--mirror"::x::xs ->
-      Benl_clflags.mirror_binaries := x;
-      Benl_clflags.mirror_sources := x;
-      parse_common_args xs
-  | "--mirror-binaries"::x::xs ->
-      Benl_clflags.mirror_binaries := x;
-      parse_common_args xs
-  | "--mirror-sources"::x::xs ->
-      Benl_clflags.mirror_sources := x;
-      parse_common_args xs
-  | "--areas"::x::xs ->
-      Benl_clflags.areas := Benl_core.simple_split ',' x;
-      parse_common_args xs
-  | "--archs"::x::xs ->
-      Benl_clflags.architectures := Benl_core.simple_split ',' x;
-      parse_common_args xs
-  | "--suite"::x::xs ->
-      Benl_clflags.suite := x;
-      parse_common_args xs
-  | "--cache-dir"::x::xs ->
-      Benl_clflags.cache_dir := x;
-      parse_common_args xs
-  | ("--config"|"-c")::x::xs ->
-      Benl_clflags.config := read_config_file x;
-      parse_common_args xs
-  | ("--cache"|"-C")::x::xs ->
-      Benl_clflags.cache_file := x;
-      parse_common_args xs
-  | "--use-cache"::xs ->
-      Benl_clflags.use_cache := true;
-      parse_common_args xs
-  | x::xs -> x::(parse_common_args xs)
-  | [] -> []
+let read_config ?(multi = false) source =
+  let config = match source with
+    | File filename -> Benl_utils.parse_config_file filename
+    | Stdin -> Benl_utils.parse_config_from_in_channel stdin
+    | NoSource -> assert false
+  in
+  StringMap.fold (fun key value accu -> match (key, value) with
+    | ("mirror", x) ->
+        Benl_clflags.mirror_binaries := to_string "mirror" x;
+        Benl_clflags.mirror_sources  := to_string "mirror" x;
+        StringMap.add key value accu
+    | ("mirror-binaries", x) ->
+        Benl_clflags.mirror_binaries := to_string "mirror-binaries" x;
+        StringMap.add key value accu
+    | ("mirror-sources", x) ->
+        Benl_clflags.mirror_sources := to_string "mirror-sources" x;
+        StringMap.add key value accu
+    | ("areas", x) ->
+        if multi then
+          StringMap.add key value accu
+        else
+          let () = Benl_clflags.areas := to_string_l key x in
+          accu
+    | ("architectures", x) ->
+        if multi then
+          StringMap.add key value accu
+        else
+          let () = Benl_clflags.architectures := to_string_l key x in
+          accu
+    | ("suite", x) ->
+        if multi then
+          StringMap.add key value accu
+        else
+          let () = Benl_clflags.suite := to_string key x in
+          accu
+    | ("cache-dir", x) ->
+        Benl_clflags.cache_dir := to_string "cache-dir" x;
+        StringMap.add key value accu
+    | ("cache-file", x) ->
+        let name = to_string "cache-file" x in
+        Benl_clflags.set_cache_file name;
+        accu
+    | ("use-cache", Etrue) ->
+        Benl_clflags.use_cache := true;
+        StringMap.add key value accu
+    | ("more-binary-keys", x) ->
+        let new_keys = List.map
+          String.lowercase
+          (to_string_l "more-binary-keys" x)
+        in
+        Benl_data.relevant_binary_keys := StringSet.union
+          (StringSet.from_list new_keys)
+          !Benl_data.relevant_binary_keys;
+        accu
+    | ("more-source-keys", x) ->
+        let new_keys = List.map
+          String.lowercase
+          (to_string_l "more-source-keys" x)
+        in
+        Benl_data.relevant_source_keys := StringSet.union
+          (StringSet.from_list new_keys)
+          !Benl_data.relevant_source_keys;
+        accu
+    | ("preferred-compression-format", x) ->
+        let format = to_string "preferred-compression-format" x in
+        if Benl_compression.is_known format then
+          Benl_clflags.preferred_compression_format :=
+            Benl_compression.of_string format
+        else
+          warn (Unknown_input_format format);
+        StringMap.add key value accu
+    | _ ->
+        StringMap.add key value accu
+  )
+  config
+  StringMap.empty
 
-let print_help () =
-  Printf.printf "Usage: %s command [options]\n%!" Sys.argv.(0);
-  Printf.printf "List of available commands:\n%!";
-  List.iter
-    (fun frontend ->
-      Printf.printf " - %s\n%!" frontend;
-      (get_frontend frontend).help ()
+let read_ben_file filename =
+  let config = read_config ~multi:true (File filename) in
+  let default_values = [
+    "architectures", to_expr_l !Benl_clflags.architectures;
+    "ignored", to_expr_l !Benl_base.ignored_architectures;
+    "areas", to_expr_l !Benl_clflags.areas;
+    "suite", Benl_types.EString !Benl_clflags.suite;
+  ] in
+  List.fold_left
+    (fun config (key, value) ->
+      if not (StringMap.mem key config) then
+        StringMap.add key value config
+      else
+        config
     )
-    (available_frontends ());
-  Printf.printf "List of available options:\n%!";
-  List.iter
-    (fun (option, desc) ->
-      Printf.printf " * %s\t%s\n%!" option desc
-    )
-    [ "--dry-run" , "Dry run";
-      "--quiet|-q", "Quiet mode";
-      "--verbose", "Verbose mode";
-      "--mirror", "Mirror to use";
-      "--mirror-binaries", "Mirror to use for binaries";
-      "--mirror-sources", "Mirror to use for sources";
-      "--areas", "Areas to consider";
-      "--archs", "Architectures to consider";
-      "--suite", "Suite";
-      "--cache-dir", "Path to cache dir";
-      "--config|-c", "Config file"
-    ];
-  exit 0
+    config
+    default_values
 
-let main () = match Array.to_list Sys.argv with
-  | [] ->
-      (* we assume Sys.argv.(0) is always here! *)
-      assert false
-  | _ :: ("-h"|"-help"|"--help") :: _ ->
-      print_help ()
-  | cmd::xs ->
-      let sc, args =
-        try
-          let cmd = to_cmd (Filename.basename cmd) in
-          get_frontend cmd, xs
-        with Error (Unknown_command _) -> match xs with
-          | cmd::xs ->
-              get_frontend cmd, xs
-          | _ ->
-              print_help ()
-      in
-      Printexc.catch sc.main args
+let spec = ref (Arg.align [
+  "--no-benrc", Arg.Clear Benl_clflags.use_benrc, " Do not read .benrc file at startup";
+  "--dry-run" , Arg.Set Benl_clflags.dry_run, " Dry run";
+  "-n"        , Arg.Set Benl_clflags.dry_run, " Dry run";
+  "--parallel", Arg.Int Benl_parallel.set_level, " Set parallelism level";
+  "-P"        , Arg.Int Benl_parallel.set_level, " Set parallelism level";
+  "--quiet"   , Arg.Set Benl_clflags.quiet, " Quiet mode";
+  "-q"        , Arg.Set Benl_clflags.quiet, " Quiet mode";
+  "--verbose" , Arg.Set Benl_clflags.verbose, " Verbose mode";
+  "-v"        , Arg.Set Benl_clflags.verbose, " Verbose mode";
+  "--mirror"  , Arg.String (fun m ->
+    Benl_clflags.mirror_binaries := m;
+    Benl_clflags.mirror_sources := m
+  )                                         , " Mirror to use";
+  "--mirror-binaries" , Arg.String (fun m ->
+    Benl_clflags.mirror_binaries := m
+  )                                         , " Mirror to use for binaries";
+  "--mirror-sources"  , Arg.String (fun m ->
+    Benl_clflags.mirror_sources := m
+  )                                         , " Mirror to use for sources";
+  "--areas"   , Arg.String (fun a ->
+    Benl_clflags.areas := Benl_core.simple_split ',' a)
+                                            , " Areas to consider";
+  "--archs"   , Arg.String (fun a ->
+    Benl_clflags.architectures := Benl_core.simple_split ',' a)
+                                            , " Architectures to consider";
+  "--suite"   , Arg.Set_string Benl_clflags.suite, " Suite";
+  "--cache-dir", Arg.Set_string Benl_clflags.cache_dir, " Path to cache directory";
+  "--config"  , Arg.String (fun c ->
+    ignore (read_config (File c)))
+                                            , " Path to configuration file";
+  "-c"  , Arg.String (fun c ->
+    ignore (read_config (File c)))
+                                            , " Path to configuration file";
+  "--cache"   , Arg.String Benl_clflags.set_cache_file, " Path to cache file";
+  "-C"        , Arg.String Benl_clflags.set_cache_file, " Path to cache file";
+  "--use-cache", Arg.Set Benl_clflags.use_cache, " Enable use of cache file, if available";
+  "--more-binary-keys", Arg.String (fun x ->
+    let new_keys = List.map
+      String.lowercase
+      (Benl_core.simple_split ',' x)
+    in
+    Benl_data.relevant_binary_keys := StringSet.union
+      (StringSet.from_list new_keys)
+      !Benl_data.relevant_binary_keys)
+                                                , " Further relevant binary keys";
+  "--more-source-keys", Arg.String (fun x ->
+    let new_keys = List.map
+      String.lowercase
+      (Benl_core.simple_split ',' x)
+    in
+    Benl_data.relevant_source_keys := StringSet.union
+      (StringSet.from_list new_keys)
+      !Benl_data.relevant_source_keys)
+                                                , " Further relevant source keys";
+  "--preferred-compression-format", Arg.String (fun x ->
+    if Benl_compression.is_known x then
+      Benl_clflags.preferred_compression_format := Benl_compression.of_string x
+    else
+      warn (Unknown_input_format x))
+                                                , " Preferred compression format";
+  "-z", Arg.String (fun x ->
+    if Benl_compression.is_known x then
+      Benl_clflags.preferred_compression_format := Benl_compression.of_string x
+    else
+      warn (Unknown_input_format x))
+                                                , " Preferred compression format";
+  "-h", Arg.Unit (fun () -> Pervasives.raise (Arg.Help "Use -help or --help instead\n")), " Display this list of options";
+  "-V", Arg.Unit (fun () -> Benl_clflags.show_version := true), " Display version number (and build date) and exists.";
+  "--version", Arg.Set Benl_clflags.show_version, " Display version number (and build date) and exists.";
+])

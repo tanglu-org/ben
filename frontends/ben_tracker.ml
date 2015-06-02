@@ -19,10 +19,12 @@
 
 open Xhtml.M
 open Printf
+open Benl_core
 open Benl_clflags
 open Benl_utils
-open Ben_monitor
 open Benl_error
+
+module Arg = Benl_arg
 
 let ($) f x = f x
 
@@ -30,7 +32,7 @@ let base = ref "."
 let config_dir = ref "config"
 let global_config = ref (FilePath.concat !config_dir "global.conf")
 let lock = ref "ben.lock"
-let update = ref false
+let clean = ref true
 let tconfig = ref None
 
 open Benl_types
@@ -39,15 +41,16 @@ open Benl_frontend
 let read_global_config () =
   if Sys.file_exists !global_config then begin
     let config = Benl_utils.parse_config_file !global_config in
-    List.iter (function
+    StringMap.iter (fun key value -> match (key, value) with
         | "architectures", archs ->
-          Benl_base.debian_architectures := check_string_list "architectures" archs
+          Benl_base.debian_architectures := to_string_l "architectures" archs;
+          Benl_clflags.architectures := to_string_l "architectures" archs
         | "ignored", archs ->
-          Benl_base.ignored_architectures := check_string_list "ignored" archs
+          Benl_base.ignored_architectures := to_string_l "ignored" archs
         | "suite", (EString suite) ->
           Benl_clflags.suite := suite
         | "areas", areas ->
-          Benl_clflags.areas := check_string_list "areas" areas
+          Benl_clflags.areas := to_string_l "areas" areas
         | "base", (EString path) ->
           base := path
         | "config-dir", (EString path) ->
@@ -71,15 +74,6 @@ let read_global_config () =
           Ben_monitor.baseurl := url
         | "template", (EString template) ->
           Benl_templates.load_template template;
-        | "output-type", (EString format) ->
-          (match String.lowercase format with
-            | "text" -> Ben_monitor.output_type := Text
-            | "levels" -> Ben_monitor.output_type := Levels
-            | "xhtml" -> Ben_monitor.output_type := Xhtml
-            | format ->
-                warn (Unknown_output_format format);
-                Ben_monitor.output_type := Xhtml
-          )
         | item, _ ->
             warn (Unknown_configuration_item item)
     )
@@ -89,43 +83,21 @@ let read_global_config () =
 let lockf () =
   FilePath.concat !cache_dir !lock
 
-let rec parse_local_args = function
-  | ("--config-dir"|"-cd")::x::xs ->
-      config_dir := x;
-      parse_local_args xs
-  | ("--global-conf"|"-g")::x::xs ->
-      global_config := x;
-      parse_local_args xs
-  | ("--transition"|"-t")::x::xs ->
-      tconfig := Some x;
-      parse_local_args xs
-  | ("--update"|"-u")::xs ->
-      update := true;
-      parse_local_args xs
-  | ("--base"|"-b")::x::xs ->
-      base := x;
-      parse_local_args xs
-  | ("--use-projectb")::xs ->
-      Benl_data.use_projectb := true;
-      parse_local_args xs
-  | "--template"::template::xs ->
-      Benl_templates.load_template template;
-      parse_local_args xs
-  | x::xs -> x::(parse_local_args xs)
-  | [] -> []
-
-let help () =
-  List.iter
-    (fun (option , desc) ->
-      printf "    %s: %s\n%!" option desc
-    )
-    [ "--base|-b [dir]", "Specifies the \"base\" directory.";
-      "--config-dir|-cd [dir]", "Location of ben trackers";
-      "--transition|-t [profile/transition]", "Generate only that tracker page";
-      "--update|-u", "Updates cache files";
-      "--use-projectb", "Get package lists from Projectb database";
-      "--template", "Select an HTML template";
-    ]
+let spec = Arg.align [
+  "--config-dir" , Arg.Set_string config_dir, " Specify tracker's global configuration directory";
+  "-cd"          , Arg.Set_string config_dir, " ";
+  "--global-conf", Arg.Set_string global_config, " Specify tracker's global configuration file";
+  "-g"           , Arg.Set_string global_config, " ";
+  "--transition" , Arg.String (fun t -> tconfig := Some t), " Specify selected transition";
+  "-t"           , Arg.String (fun t -> tconfig := Some t), " ";
+  "--update"     , Arg.Set Benl_clflags.update, " Do update the cache file";
+  "-u"           , Arg.Set Benl_clflags.update, " ";
+  "--base"       , Arg.Set_string base, " Specify tracker's base directory";
+  "-b"           , Arg.Set_string base, " ";
+  "--use-projectb", Arg.Set Benl_data.use_projectb, " Use Projectb to fetch information about distributions";
+  "--template"   , Arg.String (fun t -> Benl_templates.load_template t), " Specify template to use";
+  "--no-clean"   , Arg.Clear clean, " Do not clean HTML directory before exiting";
+]
 
 exception Unknown_profile of string
 
@@ -175,45 +147,47 @@ let clear_cache () =
 
 let update_test () =
   let cachef = Benl_clflags.get_cache_file () in
-     !update
-  || test (Not Exists) cachef
+     !Benl_clflags.update
+  || (!Benl_clflags.use_cache && test (Not Exists) cachef)
 
-let update_cache () =
-  let () = clear_cache () in
-  if not !Benl_data.use_projectb then Ben_download.download_all ()
+let read_cache architectures =
+  if update_test () then begin
+    if not !Benl_data.use_projectb then begin
+      clear_cache ();
+      Ben_download.download_all architectures;
+    end;
+    Benl_data.generate_cache
+      (Benl_clflags.get_cache_file ())
+      architectures
+  end
+  else
+    Benl_data.load_cache architectures
 
 let profile_of_file file =
   try
     profile_of_string $ Filename.basename (Filename.dirname file)
   with _ -> Unknown
 
-let run_monitor template file =
-  let ($) = Filename.concat in
+let read_transition_config file =
   let (!!) = Filename.basename in
-  let profile = profile_of_file file in
   let transition = FilePath.chop_extension !!file in
-  let () = p "Generating (%s) %s\n" (string_of_profile profile) transition in
-  (* Reset config variables before reading .ben files *)
-  let () = Benl_clflags.reset () in
   (* Read a .ben file *)
-  let () = Benl_clflags.config := Benl_frontend.read_config_file file in
-  let rounds, sources, binaries, dep_graph = compute_graph () in
-  let all, bad, packages, output =
-    Ben_monitor.print_html_monitor template sources binaries dep_graph rounds in
-  let htmlf = FilePath.replace_extension !!file "html" in
-  let htmlp = "html" $ htmlf in
-  let html = !base $ htmlp in
-  let export =
-    try
-      Benl_clflags.get_config "export" = Benl_types.Etrue
-    with _ -> true in
-  let result = all, bad, htmlp, profile, transition, packages, export in
+  transition, (Benl_frontend.read_ben_file file)
+
+let get_transition_data data name config =
   try
-    Benl_utils.dump_xhtml_to_file html output;
-    result
-  with _ ->
-    eprintf "Something bad happened while generating %s!\n" html;
-    result
+    let transition_data = Ben_monitor.compute_transition_data data config in
+    let monitor_data, sources, binaries, dep_graph, all, bad, packages =
+      transition_data in
+    let has_testing_data = Ben_monitor.has_testing_data monitor_data in
+    let export =
+      try
+        Benl_clflags.get_config config "export" = Benl_types.Etrue
+      with _ -> true in
+    Some (export, transition_data, has_testing_data)
+  with e ->
+    Benl_error.warn_exn ("Failed to process transition " ^ name) e;
+    None
 
 module SMap = Map.Make(String)
 
@@ -223,25 +197,139 @@ let sadd mp p t =
     with _ -> [] in
   SMap.add p (t::ts) mp
 
+let smerge _ v1 v2 = match v1, v2 with
+  | Some v1, Some v2 -> Some (v1 @ v2)
+  | Some v1, None    -> Some v1
+  | None   , Some v2 -> Some v2
+  | _                -> None
+
+let html_path_t name =
+  Filename.concat "html" (Printf.sprintf "%s.html" name)
+
+let print_html_collisions (hits : (SMap.key * SMap.key list) list) =
+  let hits = List.fold_left
+    (fun map (pkg, transitions) ->
+      List.fold_left
+        (fun map t -> sadd map t pkg)
+        map
+        transitions
+    )
+    SMap.empty
+    hits
+  in
+  div ~a:[ a_id "collisions" ] [
+    b [ pcdata "Collisions:" ];
+    let hits =
+      SMap.fold
+        (fun transition packages list ->
+          let elt =
+            li [ Ben_monitor.a_link
+                   (transition ^ ".html")
+                   transition;
+                 pcdata " through ";
+                 pcdata (String.concat ", " packages)
+               ]
+          in
+          elt :: list
+        )
+        hits
+        []
+    in
+    match List.rev hits with
+    | [] -> pcdata "(none)"
+    | h::l -> ul h l
+  ]
+
+let print_html_monitor config template file transition_data has_testing_data collisions =
+  let monitor_data, sources, binaries, dep_graph, _, _, packages =
+    transition_data
+  in
+  let ($) = Filename.concat in
+  let (!!) = Filename.basename in
+  let collisions_div =
+    try
+      let hits = SMap.find !!file collisions in
+      Some (print_html_collisions hits)
+    with Not_found ->
+      None
+  in
+  let output =
+    Ben_monitor.print_html_monitor
+      config
+      template
+      monitor_data
+      sources
+      binaries
+      dep_graph
+      packages
+      has_testing_data
+      collisions_div
+  in
+  let htmlp = html_path_t !!file in
+  let html = !base $ htmlp in
+  p "Generating %s\n" htmlp;
+  try
+    Benl_utils.dump_xhtml_to_file html output
+  with e ->
+    Benl_error.warn_exn ("Failed to generate" ^ html) e
+
+let compute_collisions results =
+  let data_map = List.fold_left
+    (fun
+      data_map
+      (_, transition, _, (_, transition_data, has_testing_data)) ->
+        let  _, _, _, _, _, _, pkgs = transition_data in
+        let new_data = Benl_data.S.fold
+          (fun package data ->
+            SMap.add (Package.Name.to_string package) [transition] data
+          )
+          pkgs
+          SMap.empty
+        in
+        SMap.merge smerge data_map new_data
+    )
+    SMap.empty
+    results
+  in
+  let collision_map = SMap.fold
+    (fun pkg transitions map ->
+      List.fold_left
+        (fun map t ->
+          let ts_left = List.filter (fun r -> t <> r) transitions in
+          sadd map t (pkg,ts_left)
+        )
+        map
+        transitions
+    )
+    data_map
+    SMap.empty
+  in
+  collision_map
+
 let generate_stats results =
   List.fold_left
     (fun (packages, profiles)
-      (all, bad, htmlp, p, t, pkgs, export) ->
-        let pkgs = List.map Package.Name.to_string pkgs in
+      (p, t, export, transition_data, _) ->
+        let _, _, _, _, all, bad, pkgs = transition_data in
+        let htmlp = html_path_t t in
         let profiles = sadd
           profiles
           (string_of_profile p)
           (htmlp, t, all, bad)
         in
-        let packages = List.fold_left
-          (fun packages package ->
+        let packages = Benl_data.S.fold
+          (fun package packages ->
             if export then
-              sadd packages package (t, p, export)
+              sadd
+                packages
+                (Package.Name.to_string package)
+                (t, p, export)
             else
               packages
           )
+          pkgs
           packages
-          pkgs in
+        in
         packages, profiles
     )
     (SMap.empty, SMap.empty)
@@ -254,6 +342,7 @@ let dump_yaml smap file =
       (string_of_profile profile)
   in
   let file = Filename.concat !base (Filename.concat "export" file) in
+  p "Generating %s\n" file;
   let string = SMap.fold
     (fun key list string ->
       let list = List.filter (fun (_,_,export) -> export) list in
@@ -270,14 +359,46 @@ let dump_yaml smap file =
     let newfile = FilePath.add_extension file "new" in
     dump_to_file newfile string;
     mv newfile file
-  with exc ->
-    eprintf "E: %s\n" $ Printexc.to_string exc;
-    Printexc.print_backtrace stderr;
-    eprintf "Something bad happened while generating %s!\n" file
+  with exn ->
+    Benl_error.error_exn ("Failed to generate " ^ file) exn
+
+let clean_up smap =
+  if !clean then begin
+    p "Cleaning up...\n";
+    let ($) = Filename.concat in
+    let html_dir = !base $ "html" in
+    let known_transitions =
+      SMap.fold
+        (fun _ tlist accu ->
+          let tlist = List.map
+            (fun (name, _, _, _) -> Filename.basename name)
+            tlist
+          in
+          let tset = StringSet.from_list tlist in
+          StringSet.union tset accu
+        )
+        smap
+        StringSet.empty
+    in
+    try
+      let dir_content = Sys.readdir html_dir in
+      Array.iter
+        (fun file ->
+          if Filename.check_suffix file ".html" &&
+            not (StringSet.mem file known_transitions)
+          then begin
+            let file = html_dir $ file in
+            p "Removing %s\n" file;
+            Sys.remove file
+          end
+        )
+        dir_content
+    with _ -> ()
+  end
 
 let tracker template profiles =
   let page_title = "Transition tracker" in
-  let footer = [ small (generated_on_text ()) ] in
+  let footer = [ small (Ben_monitor.generated_on_text ()) ] in
   let tget show_score (path, name, all, bad) =
     li (
       (Ben_monitor.a_link path name)::
@@ -299,6 +420,7 @@ let tracker template profiles =
         with _ ->
           List.assoc Unknown profiles_desc
       in
+      let tlist = List.sort Pervasives.compare tlist in
       let tlist = List.map (tget show_score) tlist in
       match tlist with
         | [] -> acc
@@ -319,25 +441,28 @@ let tracker template profiles =
   try
     p "Generating index...\n";
     dump_xhtml_to_file index output
-  with exc ->
-    eprintf "E: %s\n" $ Printexc.to_string exc;
-    Printexc.print_backtrace stderr;
-    eprintf "Something bad happened while generating index.html!\n"
+  with exn ->
+    Benl_error.error_exn "Failed to generate index.html" exn
 
 let () = at_exit (fun () ->
-  rm [lockf ()]
+  try
+    rm [lockf ()]
+  with _ -> ()
 )
 
 let main args =
-  let _ = parse_local_args (Benl_frontend.parse_common_args args) in
   let () = read_global_config () in
   let lockf = lockf () in
   if test Exists lockf then
     eprintf "Please wait until %s is removed!\n" lockf
   else
     try
-      touch lockf;
-      if update_test ()  then update_cache ();
+      let lockf_b = Filename.dirname lockf in
+      let () = if test Exists lockf_b then
+          touch lockf
+        else
+          eprintf "%s doesn't exist. Skipping creation of lock file.\n" lockf_b
+      in
       let htmld = Filename.concat !base "html" in
       if test (Not Exists) htmld then
         mkdir ~parent:true htmld;
@@ -347,39 +472,108 @@ let main args =
                       And (Has_extension "ben",
                       And (Is_file, Is_readable))) in
       let template = Benl_templates.get_registered_template () in
-      let results =
+      (* Computing list of transitions *)
+      let transition_files =
         match !tconfig with
-        (* Here we suppose that config is relative to base directory *)
-          | Some transition ->
-            let transition = Filename.concat !config_dir transition in
-            [ run_monitor template transition ]
-          | None ->
-            find test_cond confd
-              (fun results transition ->
-                match profile_of_file transition with
-                  | Old -> results
-                  | _ ->
-                    try
-                      let result = run_monitor template transition in
-                      result :: results
-                    with Benl_error.Error e -> (* Ben file has errors *)
-                      warn e;
-                      results
-              )
-              []
+        | Some transition -> [transition, profile_of_file transition]
+        | None ->
+          find test_cond confd
+            (fun results transition ->
+              match profile_of_file transition with
+              | Old -> results
+              | profile -> (transition, profile) :: results
+            )
+            []
       in
-      (* Should we yell if all .ben files were broken? i.e. results == [] *)
+      (* Read found .ben files *)
+      let transitions =
+        Benl_parallel.map
+          (fun (transition, profile) ->
+            try
+              let name, config = read_transition_config transition in
+              Some (name, (config, transition, profile))
+            with
+            | Benl_error.Error e -> (* Ben file has errors *)
+              warn e;
+              None
+            | e ->
+              Benl_error.warn_exn ("Failed to read " ^ transition) e;
+              None
+
+          )
+          transition_files
+      in
+      let transitions =
+        List.fold_left
+          (fun transitions -> function
+          | Some t -> t :: transitions
+          | None -> transitions
+          )
+          []
+          transitions
+      in
+      (* Read ben.cache *)
+      let cache = read_cache (Benl_base.archs_list ()) in
+      (* Compute data for each transition *)
+      let results =
+        Benl_parallel.map
+          (fun (name, (config, file, profile)) ->
+            let () =
+              p "Computing data for (%s) %s\n"
+                (string_of_profile profile)
+                name
+            in
+            config, name, profile, (get_transition_data cache name config)
+          )
+          transitions
+      in
+      let results =
+        List.fold_left
+          (fun results -> function
+          | (c, n, p, Some d) -> (c, n, p, d) :: results
+          | _ -> results
+          )
+          []
+          results
+      in
+      (* Compute collisions *)
+      let collisions = compute_collisions results in
+      (* Generate an HTML page for each transition *)
+      let () = Benl_parallel.iter
+        (fun (config, transition, _, (_, transition_data, has_testing_data)) ->
+          print_html_monitor
+            config
+            template
+            transition
+            transition_data
+            has_testing_data
+            collisions
+        )
+        results
+      in
+      (* Generate the packages.yaml file *)
+      let results =
+        Benl_parallel.map
+          (fun (config, t, p, (export, transition_data, has_testing_data)) ->
+            p, t, export, transition_data, has_testing_data
+          )
+          results
+      in
       let packages, profiles = generate_stats results in
       let () = dump_yaml packages "packages.yaml" in
+      (* Clean up the HTML directory from old files *)
+      let () = clean_up profiles in
+      (* Generate the index page *)
       (match !tconfig with
         | None -> tracker template profiles
         | Some _ -> ())
-    with exc ->
-      eprintf "E: %s\n" $ Printexc.to_string exc;
-      Printexc.print_backtrace stderr
+    with exn ->
+      Benl_error.error_exn "General error" exn;
+      exit(42)
 
 let frontend = {
   Benl_frontend.name = "tracker";
   Benl_frontend.main = main;
-  Benl_frontend.help = help;
+  Benl_frontend.anon_fun = (fun _ -> ());
+  Benl_frontend.help = spec;
 }

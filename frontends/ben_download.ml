@@ -36,14 +36,20 @@ let download_sources () =
   let dst = !Benl_clflags.cache_dir/"Sources" in
   let tmp = Filename.temp_file "Sources." "" in
   let commands =
-    List.map
+    Benl_parallel.map
       (fun area ->
-         let url = sprintf "%s/dists/%s/%s/source/Sources.bz2"
-           !Benl_clflags.mirror_sources !Benl_clflags.suite area
+         let url = sprintf "%s/dists/%s/%s/source/Sources%s"
+           !Benl_clflags.mirror_sources
+           !Benl_clflags.suite
+           area
+           (Benl_compression.extension !Benl_clflags.preferred_compression_format)
          in
          if !Benl_clflags.dry_run then p "Would download %s\n" url;
-         let cmd = sprintf "{ curl %s %s | bzcat >> %s; }"
-           wquiet (escape_for_shell url) tmp
+         let cmd = sprintf "{ curl %s %s | %s >> %s; }"
+           wquiet
+           (escape_for_shell url)
+           (Benl_compression.display_tool !Benl_clflags.preferred_compression_format)
+           tmp
          in cmd)
       !Benl_clflags.areas
   in
@@ -57,7 +63,7 @@ let download_sources () =
     if r <> 0 then
       raise (Curl_error r)
     else
-      ignore (Sys.command (sprintf "rm -f %s" tmp))
+      FileUtil.rm ~force:FileUtil.Force [tmp]
   end;;
 
 let download_binaries arch =
@@ -66,14 +72,21 @@ let download_binaries arch =
   let dst = !Benl_clflags.cache_dir/"Packages_"^arch in
   let tmp = Filename.temp_file ("Packages.") "" in
   let commands =
-    List.map
+    Benl_parallel.map
       (fun area ->
-         let url = sprintf "%s/dists/%s/%s/binary-%s/Packages.bz2"
-           !Benl_clflags.mirror_binaries !Benl_clflags.suite area arch
+         let url = sprintf "%s/dists/%s/%s/binary-%s/Packages%s"
+           !Benl_clflags.mirror_binaries
+           !Benl_clflags.suite
+           area
+           arch
+           (Benl_compression.extension !Benl_clflags.preferred_compression_format)
          in
          if !Benl_clflags.dry_run then p "Would download %s\n" url;
-         let cmd = sprintf "{ curl %s %s | bzcat >> %s; }"
-           wquiet (escape_for_shell url) tmp
+         let cmd = sprintf "{ curl %s %s | %s >> %s; }"
+           wquiet
+           (escape_for_shell url)
+           (Benl_compression.display_tool !Benl_clflags.preferred_compression_format)
+           tmp
          in
          cmd)
       !Benl_clflags.areas
@@ -88,18 +101,21 @@ let download_binaries arch =
     if r <> 0 then
       raise (Curl_error r)
     else
-      ignore (Sys.command (sprintf "rm -f %s" tmp))
+      FileUtil.rm ~force:FileUtil.Force [tmp]
   end;;
 
-let download_all () =
+let download_all architectures =
   download_sources ();
-  List.iter download_binaries !Benl_clflags.architectures;;
+  Benl_parallel.iter download_binaries architectures;;
 
 let save_cache () =
   if !Benl_clflags.use_cache then begin
     let src_raw = Benl_data.file_origin.get_sources M.empty in
-    let bin_raw = List.fold_left
-      Benl_data.file_origin.get_binaries PAMap.empty !Benl_clflags.architectures
+    let bin_raw = Benl_parallel.fold
+      Benl_data.file_origin.get_binaries
+      PAMap.empty
+      !Benl_clflags.architectures
+      PAMap.fusion
     in
     let data = { src_map = src_raw; bin_map = bin_raw; } in
     let file = Benl_clflags.get_cache_file () in
@@ -107,12 +123,12 @@ let save_cache () =
   end
 
 let main args =
-  ignore (Benl_frontend.parse_common_args args);
-  download_all ();
+  download_all !Benl_clflags.architectures;
   save_cache ()
 
 let frontend = {
   Benl_frontend.name = "download";
   Benl_frontend.main = main;
-  Benl_frontend.help = fun () -> ();
+  Benl_frontend.anon_fun = (fun _ -> ());
+  Benl_frontend.help = [];
 }

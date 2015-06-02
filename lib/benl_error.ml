@@ -29,7 +29,9 @@ type error =
   | Bad_marshalled_data of string
   | Unknown_command of string
   | Unknown_output_format of string
+  | Unknown_input_format of string
   | Unexpected_expression of string
+  | Missing_configuration_file
   | Error_in_configuration_file of string
   | Missing_configuration_item of string
   | Unknown_configuration_item of string
@@ -58,8 +60,12 @@ let string_of_error = function
       sprintf "unknown command: %s" s
   | Unknown_output_format s ->
       sprintf "unknown output format: %s" s
+  | Unknown_input_format s ->
+      sprintf "unknown input format: %s" s
   | Unexpected_expression s ->
       sprintf "unexpected expression: %s" s
+  | Missing_configuration_file ->
+      sprintf "No configuration file has been specified"
   | Error_in_configuration_file s ->
       sprintf "error in configuration file: %s" s
   | Missing_configuration_item s ->
@@ -84,3 +90,10 @@ let () =
 
 let raise e = Pervasives.raise (Error e)
 let warn e = Printf.eprintf "W: %s\n%!" (string_of_error e)
+
+let warn_exn msg e =
+  Printf.eprintf "W: %s: %s\n%!" msg (Printexc.to_string e)
+
+let error_exn msg e =
+  Printf.eprintf "E: %s: %s\n" msg (Printexc.to_string e);
+  Printexc.print_backtrace stderr

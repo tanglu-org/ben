@@ -21,10 +21,20 @@ module PAIndex = struct
   type t = [`binary] Package.Name.t * string
   let compare = Pervasives.compare
 end
-module PAMap = Map.Make(PAIndex)
+module PAMap = struct
+  include Map.Make(PAIndex)
+  let fusion m1 m2 =
+    let smerge _ v1 v2 = match v1, v2 with
+      | Some v1, Some v2 -> Some v1
+      | Some v1, None    -> Some v1
+      | None   , Some v2 -> Some v2
+      | _                -> None
+    in
+    merge smerge m1 m2
+end
 
 module Marshallable = struct
-  let magic_number = "BENA0901"
+  let magic_number = "BENA0902"
   type t = {
     src_map : ([`source], [`source] Package.t) Package.Map.t;
     bin_map : [`binary] Package.t PAMap.t

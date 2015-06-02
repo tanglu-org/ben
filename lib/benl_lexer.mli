@@ -24,6 +24,6 @@ val token : Lexing.lexbuf -> Benl_parser.token
 (** Tokenizer for [Benl_parser]. *)
 
 val stanza_fold :
-  ((string * string) list -> 'a -> 'a) -> Lexing.lexbuf -> 'a -> 'a
+  (string Benl_core.StringMap.t -> 'a -> 'a) -> Lexing.lexbuf -> 'a -> 'a
 (** [stanza_fold f lexbuf accu] iterates [f] over all stanzas of
     [lexbuf], using [accu] as accumulator. *)

@@ -20,6 +20,63 @@
 open Benl_frontend
 
 let static_frontends = [ @STATIC_FRONTENDS@ ]
+let version = "@VERSION@"
+let build_date = "@BUILD_DATE@"
 
 let () = List.iter register_frontend static_frontends
-let () = Printexc.catch main ()
+
+module Arg = Benl_arg
+
+let usage_msg =
+  let msg = Printf.sprintf
+    "Usage: %s frontend [options]"
+    (Filename.basename Sys.argv.(0))
+  in
+  let msg = Printf.sprintf
+    "%s\nAvailable frontends:"
+    msg
+  in
+  let msg = Printf.sprintf
+    "%s\n%s"
+    msg
+    (String.concat
+       "\n"
+       (List.map
+          (fun name ->
+            Printf.sprintf " - %s" name
+          )
+          (available_frontends ())))
+  in
+  Printf.sprintf "%s\n%s" msg "Available options:"
+
+let () = Arg.parse_dynamic
+  Benl_frontend.spec
+  (fun name ->
+    if !Arg.current = 1 then
+      try
+        let frontend = get_frontend name in
+        Benl_frontend.set_selected_frontend frontend;
+        Benl_frontend.spec := Arg.align
+          (!Benl_frontend.spec @ (Benl_frontend.get_selected_frontend ()).help)
+      with _ ->
+        ()
+    else
+      let frontend = Benl_frontend.get_selected_frontend () in
+      frontend.anon_fun name
+  )
+  usage_msg
+
+let () =
+  if !Benl_clflags.show_version then begin
+    Printf.printf "Ben %s (built on %s)\n"
+      version
+      build_date;
+    exit 0
+  end
+  else
+    let () = Parmap.set_default_ncores (Benl_parallel.get_level ()) in
+    let frontend = Benl_frontend.get_selected_frontend () in
+    let benrc = Filename.concat (Sys.getenv "HOME") ".benrc" in
+    if !Benl_clflags.use_benrc && Sys.file_exists benrc then
+      ignore (read_config (Benl_types.File benrc));
+    Printexc.catch frontend.main ()

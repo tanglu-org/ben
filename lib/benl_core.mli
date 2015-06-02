@@ -18,10 +18,25 @@
 (*  <http://www.gnu.org/licenses/>.                                       *)
 (**************************************************************************)
 
-(** Utility functions.
+(** Utility functions and modules.
 
-    This module contains handy functions not specific to Ben.
+    This module contains handy functions (or modules) not specific to Ben.
 *)
+
+module StringSet : sig
+  include Set.S with type elt = string
+  val from_list : string list -> t
+end
+
+module StringMap : sig
+  include Map.S with type key = string
+  val from_list : (key * int) list -> int t
+  val fusion : 'a t -> 'a t -> 'a t
+end
+
+module IntMap : sig
+  include Map.S with type key = int
+end
 
 val with_in_channel : in_channel -> (in_channel -> 'a) -> 'a
 (** Run the function on the in_channel, taking care of exceptions. *)
@@ -47,8 +62,14 @@ val list_rev_mapi : (int -> 'a -> 'b) -> 'a list -> 'b list
 (** Same as [List.rev_map], but calls the function with the index of
     the current element. *)
 
+val uniq : 'a list -> 'a list
+(** Remove duplicates in a list. *)
+
 val simple_split : char -> string -> string list
 (** [simple_split sep s] splits [s] using [sep] as delimiter. *)
+
+val capitalize : ?sep:char -> string -> string
+(** [capitalize ?sep s] capitalizes a field name. *)
 
 val starts_with : string -> string -> bool
 (** [starts_with s prefix] returns [true] iff [s] starts with

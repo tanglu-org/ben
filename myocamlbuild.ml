@@ -26,11 +26,15 @@ let packages = [
   "dynlink";
   "unix";
   "pcre";
+  "re.pcre";
+  "netstring";
   "ocamlgraph";
   "tyxml";
   "fileutils";
   "threads";
   "postgresql";
+  "parmap";
+  "extlib";
 ]
 
 exception Require_findlib
@@ -39,6 +43,15 @@ exception Subprocess_died_unexpectedly of Unix.process_status
 
 let try_exec cmd =
   Sys.command (sprintf "%s >/dev/null 2>&1" cmd) = 0
+
+let try_run cmd = (* reads one single line *)
+  let in_c = Unix.open_process_in cmd in
+  let line = input_line in_c in
+  let _ = Unix.close_process_in in_c in
+  line
+
+let version = try_run "dpkg-parsechangelog | sed -n 's/Version: //p'"
+let build_date = try_run "date +'%F %T %Z'"
 
 let require pkg =
   if not (try_exec (sprintf "ocamlfind query %s" pkg)) then
@@ -76,6 +89,9 @@ let () =
              List.iter flag ["ocamldep"; "compile"; "link"; "doc"])
           packages;
 
+        flag ["ocaml"; "compile"; "native"] (S[A"-inline"; A"1000"]);
+        flag ["ocaml"; "link"; "native"] (S[A"-inline"; A"1000"]);
+
         (* why isn't this done by default? *)
         flag ["library"; "link"; "thread"] (A"-thread");
 
@@ -87,7 +103,7 @@ let () =
         flag ["link"; "library"; "ocaml"; "native"; "use_libbenl"]
           (S[A"-cclib"; A"-lbenl"]);
         flag ["link"; "program"; "ocaml"; "byte"; "use_libbenl"]
-          (S[A"-dllib"; A"-lbenl"]);
+          (S[A"-I"; A"lib"; A"-dllib"; A"-lbenl"]);
         dep  ["link"; "ocaml"; "use_libbenl"] ["lib/libbenl.a"];
 
         (* rule for the main executable that will link all frontends  *)
@@ -114,6 +130,8 @@ let () =
             Cmd
               (S [A"sed";
                   A"-e"; A (sprintf "s/@STATIC_FRONTENDS@/%s/" static);
+                  A"-e"; A (sprintf "s/@VERSION@/%s/" version);
+                  A"-e"; A (sprintf "s/@BUILD_DATE@/%s/" build_date);
                   P"bin/ben.mlp"; Sh">"; P"bin/ben.ml"])
         end;
 
