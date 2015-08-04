@@ -100,7 +100,7 @@ module Projectb = struct
   let mk_origin () =
 
     (* let suite = !Benl_clflags.suite in *)
-    let suite = "chromodoris" in
+    let suite = "dasyatis" in
 
     (* psql service=projectb must work, e.g. on curie.tanglu.org *)
     let projectb = new Postgresql.connection ~conninfo:"service=projectb" in
